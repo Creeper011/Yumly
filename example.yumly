@@ -1,0 +1,27 @@
+include { .env }
+
+"> this is an comment <"
+(app) { "> commentarie <"
+    name ;string = "yumly",
+    version ;string = "0.0.1",
+    debug ;bool = true,
+    number = 42,
+    pi = 3.14159,
+    (hello) {
+        name = "hello", isMyBug ;bool = true,
+        version2 = "0.1",
+        desktop = $["XDG_SESSION_DESKTOP"]
+    }
+}
+
+(discord) 
+{
+    token ;env = $["DISCORD_TOKEN"],
+    prefix = "!",
+}
+"> multi
+line commentarie btw
+<"
+
+(oi) { ola = "ola", tudo ;string = "bem?", e_ai=">a"}
+

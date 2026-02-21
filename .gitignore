@@ -1,0 +1,5 @@
+.venv
+.vscode
+build
+nimcache
+yumly.egg-info

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yumly"
+version = "0.1.0"
+description = "Yumly is a configuration file format that is designed to be an mix of YAML and JSON with type safaty and a rigorous struct."
+readme = "README.md"
+authors = [{ name = "Yumene", email = "dev@yumene.com" }]
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+
+[tool.setuptools]
+packages = ["yumly"]
+package-dir = {"" = "lib/python"}
+
+[tool.setuptools.package-data]
+yumly = ["yumly_core.so", "yumly_core.pyd"]
+
+[project.urls]
+"Homepage" = "https://github.com/yumene/yumly"
+"Bug Tracker" = "https://github.com/yumene/yumly/issues"
