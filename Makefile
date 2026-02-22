@@ -1,5 +1,5 @@
 MODULE_NAME := yumly_core
-SRC := yumly/yumly_core.nim
+SRC := src/Yumly.nim
 OUT_DIR := lib/python/yumly
 
 PYTHON ?= python3

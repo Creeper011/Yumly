@@ -6,3 +6,5 @@ yumly.egg-info
 lib/python/yumly/yumly_core.so
 .nimble
 .cache
+nimble.develop
+nimble.paths

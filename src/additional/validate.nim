@@ -10,50 +10,67 @@ import ../types/ast
 
 const AllowedIncludeExts = [".env"]
 
+template loc(line, col: int): string =
+  " (line " & $line & ", column " & $col & ")"
+
 proc checkDuplicateBlocks(blocks: seq[Block], path: string, errors: var seq[string]) =
   var seen = initHashSet[string]()
   for blk in blocks:
     if blk.name in seen:
-      if path.len == 0:
-        errors.add "Oh no.. duplicated group '" & blk.name & "' at root"
-      else:
-        errors.add "Oh no.. duplicated group '" & blk.name & "' in '" & path & "'"
+      let where = if path.len == 0: "root" else: "'" & path & "'"
+      errors.add(
+        "Oh no! the block '(" & blk.name & ")' is duplicated in " & where & "! (°ロ°)" &
+        loc(blk.line, blk.col) &
+        "\n  hint: merge them into one block or rename one of them"
+      )
     else:
       seen.incl blk.name
 
+proc kindName(k: ValueKind): string =
+  case k
+  of vkString: "string"
+  of vkInt:    "int"
+  of vkFloat:  "float"
+  of vkBool:   "bool"
+  of vkEnv:    "env"
+
 proc validateBlock(blk: var Block, path: string, errors: var seq[string]) =
   checkDuplicateBlocks(blk.subBlocks, path, errors)
+
   for i in 0..<blk.pairs.len:
+    let pair     = blk.pairs[i]
+    let position = loc(pair.line, pair.col)
+
     # check env var presence when value is an env reference
-    if blk.pairs[i].value.kind == vkEnv:
-      if not existsEnv(blk.pairs[i].value.env):
-        errors.add "Env '" & blk.pairs[i].value.env & "' not found for '" & blk.pairs[i].key &
-                   "' at '" & path & "'"
-      blk.pairs[i].value.envVal = os.getEnv(blk.pairs[i].value.env, "")
+    if pair.value.kind == vkEnv:
+      if not existsEnv(pair.value.env):
+        errors.add(
+          "Kyaa~! the env variable '" & pair.value.env & "' does not exist! (；ω；)" &
+          "\n  key: '" & pair.key & "' in block '" & path & "'" & position &
+          "\n  hint: make sure '" & pair.value.env & "' is set in your terminal or in your .env file"
+        )
+      blk.pairs[i].value.envVal = os.getEnv(pair.value.env, "")
 
     # check type hints
-    if blk.pairs[i].typeHint.isSome and blk.pairs[i].value.kind != vkEnv:
-      case blk.pairs[i].typeHint.get
-      of vkString:
-        if blk.pairs[i].value.kind != vkString:
-          errors.add "Heyy, the key '" & blk.pairs[i].key & "' at '" & path &
-                     "' should be a string, but i found: " & $blk.pairs[i].value.kind
-      of vkInt:
-        if blk.pairs[i].value.kind != vkInt:
-          errors.add "Heyy, the key '" & blk.pairs[i].key & "' at '" & path &
-                     "' should be an int, but i found: " & $blk.pairs[i].value.kind
-      of vkFloat:
-        if blk.pairs[i].value.kind != vkFloat:
-          errors.add "Heyy, the key '" & blk.pairs[i].key & "' at '" & path &
-                     "' should be a float, but i found: " & $blk.pairs[i].value.kind
-      of vkBool:
-        if blk.pairs[i].value.kind != vkBool:
-          errors.add "Heyy, the key '" & blk.pairs[i].key & "' at '" & path &
-                     "' should be a bool, but i found: " & $blk.pairs[i].value.kind
-      of vkEnv:
-        if blk.pairs[i].value.kind != vkEnv:
-          errors.add "Heyy, the key '" & blk.pairs[i].key & "' at '" & path &
-                     "' should be an env var, but i found: " & $blk.pairs[i].value.kind
+    if pair.typeHint.isSome:
+      let expected = pair.typeHint.get
+      let got = pair.value.kind
+
+      # env values must use the ;env hint
+      if got == vkEnv and expected != vkEnv:
+        errors.add(
+          "Ehhh... '" & pair.key & "' in '" & path & "' (group) is an env reference but is annotated as ;" & kindName(expected) & "! >_<" &
+          position &
+          "\n  env values must be annotated with ;env (use ;env or remove the type hint)"
+        )
+      else:
+        if expected != got:
+          errors.add(
+            "Ehhh... '" & pair.key & "' in '" & path & "' has the wrong type! >_<" &
+            position &
+            "\n  value has type: " & kindName(got) & ", but the type hint is ;" & kindName(expected) &
+            "\n  hint: fix the value or remove the ;" & kindName(expected) & " type hint"
+          )
 
   for i in 0..<blk.subBlocks.len:
     validateBlock(blk.subBlocks[i], path & "." & blk.subBlocks[i].name, errors)
@@ -63,26 +80,39 @@ proc validateConfig*(config: var Config) =
 
   for incl in config.includes:
     if not os.fileExists(incl.includePath):
-      errors.add "Oh no.. i cannot found '" & incl.includePath & "'"
+      errors.add(
+        "Heeeh?! i can't find '" & incl.includePath & "' anywhere... (T_T)" &
+        "\n  searched at: " & os.absolutePath(incl.includePath) &
+        "\n  hint: check if the path is correct and the file actually exists"
+      )
       continue
-    
+
     # checks the file extension of env
     let sf = os.splitFile(incl.includePath)
     var ext = sf.ext.toLowerAscii()
     if ext.len == 0 and sf.name.toLowerAscii() == ".env":
       ext = ".env"
     if ext notin AllowedIncludeExts:
-      errors.add "Oh no.. '" & incl.includePath & "' has unsupported include type: '" & ext & "'"
+      errors.add(
+        "Mmm, this file type isn't supported in include { } ;-;" &
+        "\n  file: '" & incl.includePath & "'" &
+        "\n  got type: '" & ext & "'" &
+        "\n  hint: only " & AllowedIncludeExts.join(", ") & " files are supported for now"
+      )
       continue
-    
+
     if ext == ".env":
       try:
-        let sfEnv = os.splitFile(incl.includePath)
-        let envDir = if sfEnv.dir.len == 0: "." else: sfEnv.dir
+        let sfEnv   = os.splitFile(incl.includePath)
+        let envDir  = if sfEnv.dir.len == 0: "." else: sfEnv.dir
         let envFile = sfEnv.name & sfEnv.ext
         load(envDir, envFile)
       except CatchableError as e:
-        errors.add e.msg
+        errors.add(
+          "Ih... something went wrong while loading the .env file! (>_<)" &
+          "\n  file: '" & incl.includePath & "'" &
+          "\n  detail: " & e.msg
+        )
 
   checkDuplicateBlocks(config.blocks, "", errors)
 
@@ -91,4 +121,5 @@ proc validateConfig*(config: var Config) =
 
   if errors.len > 0:
     raise newException(ValueError,
-        "Config validation failed with the following errors:\n" & errors.join("\n"))
+      "Yooo! config validation failed with " & $errors.len & " error(s):\n\n" &
+      errors.join("\n\n"))

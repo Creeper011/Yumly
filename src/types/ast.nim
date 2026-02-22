@@ -21,11 +21,15 @@ type
     key*: string
     typeHint*: Option[ValueKind]
     value*: Value
+    line*: int
+    col*: int
 
   Block* = object
     name*: string
     pairs*: seq[Pair]
     subBlocks*: seq[Block]
+    line*: int
+    col*: int
 
   Include* = object
     includePath*: string

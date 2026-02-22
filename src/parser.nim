@@ -17,9 +17,10 @@ proc advance(parser: var Parser): Token =
 # lookahead for a token of a specific kind, if it matches, advances the parser and returns true, otherwise returns false
 proc expect(parser: var Parser, kind: TokenKind): Token =
   if parser.peek().kind != kind:
+    let foundTok = parser.peek()
     raise newException(ValueError,
-      "Heyyy, i expected " & $kind & ", but i found: " & $parser.peek().kind &
-      " on line: " & $parser.peek().line)
+      "Heyy i expected " & $kind & ", but found " & $foundTok.kind &
+      " at line " & $foundTok.line & ", column " & $foundTok.col & ".")
   parser.advance()
 
 proc consumeComma(parser: var Parser) =
@@ -38,7 +39,7 @@ proc parseTypeHint(parser: var Parser): Option[ValueKind] =
   of "bool":   some(vkBool)
   of "env":    some(vkEnv)
   else:
-    raise newException(ValueError, "uhh.. unknown type hint '" & hint.value & "'")
+    raise newException(ValueError, "Unknown type hint '" & hint.value & "' at line " & intToStr(hint.line) & ", column " & intToStr(hint.col) & ".")
 
 proc parseValue(parser: var Parser): Value =
   case parser.peek().kind
@@ -65,27 +66,28 @@ proc parseValue(parser: var Parser): Value =
     of "false": Value(kind: vkBool, boolVal: false)
     else:       Value(kind: vkString, str: tok.value)
   else:
+    let t = parser.peek()
     raise newException(ValueError,
-      "Heyyy, i expected a value, but i found: " & $parser.peek().kind &
-      " on line: " & $parser.peek().line)
+      "Heyy i expected a value, but found " & $t.kind &
+      " at line " & $t.line & ", column " & $t.col & ".")
       
 proc parsePair(parser: var Parser): Pair =
   let key      = parser.expect(tkIdent)
   var typeHint = parseTypeHint(parser)   # key ;type = value
   discard parser.expect(tkEquals)
   let value = parseValue(parser)
-  Pair(key: key.value, typeHint: typeHint, value: value)
+  Pair(key: key.value, typeHint: typeHint, value: value, line: key.line, col: key.col)
 
 proc parseBlock(parser: var Parser): Block =
 
   # Block structure: (name) {
-  discard parser.expect(tkLParen)
+  let key = parser.expect(tkLParen)
   let name = parser.expect(tkIdent)
   discard parser.expect(tkRParen)
   discard parser.expect(tkLBrace)
 
   # parse the content
-  var blk = Block(name: name.value)
+  var blk = Block(name: name.value, line: key.line, col: key.col)
   # while we haven't reached the end of the block..
   while parser.peek().kind notin {tkRBrace, tkEOF}:
     # detects a sub-block.. detects with an (.. the parseBlock will handle the rest of ) {
@@ -119,8 +121,9 @@ proc generateAST*(tokens: seq[Token]): Config =
     of tkLParen:
       config.blocks.add(parseBlock(parser))
     else:
+      let t = parser.peek()
       raise newException(ValueError,
-        "Oh no!! i found an unexpected token at root level: " & $parser.peek().kind &
-        " on line " & $parser.peek().line & " (don't forget the tokens available at root level is only 'include' ;) )")
+        "Ehhh.. i found an unexpected token at root level: " & $t.kind &
+        " at line " & $t.line & ", column " & $t.col & ". Available root tokens: 'include'.")
 
   config
