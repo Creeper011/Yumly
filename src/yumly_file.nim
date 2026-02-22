@@ -1,9 +1,9 @@
 import os, strutils
 
 proc checkFileExtension*(path: string) =
-  # check if file is an yumly file
-  if not path.endsWith(".yumly"):
-    raise newException(ValueError, "Heyy, the file should have a .yumly extension :<, but i found: " & path)
+  # accept .yumly or .yuy; reject anything else
+  if not (path.endsWith(".yumly") or path.endsWith(".yuy")):
+    raise newException(ValueError, "Heyy, the file should have a .yumly or .yuy extension :<, but i found: " & path)
 
 proc openFileContent*(filePath: string): string =
   if not fileExists(filePath):

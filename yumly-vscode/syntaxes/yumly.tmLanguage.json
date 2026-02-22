@@ -1,0 +1,172 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Yumly",
+  "scopeName": "source.yumly",
+  "fileTypes": [
+    "yumly",
+    "yuy"
+  ],
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#include" },
+    { "include": "#block" },
+    { "include": "#pair" },
+    { "include": "#values" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.block.yumly",
+      "begin": "^(\\s*)\">",
+      "end": "<\"",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.comment.begin.yumly" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.comment.end.yumly" }
+      }
+    },
+
+    "include": {
+      "name": "keyword.control.include.yumly",
+      "match": "\\binclude\\b"
+    },
+
+    "block": {
+      "name": "meta.block.yumly",
+      "begin": "\\(\\s*([A-Za-z_][\\w\\.-]*)\\s*\\)\\s*\\{",
+      "beginCaptures": {
+        "0": { "name": "punctuation.section.block.begin.yumly" },
+        "1": { "name": "entity.name.section.yumly" }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.block.end.yumly" }
+      },
+      "patterns": [
+        { "include": "#comment" },
+        { "include": "#include" },
+        { "include": "#block" },
+        { "include": "#pair" },
+        { "include": "#values" },
+        { "include": "#punctuation" }
+      ]
+    },
+
+    "pair": {
+      "name": "meta.pair.yumly",
+      "begin": "\\b([A-Za-z_][\\w\\.-]*)\\b\\s*(;\\s*(string|int|float|bool|env))?\\s*=",
+      "beginCaptures": {
+        "1": { "name": "variable.other.member.yumly" },
+        "2": { "name": "keyword.operator.typehint.yumly" },
+        "3": { "name": "storage.type.yumly" },
+        "0": { "name": "punctuation.separator.key-value.yumly" }
+      },
+      "end": "(?=,|\\}|$)",
+      "patterns": [
+        { "include": "#values" }
+      ]
+    },
+
+    "values": {
+      "patterns": [
+        { "include": "#comment" },
+        { "include": "#env" },
+        { "include": "#string" },
+        { "include": "#number" },
+        { "include": "#boolean" },
+        { "include": "#identifier" }
+      ]
+    },
+
+    "env": {
+      "name": "variable.other.env.yumly",
+      "begin": "\\$\\s*\\[",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.variable.begin.yumly" }
+      },
+      "end": "\\]",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.variable.end.yumly" }
+      },
+      "patterns": [
+        {
+          "name": "string.quoted.double.env.yumly",
+          "begin": "\"",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.yumly" }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.yumly" }
+          },
+          "patterns": [
+            { "name": "constant.character.escape.yumly", "match": "\\\\." }
+          ]
+        }
+      ]
+    },
+
+    "string": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.yumly",
+          "begin": "\"",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.yumly" }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.yumly" }
+          },
+          "patterns": [
+            { "name": "constant.character.escape.yumly", "match": "\\\\." }
+          ]
+        },
+        {
+          "name": "string.quoted.single.yumly",
+          "begin": "'",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.string.begin.yumly" }
+          },
+          "end": "'",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.string.end.yumly" }
+          },
+          "patterns": [
+            { "name": "constant.character.escape.yumly", "match": "\\\\." }
+          ]
+        }
+      ]
+    },
+
+    "number": {
+      "name": "constant.numeric.yumly",
+      "match": "[-+]?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][-+]?[0-9]+)?"
+    },
+
+    "boolean": {
+      "name": "constant.language.boolean.yumly",
+      "match": "\\b(?:true|false)\\b"
+    },
+
+    "identifier": {
+      "name": "variable.other.unquoted.yumly",
+      "match": "\\b[A-Za-z_][\\w\\.-]*\\b"
+    },
+
+    "punctuation": {
+      "patterns": [
+        { "name": "punctuation.separator.comma.yumly", "match": "," },
+        { "name": "punctuation.separator.key-value.yumly", "match": "=" },
+        { "name": "punctuation.separator.typehint.yumly", "match": ";" },
+        { "name": "punctuation.section.block.begin.yumly", "match": "\\{" },
+        { "name": "punctuation.section.block.end.yumly", "match": "\\}" },
+        { "name": "punctuation.section.group.begin.yumly", "match": "\\(" },
+        { "name": "punctuation.section.group.end.yumly", "match": "\\)" },
+        { "name": "punctuation.section.brackets.begin.yumly", "match": "\\[" },
+        { "name": "punctuation.section.brackets.end.yumly", "match": "\\]" }
+      ]
+    }
+  }
+}

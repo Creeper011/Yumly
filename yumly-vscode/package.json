@@ -1,0 +1,26 @@
+{
+  "name": "yumly",
+  "displayName": "Yumly",
+  "description": "Realce de sintaxe para Yumly, linguagem de config que mistura YAML e JSON com type safety.",
+  "version": "0.0.1",
+  "publisher": "yumene",
+  "engines": {
+    "vscode": "^1.109.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "yumly",
+      "aliases": ["Yumly", "yumly"],
+      "extensions": [".yumly",".yuy"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "yumly",
+      "scopeName": "source.yumly",
+      "path": "./syntaxes/yumly.tmLanguage.json"
+    }]
+  }
+}
