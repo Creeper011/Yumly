@@ -1,2 +1,2 @@
-import yumly_core
-export yumly_core
+import yumly/libyumly
+export libyumly

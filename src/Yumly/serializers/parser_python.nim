@@ -25,7 +25,7 @@ proc blocksToPyDict(blocks: seq[Block];): PyObject =
     root[blk.name] = blockToPyDict(blk)
   return root
 
-proc parseConfigPython*(path: string): PyObject =
+proc parseConfigPy*(path: string): PyObject =
   checkFileExtension(path)
   let content = openFileContent(path)
   let tokens  = tokenize(content)

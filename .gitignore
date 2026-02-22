@@ -8,3 +8,5 @@ lib/python/yumly/yumly_core.so
 .cache
 nimble.develop
 nimble.paths
+__pycache__
+libyumly.so

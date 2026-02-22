@@ -9,9 +9,7 @@ license       = "MIT"
 # the parser API from yumly_core.
 srcDir        = "src"
 installExt    = @["nim"]
-
-# Ship the CLI built from yumly_cli.nim at repo root.
-bin           = @["yumly_cli"]
+bin           = @["libyumly"]
 
 
 # Dependencies

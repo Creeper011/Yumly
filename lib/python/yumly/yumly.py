@@ -1,4 +1,4 @@
-from . import yumly_core # type: ignore
+from . import libyumly # type: ignore
 from .yumly_error import YumlyError
 
 __all__ = ["Yumly", "YumlyError"]
@@ -16,7 +16,7 @@ class Yumly():
 
     def _parse(self) -> dict:
         try:
-            value = yumly_core.parsePyConfig(self.path)
+            value = libyumly.loadYumlyPy(self.path)
         except Exception as exc:
             msg = str(exc).strip()
             if not msg:

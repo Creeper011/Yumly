@@ -4,8 +4,8 @@ from pathlib import Path
 from setuptools import setup # type: ignore
 from setuptools.command.build_py import build_py # type: ignore
 
-NIM_SOURCE_PATH = "src/yumly_core.nim"
-MODULE_NAME = "yumly_core"
+NIM_SOURCE_PATH = "src/Yumly/libyumly.nim"
+MODULE_NAME = "libyumly"
 
 def _extension_suffix() -> str:
     platform = sys.platform
