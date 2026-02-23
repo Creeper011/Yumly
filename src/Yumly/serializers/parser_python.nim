@@ -1,7 +1,5 @@
 import nimpy
-import ../tokenizer, ../parser, ../additional/validate
 import ../types/ast
-import ../yumly_file
 
 let pyBuiltins = pyBuiltinsModule()
 
@@ -48,10 +46,5 @@ proc blocksToPyDict(blocks: seq[Block]): PyObject =
     root[blk.name] = blockToPyDict(blk)
   return root
 
-proc parseConfigPy*(path: string): PyObject =
-  checkFileExtension(path)
-  let content = openFileContent(path)
-  let tokens  = tokenize(content)
-  var config  = generateAST(tokens)
-  validateConfig(config)
+proc toPython*(config: Config): PyObject =
   return blocksToPyDict(config.blocks)

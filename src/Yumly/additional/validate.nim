@@ -5,10 +5,8 @@
 ##
 
 import os, options, strutils, sets
-import dotenv
 import ../types/ast
-
-const AllowedIncludeExts = [".env"]
+import validate_includes
 
 template loc(line, col: int): string =
   " (line " & $line & ", column " & $col & ")"
@@ -74,23 +72,32 @@ proc matches(hint: TypeHintKind, kind: ValueKind): bool =
   of thList:   kind == vkList
   of thTuple:  kind == vkTuple
 
+proc resolveEnvVars(blk: var Block, path: string, errors: var seq[string]) =
+  for i in 0..<blk.pairs.len:
+    template pair: untyped = blk.pairs[i]
+    if pair.value.kind == vkEnv:
+      if not existsEnv(pair.value.env):
+        errors.add(
+          "Kyaa~! the env variable '" & pair.value.env & "' does not exist! (；ω；)" &
+          "\n  key: '" & pair.key & "' in block '" & path & "'" & loc(pair.line, pair.col) &
+          "\n  hint: make sure '" & pair.value.env & "' is set in your terminal or in your .env file"
+        )
+      blk.pairs[i].value.envVal = os.getEnv(pair.value.env)
+
+  for i in 0..<blk.subBlocks.len:
+    resolveEnvVars(blk.subBlocks[i], path & "." & blk.subBlocks[i].name, errors)
+
 proc validateBlock(blk: var Block, path: string, errors: var seq[string]) =
   checkDuplicateBlocks(blk.subBlocks, path, errors)
   checkDuplicatePairs(blk.pairs, path, errors)
 
   for i in 0..<blk.pairs.len:
-    let pair     = blk.pairs[i]
+    template pair: untyped = blk.pairs[i]
     let position = loc(pair.line, pair.col)
 
-    # check env var presence when value is an env reference
-    if pair.value.kind == vkEnv:
-      if not existsEnv(pair.value.env):
-        errors.add(
-          "Kyaa~! the env variable '" & pair.value.env & "' does not exist! (；ω；)" &
-          "\n  key: '" & pair.key & "' in block '" & path & "'" & position &
-          "\n  hint: make sure '" & pair.value.env & "' is set in your terminal or in your .env file"
-        )
-      blk.pairs[i].value.envVal = os.getEnv(pair.value.env, "")
+    # transform an list with heterogenius value to a tuple
+    if pair.typeHint.isSome and pair.typeHint.get().kind == thTuple and pair.value.kind == vkList:
+      pair.value = Value(kind: vkTuple, elements: pair.value.items)
 
     # check type hints
     if pair.typeHint.isSome:
@@ -138,47 +145,17 @@ proc validateBlock(blk: var Block, path: string, errors: var seq[string]) =
   for i in 0..<blk.subBlocks.len:
     validateBlock(blk.subBlocks[i], path & "." & blk.subBlocks[i].name, errors)
 
-proc validateConfig*(config: var Config) =
+proc validateConfig*(config: var Config, skipInclude: bool = false, skipEnv: bool = false) =
   var errors: seq[string]
 
-  for incl in config.includes:
-    if not os.fileExists(incl.includePath):
-      errors.add(
-        "Heeeh?! i can't find '" & incl.includePath & "' anywhere... (T_T)" &
-        "\n  searched at: " & os.absolutePath(incl.includePath) &
-        "\n  hint: check if the path is correct and the file actually exists"
-      )
-      continue
+  if not skipInclude:
+    validateIncludes(config, errors)
 
-    # checks the file extension of env
-    let sf = os.splitFile(incl.includePath)
-    var ext = sf.ext.toLowerAscii()
-    if ext.len == 0 and sf.name.toLowerAscii() == ".env":
-      ext = ".env"
-    if ext notin AllowedIncludeExts:
-      errors.add(
-        "Mmm, this file type isn't supported in include { } ;-;" &
-        "\n  file: '" & incl.includePath & "'" &
-        "\n  got type: '" & ext & "'" &
-        "\n  hint: only " & AllowedIncludeExts.join(", ") & " files are supported for now"
-      )
-      continue
-
-    if ext == ".env":
-      try:
-        let sfEnv   = os.splitFile(incl.includePath)
-        let envDir  = if sfEnv.dir.len == 0: "." else: sfEnv.dir
-        let envFile = sfEnv.name & sfEnv.ext
-        load(envDir, envFile)
-      except CatchableError as e:
-        errors.add(
-          "Ih... something went wrong while loading the .env file! (>_<)" &
-          "\n  file: '" & incl.includePath & "'" &
-          "\n  detail: " & e.msg
-        )
+  if not skipEnv:
+    for i in 0..<config.blocks.len:
+      resolveEnvVars(config.blocks[i], config.blocks[i].name, errors)
 
   checkDuplicateBlocks(config.blocks, "", errors)
-
   for i in 0..<config.blocks.len:
     validateBlock(config.blocks[i], config.blocks[i].name, errors)
 

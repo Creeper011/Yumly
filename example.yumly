@@ -1,37 +1,90 @@
 include { .env }
 
-"> this is an comment <"
-(app) { "> commentarie <"
-    name ;string = "yumly",
-    "> name = "yumly2",  this raises an duplicated pair error <"
-    version ;string = "0.0.1",
-    debug ;bool = true,
-    number = 42,
-    pi = 3.14159,
-    mi = 3e2,
-    (hello) {
-        name = "hello", isMyBug ;bool = true,
-        version2 = "0.1",
-        desktop = $["XDG_SESSION_DESKTOP"]
-    },
-    (hihi) {
-        haha = "value"
+(global) {
+    project_name ;string = "Project Orion",
+    version ;string = "2.4.5-stable",
+    is_production ;bool = false,
+    max_retries ;int = 5,
+    pi_precision = 3.14159265,
+    uptime_goal = 9.99e1, "> 99.9% <"
+    
+    (metadata) {
+        tags ;list[string] = ["cloud", "high-availability", "scalable"],
+        region_info ;tuple = ["us-east-1", 101, true], "> Region, ID, Active <"
+        owner_id = 12345
     }
 }
 
-(discord) 
-{
-    token ;env = $["DISCORD_TOKEN"],
-    prefix = "!",
-    myList ;list[string] = ["1", "2", "3"], "> can only contains strings beacause it's [string] <"
-    "> tuple in yumly is not like other langs, it's like an heterogeneous list <"
-    myTuple ;tuple = [1, "2", true], "> can contain multiple types <"
-    myList2 ;list[int] = [1, 2, 3]
+"> Database Configuration with environment variables <"
+(database) {
+    (postgres) {
+        host ;string = "localhost",
+        port ;int = 5432,
+        db_name = "production_db",
+        ypassword ;env = $["DB_PASSWORD"],
+        max_connections = 100
+    },
+    (redis) {
+        host = "127.0.0.1",
+        port = 6767,
+        cluster_mode ;bool = false,
+        timeout ;int = 300
+    }
 }
 
-"> multi
-line commentarie btw
-<"
+"> Microservices Definition <"
+(services) {
+    (api_gateway) {
+        port = 8080,
+        enable_logging ;bool = true,
+        endpoints ;list[string] = ["/auth", "/v1/data", "/v1/status"],
+        timeout_settings ;tuple = [30, "seconds", true]
+    },
+    
+    (auth_service) {
+        name = "AuthV2",
+        secret_key ;env = $["JWT_SECRET"],
+        token_expiration = 3600,
+        roles ;list[string] = ["admin", "editor", "viewer", "guest"],
+        
+        (security) {
+            mfa_enabled ;bool = true,
+            max_login_attempts = 3,
+            encryption_type = "AES-256"
+        }
+    },
 
-(oi) { ola = "ola", tudo ;string = "bem?", e_ai=">a"}
+    (worker_nodes) {
+        instance_count = 12,
+        load_balancer = "nginx-internal",
+        node_ports ;list[int] = [9001, 9002, 9003, 9004, 9005],
+        
+        (health_check) {
+            path = "/health",
+            interval = 10,
+            threshold = 2
+        }
+    }
+}
 
+"> Notification Settings and External Integrations <"
+(integrations) {
+    (discord_bot) {
+        token ;env = $["DISCORD_TOKEN"],
+        prefix ;string = "!",
+        active_channels ;list[string] = ["general", "alerts", "dev-logs"],
+        permissions ;tuple = [8, "administrator", true]
+    },
+    
+    (email_smtp) {
+        server = "smtp.mailtrap.io",
+        port = 2525,
+        user = $["SMTP_USER"],
+        use_tls ;bool = true
+    }
+}
+
+(system_check) { 
+    status = "ready", 
+    verified ;bool = true
+}

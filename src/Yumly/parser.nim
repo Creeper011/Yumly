@@ -118,9 +118,6 @@ proc parsePair(parser: var Parser): Pair =
   discard parser.expect(tkEquals)
   var value = parseValue(parser)
 
-  if typeHint.isSome and typeHint.get().kind == thTuple and value.kind == vkList:
-      value = Value(kind: vkTuple, elements: value.items)
-
   Pair(key: key.value, typeHint: typeHint, value: value, line: key.line, col: key.col)
 
 proc parseBlock(parser: var Parser): Block =
