@@ -31,6 +31,12 @@ proc consumeComma(parser: var Parser) =
   if parser.peek().kind == tkComma:
     discard parser.advance()
 
+proc consumeOrExpectComma(parser: var Parser) =
+  if parser.peek().kind notin {tkRBrace, tkEOF}:
+    discard parser.expect(tkComma)
+  else:
+    parser.consumeComma()
+
 proc parseTypeHint(parser: var Parser): Option[TypeHint] =
   if parser.peek().kind != tkDeclaration:
     return none(TypeHint)
@@ -42,24 +48,39 @@ proc parseTypeHint(parser: var Parser): Option[TypeHint] =
   of "float":  some(TypeHint(kind: thFloat))
   of "bool":   some(TypeHint(kind: thBool))
   of "env":    some(TypeHint(kind: thEnv))
-  of "tuple":  some(TypeHint(kind: thTuple))
   of "list":
-    discard parser.expect(tkLBracket)
-    let inner = parser.expect(tkIdent)
-    discard parser.expect(tkRBracket)
-    let innerKind = case inner.value
-      of "string": thString
-      of "int":    thInt
-      of "float":  thFloat
-      of "bool":   thBool
-      of "env":    thEnv
-      else:
-        raise newException(ValueError, "Unknown list element type '" & inner.value & "' at line " & $inner.line & ", column " & $inner.col & ".")
-    some(TypeHint(kind: thList, elementKind: innerKind))
+    if parser.peek().kind == tkLBracket:
+      discard parser.advance()
+      let elemKindTok = parser.expect(tkIdent)
+      let elemKind = case elemKindTok.value
+        of "string": thString
+        of "int":    thInt
+        of "float":  thFloat
+        of "bool":   thBool
+        of "env":    thEnv
+        else:
+          raise newException(ValueError, "Unknown list element type '" & elemKindTok.value & "' at line " & intToStr(elemKindTok.line) & ", column " & intToStr(elemKindTok.col) & ".")
+      discard parser.expect(tkRBracket)
+      some(TypeHint(kind: thList, elementKind: elemKind))
+    else:
+      some(TypeHint(kind: thList, elementKind: thString))
+  of "tuple":
+    some(TypeHint(kind: thTuple))
   else:
-    raise newException(ValueError, "Unknown type hint '" & hint.value & "' at line " & $hint.line & ", column " & $hint.col & ".")
+    raise newException(ValueError, "Unknown type hint '" & hint.value & "' at line " & intToStr(hint.line) & ", column " & intToStr(hint.col) & ".")
 
-proc parseValue(parser: var Parser, typeHint: Option[TypeHint] = none(TypeHint)): Value =
+proc parseValue(parser: var Parser): Value
+
+proc parseListItems(parser: var Parser, closingKind: TokenKind): seq[Value] =
+  var items: seq[Value]
+  while parser.peek().kind != closingKind and parser.peek().kind != tkEOF:
+    items.add(parseValue(parser))
+    if parser.peek().kind == tkComma:
+      discard parser.advance()
+  discard parser.expect(closingKind)
+  return items
+
+proc parseValue(parser: var Parser): Value =
   case parser.peek().kind
   # if the value is an env var, we expect a structure like $[ENV_VAR_NAME]
   of tkDollar:
@@ -85,33 +106,8 @@ proc parseValue(parser: var Parser, typeHint: Option[TypeHint] = none(TypeHint))
       else:       Value(kind: vkString, str: tok.value)
   of tkLBracket:
     discard parser.advance()
-    var items: seq[Value]
-    while parser.peek().kind != tkRBracket:
-      items.add(parser.parseValue())
-      if parser.peek().kind == tkComma:
-        discard parser.advance()
-    discard parser.expect(tkRBracket)
-
-    var isTuple = false
-    if typeHint.isSome:
-      if typeHint.get.kind == thTuple:
-        isTuple = true
-      elif typeHint.get.kind == thList:
-        isTuple = false
-    else:
-      if items.len > 1:
-        let firstKind = items[0].kind
-        for i in 1..<items.len:
-          if items[i].kind != firstKind:
-            isTuple = true
-            break
-      else:
-        isTuple = false
-
-    if isTuple:
-      result = Value(kind: vkTuple, elements: items)
-    else:
-      result = Value(kind: vkList, items: items)
+    let items = parseListItems(parser, tkRBracket)
+    result = Value(kind: vkList, items: items)
   else:
     let token = parser.peek()
     expectedValueError(token)
@@ -120,7 +116,11 @@ proc parsePair(parser: var Parser): Pair =
   let key      = parser.expect(tkIdent)
   var typeHint = parseTypeHint(parser)   # key ;type = value
   discard parser.expect(tkEquals)
-  let value = parseValue(parser, typeHint)
+  var value = parseValue(parser)
+
+  if typeHint.isSome and typeHint.get().kind == thTuple and value.kind == vkList:
+      value = Value(kind: vkTuple, elements: value.items)
+
   Pair(key: key.value, typeHint: typeHint, value: value, line: key.line, col: key.col)
 
 proc parseBlock(parser: var Parser): Block =
@@ -136,12 +136,8 @@ proc parseBlock(parser: var Parser): Block =
       blk.subBlocks.add(parseBlock(parser))
     else:
       blk.pairs.add(parsePair(parser))
-      if parser.peek().kind notin {tkRBrace, tkEOF}:
-        discard parser.expect(tkComma)
-      else:
-        parser.consumeComma()
+    parser.consumeOrExpectComma()
 
-  # só aqui fecha
   discard parser.expect(tkRBrace, blk)
   blk
 

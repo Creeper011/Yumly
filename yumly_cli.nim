@@ -1,7 +1,7 @@
 
 
 import os
-import Yumly
+import src/Yumly/libyumly
 
 proc parseOutput() =
     let args = commandLineParams()

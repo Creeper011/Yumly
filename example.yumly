@@ -3,6 +3,7 @@ include { .env }
 "> this is an comment <"
 (app) { "> commentarie <"
     name ;string = "yumly",
+    name = "yumly2",
     version ;string = "0.0.1",
     debug ;bool = true,
     number = 42,
@@ -12,6 +13,9 @@ include { .env }
         name = "hello", isMyBug ;bool = true,
         version2 = "0.1",
         desktop = $["XDG_SESSION_DESKTOP"]
+    },
+    (hihi) {
+        haha = "value"
     }
 }
 
@@ -20,7 +24,8 @@ include { .env }
     token ;env = $["DISCORD_TOKEN"],
     prefix = "!",
     myList ;list[string] = ["1", "2", "3"], "> can only contains strings beacause it's [string] <"
-    myTuple ;tuple = [1, "2", true] "> can contain multiple types <"
+    myTuple ;tuple = [1, "2", true], "> can contain multiple types <"
+    myList ;list[int] = [1, 2, 3]
 }
 
 "> multi
