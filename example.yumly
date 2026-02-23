@@ -3,7 +3,7 @@ include { .env }
 "> this is an comment <"
 (app) { "> commentarie <"
     name ;string = "yumly",
-    name = "yumly2",
+    "> name = "yumly2",  this raises an duplicated pair error <"
     version ;string = "0.0.1",
     debug ;bool = true,
     number = 42,
@@ -24,8 +24,9 @@ include { .env }
     token ;env = $["DISCORD_TOKEN"],
     prefix = "!",
     myList ;list[string] = ["1", "2", "3"], "> can only contains strings beacause it's [string] <"
+    "> tuple in yumly is not like other langs, it's like an heterogeneous list <"
     myTuple ;tuple = [1, "2", true], "> can contain multiple types <"
-    myList ;list[int] = [1, 2, 3]
+    myList2 ;list[int] = [1, 2, 3]
 }
 
 "> multi

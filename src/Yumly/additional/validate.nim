@@ -26,6 +26,19 @@ proc checkDuplicateBlocks(blocks: seq[Block], path: string, errors: var seq[stri
     else:
       seen.incl blk.name
 
+proc checkDuplicatePairs(pairs: seq[Pair], blkPath: string, errors: var seq[string]) =
+  var seen = initHashSet[string]()
+  for pair in pairs:
+    if pair.key in seen:
+      let where = if blkPath.len == 0: "root" else: "'" & blkPath & "'"
+      errors.add(
+        "Oh no! the key pair '(" & pair.key & ")' is duplicated in " & where & "! (°ロ°)" &
+        loc(pair.line, pair.col) &
+        "\n  hint: choose one to prevail or rename the duplicated key."
+      )
+    else:
+      seen.incl pair.key
+
 proc kindName(k: ValueKind): string =
   case k
   of vkString: "string"
@@ -57,12 +70,13 @@ proc matches(hint: TypeHintKind, kind: ValueKind): bool =
   of thInt:    kind == vkInt
   of thFloat:  kind == vkFloat
   of thBool:   kind == vkBool
-  of thEnv:    kind == vkEnv or kind == vkString
+  of thEnv:    kind == vkEnv
   of thList:   kind == vkList
   of thTuple:  kind == vkTuple
 
 proc validateBlock(blk: var Block, path: string, errors: var seq[string]) =
   checkDuplicateBlocks(blk.subBlocks, path, errors)
+  checkDuplicatePairs(blk.pairs, path, errors)
 
   for i in 0..<blk.pairs.len:
     let pair     = blk.pairs[i]
