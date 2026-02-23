@@ -5,7 +5,15 @@
 import token, options
 
 type
-  ValueKind* = enum vkString, vkInt, vkFloat, vkEnv, vkBool
+  ValueKind* = enum vkString, vkInt, vkFloat, vkEnv, vkBool, vkList, vkTuple
+
+  TypeHintKind* = enum thString, thInt, thFloat, thBool, thEnv, thList, thTuple
+
+  TypeHint* = object
+    case kind*: TypeHintKind
+    of thList:
+      elementKind*: TypeHintKind
+    else: discard
 
   Value* = object
     case kind*: ValueKind
@@ -16,10 +24,12 @@ type
       env*: string
       envVal*: string
     of vkBool:   boolVal*: bool
+    of vkList:   items*: seq[Value]
+    of vkTuple:  elements*: seq[Value]
 
   Pair* = object
     key*: string
-    typeHint*: Option[ValueKind]
+    typeHint*: Option[TypeHint]
     value*: Value
     line*: int
     col*: int

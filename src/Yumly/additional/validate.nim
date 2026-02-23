@@ -33,6 +33,33 @@ proc kindName(k: ValueKind): string =
   of vkFloat:  "float"
   of vkBool:   "bool"
   of vkEnv:    "env"
+  of vkList:   "list"
+  of vkTuple:  "tuple"
+
+proc hintKindName(k: TypeHintKind): string =
+  case k
+  of thString: "string"
+  of thInt:    "int"
+  of thFloat:  "float"
+  of thBool:   "bool"
+  of thEnv:    "env"
+  of thList:   "list"
+  of thTuple:  "tuple"
+
+proc hintName(h: TypeHint): string =
+  case h.kind
+  of thList: "list[" & hintKindName(h.elementKind) & "]"
+  else: hintKindName(h.kind)
+
+proc matches(hint: TypeHintKind, kind: ValueKind): bool =
+  case hint
+  of thString: kind == vkString
+  of thInt:    kind == vkInt
+  of thFloat:  kind == vkFloat
+  of thBool:   kind == vkBool
+  of thEnv:    kind == vkEnv or kind == vkString
+  of thList:   kind == vkList
+  of thTuple:  kind == vkTuple
 
 proc validateBlock(blk: var Block, path: string, errors: var seq[string]) =
   checkDuplicateBlocks(blk.subBlocks, path, errors)
@@ -53,23 +80,45 @@ proc validateBlock(blk: var Block, path: string, errors: var seq[string]) =
 
     # check type hints
     if pair.typeHint.isSome:
-      let expected = pair.typeHint.get
+      let hint = pair.typeHint.get
       let got = pair.value.kind
 
-      # env values must use the ;env hint
-      if got == vkEnv and expected != vkEnv:
+      # env values must use the ;env hint (or be part of a list[env])
+      if got == vkEnv and hint.kind != thEnv and hint.kind != thList:
         errors.add(
-          "Ehhh... '" & pair.key & "' in '" & path & "' (group) is an env reference but is annotated as ;" & kindName(expected) & "! >_<" &
+          "Ehhh... '" & pair.key & "' in '" & path & "' (group) is an env reference but is annotated as ;" & hintName(hint) & "! >_<" &
           position &
           "\n  env values must be annotated with ;env (use ;env or remove the type hint)"
         )
-      else:
-        if expected != got:
+      
+      if hint.kind == thList:
+        if got != vkList:
           errors.add(
             "Ehhh... '" & pair.key & "' in '" & path & "' has the wrong type! >_<" &
             position &
-            "\n  value has type: " & kindName(got) & ", but the type hint is ;" & kindName(expected) &
-            "\n  hint: fix the value or remove the ;" & kindName(expected) & " type hint"
+            "\n  value is " & kindName(got) & ", but the type hint is ;" & hintName(hint)
+          )
+        else:
+          for item in pair.value.items:
+            if not matches(hint.elementKind, item.kind):
+              errors.add(
+                "Ehhh... an item in list '" & pair.key & "' in '" & path & "' has the wrong type! >_<" &
+                position &
+                "\n  expected item type: " & hintKindName(hint.elementKind) & ", but got " & kindName(item.kind)
+              )
+      elif hint.kind == thTuple:
+        if got != vkTuple:
+          errors.add(
+            "Ehhh... '" & pair.key & "' in '" & path & "' has the wrong type! >_<" &
+            position &
+            "\n  value is " & kindName(got) & ", but the type hint is ;tuple"
+          )
+      else:
+        if not matches(hint.kind, got):
+          errors.add(
+            "Ehhh... '" & pair.key & "' in '" & path & "' has the wrong type! >_<" &
+            position &
+            "\n  value has type: " & kindName(got) & ", but the type hint is ;" & hintName(hint)
           )
 
   for i in 0..<blk.subBlocks.len:

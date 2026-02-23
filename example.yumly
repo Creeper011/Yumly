@@ -7,6 +7,7 @@ include { .env }
     debug ;bool = true,
     number = 42,
     pi = 3.14159,
+    mi = 3e2,
     (hello) {
         name = "hello", isMyBug ;bool = true,
         version2 = "0.1",
@@ -18,7 +19,10 @@ include { .env }
 {
     token ;env = $["DISCORD_TOKEN"],
     prefix = "!",
+    myList ;list[string] = ["1", "2", "3"], "> can only contains strings beacause it's [string] <"
+    myTuple ;tuple = [1, "2", true] "> can contain multiple types <"
 }
+
 "> multi
 line commentarie btw
 <"

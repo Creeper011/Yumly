@@ -48,6 +48,7 @@ proc tokenize*(source: string): seq[Token] =
         continue
 
     # handle numbers (int or float)
+    # check if the number contains more than 2 characters and if it's negative
     if source[i] in {'0'..'9'} or (source[i] == '-' and i + 1 < source.len and source[i + 1] in {'0'..'9'}):
       let start = i
       if source[i] == '-':
@@ -58,6 +59,7 @@ proc tokenize*(source: string): seq[Token] =
         i += 1
         while i < source.len and source[i] in {'0'..'9'}:
           i += 1
+      # resolves scientific notations
       if i < source.len and (source[i] == 'e' or source[i] == 'E'):
         i += 1
         if i < source.len and (source[i] == '+' or source[i] == '-'):

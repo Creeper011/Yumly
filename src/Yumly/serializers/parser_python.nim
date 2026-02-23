@@ -10,6 +10,8 @@ proc insertValue(dict: PyObject, key: string, value: Value) =
   of vkInt:    dict[key] = value.intVal
   of vkFloat:  dict[key] = value.floatVal
   of vkEnv:    dict[key] = value.envVal
+  of vkList:   dict[key] = value.items
+  of vkTuple:  dict[key] = value.elements
 
 proc blockToPyDict(blk: Block;): PyObject =
   let dict = pyDict()
