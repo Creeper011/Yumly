@@ -1,2 +1,2 @@
-import yumly/libyumly
+import Yumly/libyumly
 export libyumly
