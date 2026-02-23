@@ -17,7 +17,7 @@ Nim é uma linguagem compilada, isto é, gera um binário. Por isso o parser é 
 ```python
 from yumly import Yumly
 
-data = Yumly("example.yumly").load()
+data = Yumly().load("example.yumly")
 print(data) # só imprime o valor
 ```
 
