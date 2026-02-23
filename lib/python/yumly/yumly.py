@@ -27,29 +27,29 @@ class Yumly():
     def validate_content(self, yuml_data: str) -> bool:
         """Validate raw string data"""
         try:
-            result: bool = libyumly.validateContent(yuml_data)
+            error_msg: str = libyumly.validateContentMsg(yuml_data)
         except Exception as exc:
             msg = str(exc).strip() or FALLBACK_MESSAGE
             raise YumlyError(msg) from exc
         
-        if not isinstance(result, bool):
-            raise YumlyError(FALLBACK_VALUE_MESSAGE)
+        if error_msg:
+            raise YumlyError(error_msg)
         
-        return result
+        return True
 
     def validate_file(self, path: Union[str, Path]) -> bool:
         """Validate data from a file path"""
         path_str = str(Path(path).resolve())
         try:
-            result: bool = libyumly.validateFile(path_str)
+            error_msg: str = libyumly.validateFileMsg(path_str)
         except Exception as exc:
             msg = str(exc).strip() or FALLBACK_MESSAGE
             raise YumlyError(msg) from exc
         
-        if not isinstance(result, bool):
-            raise YumlyError(FALLBACK_VALUE_MESSAGE)
-        
-        return result
+        if error_msg:
+            raise YumlyError(error_msg)
+
+        return True
 
     def _parse(self, path: Path) -> dict[str, Any]:
         path_str = str(path.resolve())

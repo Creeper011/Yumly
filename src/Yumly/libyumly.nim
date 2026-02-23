@@ -32,6 +32,22 @@ proc validateFile*(path: string): bool {.exportpy.} =
     echo error.msg
     return false
 
+proc validateContentWithErrMsg*(content: string): string {.exportpy: "validateContentMsg".} =
+  try:
+    var config = parseContentToAST(content)
+    validateConfig(config, skipInclude = true, skipEnv = true)
+    return ""
+  except ValueError as error:
+    return error.msg
+
+proc validateFileWithErrMsg*(path: string): string {.exportpy: "validateFileMsg".} =
+  try:
+    var config = parseFileToAST(path)
+    validateConfig(config, skipInclude = true, skipEnv = true)
+    return ""
+  except ValueError as error:
+    return error.msg
+
 proc loadYumly*(path: string = "config.yumly"): Config =
   var config = parseFileToAST(path)
   validateConfig(config, skipInclude = false, skipEnv = false)
