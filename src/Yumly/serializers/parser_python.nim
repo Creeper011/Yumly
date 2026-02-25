@@ -6,7 +6,7 @@ let pyBuiltins = pyBuiltinsModule()
 proc valueToPy(value: Value): PyObject =
   case value.kind
   of vkString:
-    result = pyBuiltins.str(value.str)
+    result = pyBuiltins.str(value.strVal)
   of vkBool:
     result = pyBuiltins.bool(value.boolVal)
   of vkInt:
@@ -18,7 +18,7 @@ proc valueToPy(value: Value): PyObject =
 
   of vkList:
     let pyList = pyBuiltins.list()
-    for it in value.items:
+    for it in value.elements:
       discard pyList.append(valueToPy(it))
     result = pyList
 

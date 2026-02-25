@@ -1,0 +1,16 @@
+name ;string = "John Doe"
+age ;int = 30
+hobbies ;list[string] = ["reading", "hiking", "cooking"]
+
+"> an commentary <"
+">
+multiple line
+commentary
+<"
+(block1) {
+    variable1 ;string = "value",
+    variable2 ;int = 1,
+    variable3 ;list[int] = [1, 2, 3, 4, 5],
+    variable4 ;list[string] = ["one", "two", "three", "four", "five"],
+    variable5 ;tuple = [1, "two", 3.3, "four", ["five"]],
+}

@@ -5,8 +5,7 @@
 import token, options
 
 type
-  ValueKind* = enum vkString, vkInt, vkFloat, vkEnv, vkBool, vkList, vkTuple
-
+  # filled in by the parser and validated by validator
   TypeHintKind* = enum thString, thInt, thFloat, thBool, thEnv, thList, thTuple
 
   TypeHint* = object
@@ -15,17 +14,46 @@ type
       elementKind*: TypeHintKind
     else: discard
 
+  NodeKind* = enum 
+    nkString, nkInt, nkFloat, nkBool, 
+    nkEnv,
+    nkList, nkTuple,
+    nkBlock,
+    nkPair,
+    nkConfig, nkInclude
+
+  YumNode* = ref object
+    token*: Token
+    case kind*: NodeKind
+    of nkString, nkInt, nkFloat, nkEnv, nkInclude:
+      rawValue*: string
+    of nkBool:
+      boolVal*: bool
+    of nkList, nkTuple, nkConfig, nkBlock:
+      children*: seq[YumNode]
+      name*: string
+    of nkPair:
+      key*: string
+      typeHint*: Option[TypeHint]
+      valNode*: YumNode
+      
+    line*, col*: int
+
+  # filled in by the evaluator
+  ValueKind* = enum 
+    vkString, vkInt, vkFloat, vkBool, vkList, vkTuple, vkEnv
+
   Value* = object
     case kind*: ValueKind
-    of vkString: str*: string
-    of vkInt:    intVal*: int
-    of vkFloat:  floatVal*: float
+    of vkString:    strVal*: string
+    of vkInt:       intVal*: int
+    of vkFloat:     floatVal*: float
+    of vkBool:      boolVal*: bool
+    of vkList, vkTuple:
+      elements*: seq[Value]
     of vkEnv:
-      env*: string
+      envName*: string
       envVal*: string
-    of vkBool:   boolVal*: bool
-    of vkList:   items*: seq[Value]
-    of vkTuple:  elements*: seq[Value]
 
   Pair* = object
     key*: string
@@ -46,6 +74,7 @@ type
 
   Config* = object
     blocks*: seq[Block]
+    pairs*: seq[Pair]
     includes*: seq[Include]
 
   Parser* = object

@@ -21,12 +21,6 @@ proc expect(parser: var Parser, kind: TokenKind): Token =
     expectedError(kind, parser.peek())
   parser.advance()
 
-# overload with block
-proc expect(parser: var Parser, kind: TokenKind, blk: Block): Token =
-  if parser.peek().kind != kind:
-    expectedBlockError(kind, blk.name, blk.line, blk.col, parser.peek())
-  parser.advance()
-
 proc consumeComma(parser: var Parser) =
   if parser.peek().kind == tkComma:
     discard parser.advance()
@@ -69,92 +63,110 @@ proc parseTypeHint(parser: var Parser): Option[TypeHint] =
   else:
     raise newException(ValueError, "Unknown type hint '" & hint.value & "' at line " & intToStr(hint.line) & ", column " & intToStr(hint.col) & ".")
 
-proc parseValue(parser: var Parser): Value
+proc parseValue(parser: var Parser): YumNode
 
-proc parseListItems(parser: var Parser, closingKind: TokenKind): seq[Value] =
-  var items: seq[Value]
-  while parser.peek().kind != closingKind and parser.peek().kind != tkEOF:
-    items.add(parseValue(parser))
+proc parseListItems(parser: var Parser): seq[YumNode] =
+  var items: seq[YumNode] = @[]
+  while parser.peek().kind != tkRBracket and parser.peek().kind != tkEOF:
+    items.add(parser.parseValue())
+
     if parser.peek().kind == tkComma:
-      discard parser.advance()
-  discard parser.expect(closingKind)
+      parser.consumeOrExpectComma()
+    elif parser.peek().kind != tkRBracket:
+      raise newException(ValueError, "hey, tt")
+
+  discard parser.expect(tkRBracket)
   return items
 
-proc parseValue(parser: var Parser): Value =
-  case parser.peek().kind
-  # if the value is an env var, we expect a structure like $[ENV_VAR_NAME]
+proc parseValue(parser: var Parser): YumNode =
+  let token = parser.peek()
+  
+  case token.kind
   of tkDollar:
     discard parser.advance()
-    discard parser.expect(tkLBracket)
-    let key = parser.expect(tkString)
-    discard parser.expect(tkRBracket)
-    result = Value(kind: vkEnv, env: key.value, envVal: "")
+    
+    # if is an env variable
+    if parser.peek().kind == tkLBracket:
+      discard parser.advance()
+      let envToken = parser.expect(tkString)
+      discard parser.expect(tkRBracket)
+      return YumNode(kind: nkEnv, rawValue: envToken.value, token: token, line: token.line, col: token.col)
+
   of tkString:
-    let tok = parser.advance()
-    result = Value(kind: vkString, str: tok.value)
+    let token = parser.advance()
+    return YumNode(kind: nkString, rawValue: token.value, token: token, line: token.line, col: token.col)
+
   of tkNumber:
-    let tok = parser.advance()
-    if '.' in tok.value or 'e' in tok.value or 'E' in tok.value:
-      result = Value(kind: vkFloat, floatVal: parseFloat(tok.value))
+    let token = parser.advance()
+    if '.' in token.value:
+      return YumNode(kind: nkFloat, rawValue: token.value, token: token, line: token.line, col: token.col)
     else:
-      result = Value(kind: vkInt, intVal: parseInt(tok.value))
+      return YumNode(kind: nkInt, rawValue: token.value, token: token, line: token.line, col: token.col)
+
   of tkIdent:
-    let tok = parser.advance()
-    result = case tok.value
-      of "true":  Value(kind: vkBool, boolVal: true)
-      of "false": Value(kind: vkBool, boolVal: false)
-      else:       Value(kind: vkString, str: tok.value)
+    let token = parser.advance()
+    case token.value
+    of "true", "false":
+      result = YumNode(kind: nkBool, boolVal: token.value == "true", line: token.line, col: token.col)
+
   of tkLBracket:
-    discard parser.advance()
-    let items = parseListItems(parser, tkRBracket)
-    result = Value(kind: vkList, items: items)
+    let startToken = parser.advance()
+    let items = parser.parseListItems()
+    return YumNode(kind: nkList, children: items, token: startToken, line: startToken.line, col: startToken.col)
   else:
-    let token = parser.peek()
-    expectedValueError(token)
+    expectedValueError(parser.peek())
       
-proc parsePair(parser: var Parser): Pair =
-  let key      = parser.expect(tkIdent)
-  var typeHint = parseTypeHint(parser)   # key ;type = value
+proc parsePair(parser: var Parser): YumNode =
+  let keyToken = parser.expect(tkIdent)
+  let typeHint = parseTypeHint(parser) 
   discard parser.expect(tkEquals)
-  var value = parseValue(parser)
+  let valueNode = parser.parseValue()
+  return YumNode(kind: nkPair, key: keyToken.value, typeHint: typeHint, valNode: valueNode,
+    token: keyToken, line: keyToken.line, col: keyToken.col)
 
-  Pair(key: key.value, typeHint: typeHint, value: value, line: key.line, col: key.col)
-
-proc parseBlock(parser: var Parser): Block =
-  let key  = parser.expect(tkLParen)
-  let name = parser.expect(tkIdent)
+proc parseBlock*(parser: var Parser): YumNode =
+  # capture (name) {
+  let lpToken = parser.expect(tkLParen)
+  let nameToken = parser.expect(tkIdent)
   discard parser.expect(tkRParen)
   discard parser.expect(tkLBrace)
-  var blk  = Block(name: name.value, line: key.line, col: key.col)
 
-  # while we haven't reached the end of the block..
+  result = YumNode(kind: nkBlock, token: lpToken, line: lpToken.line, 
+  col: lpToken.col, children: @[], name: nameToken.value)
+
   while parser.peek().kind notin {tkRBrace, tkEOF}:
+    # if starts with an ( treats it a block
     if parser.peek().kind == tkLParen:
-      blk.subBlocks.add(parseBlock(parser))
+      result.children.add(parser.parseBlock())
     else:
-      blk.pairs.add(parsePair(parser))
+      result.children.add(parser.parsePair())
+
     parser.consumeOrExpectComma()
+  # expect an }
+  discard parser.expect(tkRBrace)
 
-  discard parser.expect(tkRBrace, blk)
-  blk
+proc parseInclude(p: var Parser): YumNode =
+  let tok = p.peek() 
+  discard p.advance()
+  discard p.expect(tkLBrace)
+  let path = p.expect(tkIdent)
+  discard p.expect(tkRBrace)
+  return YumNode(kind: nkInclude, rawValue: path.value, token: tok,line: tok.line, col: tok.col)
 
-proc generateAST*(tokens: seq[Token]): Config =
+proc generateAST*(tokens: seq[Token]): YumNode =
   var parser = Parser(tokens: tokens, pos: 0)
-  var config: Config
+  result = YumNode(kind: nkConfig, children: @[])
   
   # loop through the tokens until end of file.
   while parser.peek().kind != tkEOF:
     case parser.peek().kind
     of tkInclude:
-      discard parser.advance()
-      discard parser.expect(tkLBrace)
-      let path = parser.expect(tkIdent)
-      discard parser.expect(tkRBrace)
-      config.includes.add(Include(includePath: path.value))
+      result.children.add(parser.parseInclude())
     of tkLParen:
-      config.blocks.add(parseBlock(parser))
+      result.children.add(parser.parseBlock())
+    of tkIdent:
+      result.children.add(parser.parsePair())
     else:
       let token = parser.peek()
       expectedTopTokenError(token)
-
-  config
+      discard parser.advance()
