@@ -6,7 +6,6 @@
 
 import os, options, strutils, sets
 import ../types/ast
-import validate_includes
 
 template loc(line, col: int): string =
   " (line " & $line & ", column " & $col & ")"
@@ -67,20 +66,6 @@ proc checkDuplicates(nodes: seq[YumNode], path: string, errors: var seq[string])
       else:
         seenPairs.incl(child.key)
 
-proc checkEnvVars(node: YumNode, path: string, errors: var seq[string]) =
-  case node.kind:
-    of nkEnv:
-      if not existsEnv(node.rawValue):
-        errors.add(
-          "Kyaa~! the env variable '" & node.rawValue & "' does not exist! (；ω；)" &
-          "\n  path: '" & path & "'" & loc(node.line, node.col) &
-          "\n  hint: make sure '" & node.rawValue & "' is set in your terminal or in your .env file"
-        )
-    of nkList, nkTuple:
-      for child in node.children:
-        checkEnvVars(child, path, errors)
-    else: discard
-
 proc validatePair(pairNode: YumNode, path: string, errors: var seq[string]) =
   let position = loc(pairNode.line, pairNode.col)
   let valNode = pairNode.valNode
@@ -112,7 +97,7 @@ proc validatePair(pairNode: YumNode, path: string, errors: var seq[string]) =
           "\n  value is " & kindName(got) & ", but the type hint is ;tuple"
         )
 
-proc validateASTNode(node: YumNode, currentPath: string, errors: var seq[string], skipEnv: bool) =
+proc validateASTNode(node: YumNode, currentPath: string, errors: var seq[string]) =
   if node.kind in {nkConfig, nkBlock}:
     checkDuplicates(node.children, currentPath, errors)
 
@@ -120,21 +105,16 @@ proc validateASTNode(node: YumNode, currentPath: string, errors: var seq[string]
     case child.kind:
       of nkBlock:
         let newPath = if currentPath.len == 0: child.name else: currentPath & "." & child.name
-        validateASTNode(child, newPath, errors, skipEnv)
+        validateASTNode(child, newPath, errors)
       of nkPair:
         validatePair(child, currentPath, errors)
-        if not skipEnv:
-          checkEnvVars(child.valNode, currentPath & "." & child.key, errors)
       else:
         discard
 
-proc validateConfig*(rootNode: YumNode, skipInclude: bool = false, skipEnv: bool = false) =
+proc validateConfig*(rootNode: YumNode) =
   var errors: seq[string]
 
-  if not skipInclude:
-     validateIncludes(rootNode, errors)
-
-  validateASTNode(rootNode, currentPath = "", errors = errors, skipEnv = skipEnv)
+  validateASTNode(rootNode, currentPath = "", errors = errors)
 
   if errors.len > 0:
     raise newException(ValueError,
