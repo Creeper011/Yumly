@@ -76,17 +76,13 @@ proc parseListItems(parser: var Parser): seq[YumNode] =
   var items: seq[YumNode] = @[]
   while parser.peek().kind != tkRBracket and parser.peek().kind != tkEOF:
     items.add(parser.parseValue())
-
-    if parser.peek().kind == tkComma:
-      parser.consumeOrExpectComma()
-    elif parser.peek().kind != tkRBracket:
-      let tok = parser.peek()
-      raise newException(
-        ValueError,
-        "Heyy, i found an malformed list at line " & $tok.line &
-        ", column " & $tok.col &
-        ". Expected ']', but found '" & $tok.kind & "'."
-      )
+    let next = parser.peek()
+    if next.kind notin {tkComma, tkRBracket, tkEOF}:
+      raise newException(ValueError,
+        "Heyy, i found a malformed list at line " & $next.line &
+        ", column " & $next.col &
+        ". Expected ',' or ']', but found " & next.kind.toDisplay() & ".")
+    parser.consumeComma()
   discard parser.expect(tkRBracket)
   return items
 
@@ -119,7 +115,7 @@ proc parseValue(parser: var Parser): YumNode =
     let token = parser.advance()
     case token.value
     of "true", "false":
-      result = YumNode(kind: nkBool, boolVal: token.value == "true", line: token.line, col: token.col)
+      return YumNode(kind: nkBool, boolVal: token.value == "true", line: token.line, col: token.col)
 
   of tkLBracket:
     let startToken = parser.advance()

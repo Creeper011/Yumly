@@ -3,7 +3,7 @@
 ##
 import types/token
 
-proc toDisplay(kind: TokenKind): string =
+proc toDisplay*(kind: TokenKind): string =
     case kind
     of tkLParen:      "'('"
     of tkRParen:      "')'"
