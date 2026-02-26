@@ -40,11 +40,12 @@ proc blockToPyDict(blk: Block): PyObject =
     dict[subBlock.name] = blockToPyDict(subBlock)
   return dict
 
-proc blocksToPyDict(blocks: seq[Block]): PyObject =
+proc toPython*(config: Config): PyObject =
   let root = pyBuiltins.dict()
-  for blk in blocks:
+  # root-level pairs
+  for pair in config.pairs:
+    insertValue(root, pair.key, pair.value)
+  # blocks
+  for blk in config.blocks:
     root[blk.name] = blockToPyDict(blk)
   return root
-
-proc toPython*(config: Config): PyObject =
-  return blocksToPyDict(config.blocks)
