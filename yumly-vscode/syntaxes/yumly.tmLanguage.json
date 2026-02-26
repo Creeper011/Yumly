@@ -17,8 +17,8 @@
   "repository": {
     "comment": {
       "name": "comment.block.yumly",
-      "begin": "^(\\s*)\">",
-      "end": "<\"",
+      "begin": ";>",
+      "end": "<;",
       "beginCaptures": {
         "0": { "name": "punctuation.definition.comment.begin.yumly" }
       },
@@ -55,12 +55,12 @@
 
     "pair": {
       "name": "meta.pair.yumly",
-      "begin": "\\b([A-Za-z_][\\w\\.-]*)\\b\\s*(;\\s*(string|int|float|bool|env))?\\s*=",
+      "begin": "([A-Za-z_][\\w\\.-]*)\\s*(;)\\s*(string|int|float|bool|env|tuple|list(?:\\[(string|int|float|bool|env)\\])?)\\s*(=)",
       "beginCaptures": {
         "1": { "name": "variable.other.member.yumly" },
-        "2": { "name": "keyword.operator.typehint.yumly" },
+        "2": { "name": "punctuation.separator.typehint.yumly" },
         "3": { "name": "storage.type.yumly" },
-        "0": { "name": "punctuation.separator.key-value.yumly" }
+        "4": { "name": "punctuation.separator.key-value.yumly" }
       },
       "end": "(?=,|\\}|$)",
       "patterns": [
