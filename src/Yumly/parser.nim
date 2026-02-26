@@ -31,6 +31,8 @@ proc consumeOrExpectComma(parser: var Parser) =
   else:
     parser.consumeComma()
 
+# TODO: add an getAvailableTypeHints 
+  
 proc parseTypeHint(parser: var Parser): Option[TypeHint] =
   if parser.peek().kind != tkDeclaration:
     return none(TypeHint)
@@ -53,7 +55,10 @@ proc parseTypeHint(parser: var Parser): Option[TypeHint] =
         of "bool":   thBool
         of "env":    thEnv
         else:
-          raise newException(ValueError, "Unknown list element type '" & elemKindTok.value & "' at line " & intToStr(elemKindTok.line) & ", column " & intToStr(elemKindTok.col) & ".")
+          raise newException(
+          ValueError,
+            "Heyy, found an unknown list element type '" & elemKindTok.value &
+            "' at line " & $elemKindTok.line & ", column " & $elemKindTok.col)
       discard parser.expect(tkRBracket)
       some(TypeHint(kind: thList, elementKind: elemKind))
     else:
@@ -61,7 +66,8 @@ proc parseTypeHint(parser: var Parser): Option[TypeHint] =
   of "tuple":
     some(TypeHint(kind: thTuple))
   else:
-    raise newException(ValueError, "Unknown type hint '" & hint.value & "' at line " & intToStr(hint.line) & ", column " & intToStr(hint.col) & ".")
+    raise newException(ValueError, "Heyy, i found an unknown type hint '" &
+    hint.value & "' at line " & intToStr(hint.line) & ", column " & intToStr(hint.col) & ".")
 
 proc parseValue(parser: var Parser): YumNode
 
@@ -73,8 +79,13 @@ proc parseListItems(parser: var Parser): seq[YumNode] =
     if parser.peek().kind == tkComma:
       parser.consumeOrExpectComma()
     elif parser.peek().kind != tkRBracket:
-      raise newException(ValueError, "hey, tt")
-
+      let tok = parser.peek()
+      raise newException(
+        ValueError,
+        "Heyy, i found an malformed list at line " & $tok.line &
+        ", column " & $tok.col &
+        ". Expected ']', but found '" & $tok.kind & "'."
+      )
   discard parser.expect(tkRBracket)
   return items
 
