@@ -39,5 +39,7 @@ proc expectedBlockError*(expected: TokenKind, blkName: string, blkLine, blkCol: 
 
 proc expectedTopTokenError*(token: Token) =
     raise newException(ValueError,
-        "Ehhh.. i found an unexpected token at root level: " & $token.kind.toDisplay() &
-        " at line " & $token.line & ", column " & $token.col & ". Available root tokens: 'include', 'block', 'ident'.")
+        "Ehhh.. found an unexpected token at root: '" & $token.kind.toDisplay() &
+        "' at line " & $token.line & ", column " & $token.col & ".\n" &
+        "Valid root tokens: include, block, ident.\n" &
+        "Tip: make sure you're using commas correctly >,<")

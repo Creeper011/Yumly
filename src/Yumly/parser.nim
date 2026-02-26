@@ -45,6 +45,7 @@ proc parseTypeHint(parser: var Parser): Option[TypeHint] =
   of "bool":   some(TypeHint(kind: thBool))
   of "env":    some(TypeHint(kind: thEnv))
   of "list":
+    # this is for list[type] type hint
     if parser.peek().kind == tkLBracket:
       discard parser.advance()
       let elemKindTok = parser.expect(tkIdent)
@@ -167,8 +168,7 @@ proc parseInclude(p: var Parser): YumNode =
 proc generateAST*(tokens: seq[Token]): YumNode =
   var parser = Parser(tokens: tokens, pos: 0)
   result = YumNode(kind: nkConfig, children: @[])
-  
-  # loop through the tokens until end of file.
+
   while parser.peek().kind != tkEOF:
     case parser.peek().kind
     of tkInclude:
@@ -176,7 +176,15 @@ proc generateAST*(tokens: seq[Token]): YumNode =
     of tkLParen:
       result.children.add(parser.parseBlock())
     of tkIdent:
-      result.children.add(parser.parsePair())
+      let pairNode = parser.parsePair()
+      result.children.add(pairNode)
+      let nextTok = parser.peek()
+      if nextTok.kind != tkEOF:
+        if nextTok.line == pairNode.line:
+          discard parser.expect(tkComma)
+        else:
+          parser.consumeComma()
+
     else:
       let token = parser.peek()
       expectedTopTokenError(token)

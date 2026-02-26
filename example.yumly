@@ -6,16 +6,16 @@ include { .env }
     is_production ;bool = false,
     max_retries ;int = 5,
     pi_precision = 3.14159265,
-    uptime_goal = 9.99e1, "> 99.9% <"
+    uptime_goal = 9.99e1, ;> 99.9% <;
     
     (metadata) {
         tags ;list[string] = ["cloud", "high-availability", "scalable"],
-        region_info ;tuple = ["us-east-1", 101, true], "> Region, ID, Active <"
+        region_info ;tuple = ["us-east-1", 101, true], ;> Region, ID, Active <;
         owner_id = 12345
     }
 }
 
-"> Database Configuration with environment variables <"
+;> Database Configuration with environment variables <;
 (database) {
     (postgres) {
         host ;string = "localhost",
@@ -32,7 +32,7 @@ include { .env }
     }
 }
 
-"> Microservices Definition <"
+;> Microservices Definition <;
 (services) {
     (api_gateway) {
         port = 8080,
@@ -67,7 +67,7 @@ include { .env }
     }
 }
 
-"> Notification Settings and External Integrations <"
+;> Notification Settings and External Integrations <;
 (integrations) {
     (discord_bot) {
         token ;env = $["DISCORD_TOKEN"],

@@ -1,12 +1,13 @@
-name ;string = "John Doe"
+include { .env } name ;string = "John Doe", fullName ;string = "John Doe 67!",
 age ;int = 30
 hobbies ;list[string] = ["reading", "hiking", "cooking"]
 
-"> an commentary <"
-">
+;> an commentary <;
+;>
 multiple line
 commentary
-<"
+<;
+
 (block1) {
     variable1 ;string = "value",
     variable2 ;int = 1,

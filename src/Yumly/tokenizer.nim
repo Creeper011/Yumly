@@ -34,9 +34,9 @@ proc tokenize*(source: string): seq[Token] =
       i += 1
       continue
     
-    # handle comments with an lookahead for "> ... <"
-    if i + 1 < source.len and source[i..i+1] == "\">":
-      let closePos = source.find("<\"", start = i + 2)
+    # handle comments with an lookahead for ";> ... <;"
+    if i + 1 < source.len and source[i..i+1] == ";>":
+      let closePos = source.find("<;", start = i + 2)
       if closePos >= 0:
         var j = i + 2
         while j < closePos:
@@ -46,6 +46,8 @@ proc tokenize*(source: string): seq[Token] =
           j += 1
         i = closePos + 2
         continue
+      else:
+        raise newException(ValueError, "Heyy, the comment doesn't close! Expected '<;' at line " & $line)
 
     # handle numbers (int or float)
     # check if the number contains more than 2 characters and if it's negative
