@@ -98,7 +98,7 @@ proc parseValue(parser: var Parser): YumNode =
 
   of tkNumber:
     let token = parser.advance()
-    if '.' in token.value:
+    if '.' in token.value or 'e' in token.value or 'E' in token.value:
       return YumNode(kind: nkFloat, rawValue: token.value, token: token, line: token.line, col: token.col)
     else:
       return YumNode(kind: nkInt, rawValue: token.value, token: token, line: token.line, col: token.col)
