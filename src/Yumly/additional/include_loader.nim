@@ -2,13 +2,22 @@
 # This module is responsible for loading included resources in Yumly.
 ##
 
-import os, strutils
+import os, strutils, sets
 import dotenv
 import ../types/ast
+import ../tokenizer, ../parser
+import ../error_messages
 
-const allowedIncludeExts = [".env"]
+const allowedIncludeExts = [".env", ".yumly", ".yuy"]
 
-proc loadIncludes*(rootNode: YumNode) =
+proc checkCircularImport(path: string, child: YumNode, visited: var HashSet[string]) =
+  if path in visited:
+    raise newException(IOError,
+      "Circular include detected! '" & path & "' is already being loaded\n" &
+      "  line: " & $child.line & ", column: " & $child.col
+    )
+
+proc loadIncludes(rootNode: YumNode; visited: var HashSet[string]) =
   for child in rootNode.children:
     if child.kind == nkInclude:
       let includePath = child.rawValue
@@ -36,16 +45,35 @@ proc loadIncludes*(rootNode: YumNode) =
           "  hint: only " & allowedIncludeExts.join(", ") & " files are supported for now"
         )
 
-      if ext == ".env":
-        try:
-          let sfEnv   = os.splitFile(includePath)
-          let envDir  = if sfEnv.dir.len == 0: "." else: sfEnv.dir
-          let envFile = sfEnv.name & sfEnv.ext
-          load(envDir, envFile)
-        except CatchableError as e:
-          raise newException(IOError,
-            "Ih... something went wrong while loading the .env file! (>_<)\n" &
-            "  file: '" & includePath & "'\n" &
-            "  line: " & $child.line & ", column: " & $child.col & "\n" &
-            "  detail: " & e.msg
-          )
+      case ext:
+        of ".env":
+          let importPath = os.absolutePath(includePath)
+          checkCircularImport(importPath, child, visited)
+          visited.incl(importPath)
+          try:
+            let sfEnv  = os.splitFile(includePath)
+            let envDir = if sfEnv.dir.len == 0: "." else: sfEnv.dir
+            let envFile = sfEnv.name & sfEnv.ext
+            load(envDir, envFile)
+          except CatchableError as error:
+            failedToLoadFile(includePath, child.line, child.col, error.msg)
+
+        of ".yumly", ".yuy":
+          try:
+            let content = readFile(includePath)
+            let tokens = tokenize(content)
+            let includedAST = generateAST(tokens)
+            let importPath = os.absolutePath(includePath)
+            checkCircularImport(importPath, child, visited)
+            visited.incl(importPath)
+            loadIncludes(includedAST, visited)
+            
+            for includedChild in includedAST.children:
+              rootNode.children.add(includedChild)
+              
+          except CatchableError as error:
+            failedToLoadFile(includePath, child.line, child.col, error.msg)
+
+proc loadIncludes*(rootNode: YumNode) =
+  var visited = initHashSet[string]()
+  loadIncludes(rootNode, visited)

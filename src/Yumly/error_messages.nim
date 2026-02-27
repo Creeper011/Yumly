@@ -43,3 +43,11 @@ proc expectedTopTokenError*(token: Token) =
         "' at line " & $token.line & ", column " & $token.col & ".\n" &
         "Valid root tokens: include, block, ident.\n" &
         "Tip: make sure you're using commas correctly >,<")
+
+proc failedToLoadFile*(path: string, line: int, column: int, error: string) =
+    raise newException(IOError,
+        "Uhh... something went wrong while loading the " & path & "file! (>_<)\n" &
+        "  file: '" & path & "'\n" &
+        "  line: " & $line & ", column: " & $column & "\n" &
+        "  detail: " & error
+    )

@@ -21,7 +21,7 @@ include { .env }
         host ;string = "localhost",
         port ;int = 5432,
         db_name = "production_db",
-        ypassword ;env = $["DB_PASSWORD"],
+        password ;env = $["DB_PASSWORD"],
         max_connections = 100
     },
     (redis) {

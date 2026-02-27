@@ -80,3 +80,4 @@ type
   Parser* = object
     tokens*: seq[Token]
     pos*: int
+    recursionDepth*: int

@@ -1,4 +1,4 @@
-include { .env } name ;string = "John Doe", fullName ;string = "John Doe 67!",
+name ;string = "John Doe", fullName ;string = "John Doe 67!",
 age ;int = 30
 hobbies ;list[string] = ["reading", "hiking", "cooking"]
 

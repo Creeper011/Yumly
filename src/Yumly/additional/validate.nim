@@ -51,7 +51,7 @@ proc checkDuplicates(nodes: seq[YumNode], path: string, errors: var seq[string])
         errors.add(
           "Oh no! the block '(" & child.name & ")' is duplicated in " & where & "! (°ロ°)" &
           loc(child.line, child.col) &
-          "\n  hint: merge them into one block or rename one of them"
+          "\n  hint: merge them into one block or rename one of them, or check if this duplication comes from an include."
         )
       else:
         seenBlocks.incl(child.name)

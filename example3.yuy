@@ -1,0 +1,9 @@
+;> include { .env } we don't use it, because the variables are already exported in the shell environment <;
+include { example2.yumly }
+
+(linux_system) {
+    path ;env = $["PATH"],
+    home ;env = $["HOME"],
+    shell ;env = $["SHELL"],
+    user ;env = $["USER"]
+}

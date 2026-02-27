@@ -18,12 +18,12 @@ template emitVal(k: TokenKind, v: string) =
 proc tokenize*(source: string): seq[Token] =
   # Tokenize the source, we will iterate through each character and build tokens based on the rules of the Yumly language.
   var tokens: seq[Token]
+  tokens = newSeqOfCap[Token](source.len div 4) 
   var i         = 0
   var line      = 1
   var lineStart = 0
 
   while i < source.len:
-
     if source[i] in {' ', '\t', '\r'}:
       i += 1
       continue
