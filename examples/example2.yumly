@@ -13,5 +13,5 @@ commentary
     variable2 ;int = 1,
     variable3 ;list[int] = [1, 2, 3, 4, 5],
     variable4 ;list[string] = ["one", "two", "three", "four", "five"],
-    variable5 ;tuple = [1, "two", 3.3, "four", ["five"]],
+    variable5 = [1, "two", 3.3, "four", ["five"]],
 }

@@ -1,0 +1,6 @@
+(linux_system) {
+    path ;env,
+    home ;env,
+    shell ;env,
+    user ;env,
+}
