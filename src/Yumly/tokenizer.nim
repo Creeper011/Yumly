@@ -93,6 +93,10 @@ proc tokenize*(source: string): seq[Token] =
         if source[i] == '\n':
           raise newException(ValueError, "Heyy the string doesn't close on line " & $line)
         i += 1
+      
+      if i >= source.len:
+        raise newException(ValueError, "Heyy the string doesn't close at the end of the file on line " & $line)
+      
       emitVal(tkString, source[start..i-1])
       i += 1
 
