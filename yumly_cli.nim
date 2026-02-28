@@ -51,7 +51,7 @@ proc parseOutput() =
             success("File loaded ✔")
         else:
             error("Unknown command: " & cmd)
-    except CatchableError as error:
-        error(error.msg)
+    except CatchableError as err:
+        error(err.msg)
 
 parseOutput()
