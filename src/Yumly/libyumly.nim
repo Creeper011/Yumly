@@ -1,7 +1,7 @@
 import nimpy
 import os
 import yumly_file
-import tokenizer, parser, additional/validate, additional/include_loader, evaluator
+import tokenizer, parser, additional/include_loader, additional/validate, evaluator
 import serializers/parser_python
 import types/ast
 
@@ -54,7 +54,7 @@ proc validateFileWithErrMsg*(path: string): string {.exportpy: "validateFileMsg"
 
 proc loadYumly*(path: string = "config.yumly"): Config =
   var ast = parseFileToAST(path)
-  loadIncludes(ast)
+  loadIncludes(ast, parentDir(path))
   validateConfig(ast)
   return evaluateConfig(ast)
 

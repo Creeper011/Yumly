@@ -17,14 +17,16 @@ proc checkCircularImport(path: string, child: YumNode, visited: var HashSet[stri
       "  line: " & $child.line & ", column: " & $child.col
     )
 
-proc loadIncludes(rootNode: YumNode; visited: var HashSet[string]) =
+proc loadIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[string]) =
   for child in rootNode.children:
     if child.kind == nkInclude:
-      let includePath = child.rawValue
+      let rawIncludePath = child.rawValue
+      let includePath = if isAbsolute(rawIncludePath): rawIncludePath
+                        else: baseDir / rawIncludePath
       
       if not os.fileExists(includePath):
         raise newException(IOError,
-          "Heeeh?! i can't find '" & includePath & "' anywhere... (T_T)\n" &
+          "Heeeh?! i can't find '" & rawIncludePath & "' anywhere... (T_T)\n" &
           "  searched at: " & os.absolutePath(includePath) & "\n" &
           "  line: " & $child.line & ", column: " & $child.col & "\n" &
           "  hint: check if the path is correct and the file actually exists"
@@ -59,21 +61,22 @@ proc loadIncludes(rootNode: YumNode; visited: var HashSet[string]) =
             failedToLoadFile(includePath, child.line, child.col, error.msg)
 
         of ".yumly", ".yuy":
+          let importPath = os.absolutePath(includePath)
+          checkCircularImport(importPath, child, visited)
+          var includedAST: YumNode
           try:
-            let importPath = os.absolutePath(includePath)
-            checkCircularImport(importPath, child, visited)
             let content = readFile(includePath)
             let tokens = tokenize(content)
-            let includedAST = generateAST(tokens)
-            visited.incl(importPath)
-            loadIncludes(includedAST, visited)
-            
-            for includedChild in includedAST.children:
-              rootNode.children.add(includedChild)
-              
+            includedAST = generateAST(tokens)
           except CatchableError as error:
             failedToLoadFile(includePath, child.line, child.col, error.msg)
 
-proc loadIncludes*(rootNode: YumNode) =
+          visited.incl(importPath)
+          loadIncludes(includedAST, parentDir(includePath), visited)
+          
+          for includedChild in includedAST.children:
+            rootNode.children.add(includedChild)
+
+proc loadIncludes*(rootNode: YumNode; baseDir: string = ".") =
   var visited = initHashSet[string]()
-  loadIncludes(rootNode, visited)
+  loadIncludes(rootNode, baseDir, visited)
