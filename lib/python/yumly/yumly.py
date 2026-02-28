@@ -5,8 +5,8 @@ from .yumly_error import YumlyError
 
 __all__ = ["Yumly", "YumlyError"]
 
-FALLBACK_MESSAGE = "Oh no.. an unexpected error ocurred.. :( the Yumly parser failed"
-FALLBACK_VALUE_MESSAGE = "Oh no.. an unexpected error ocurred.. :( invalid result structure"
+FALLBACK_MESSAGE = "Oh no.. an unexpected error occurred.. :( the Yumly parser failed"
+FALLBACK_VALUE_MESSAGE = "Oh no.. an unexpected error occurred.. :( invalid result structure"
 
 class Yumly():
     """Yumly is a configuration file format designed to be a mix of YAML and JSON with type safety."""
