@@ -22,6 +22,15 @@ proc evaluateListElements(nodes: seq[YumNode], hint: Option[TypeHint]): seq[Valu
     
   return elements
 
+proc isHeterogeneous(elements: seq[Value]): bool =
+  if elements.len == 0:
+    return false
+  let first = elements[0].kind
+  for el in elements:
+    if el.kind != first:
+      return true
+  return false
+
 proc evaluateValue*(node: YumNode, hint: Option[TypeHint]): Value =
   case node.kind:
   of nkString:
@@ -50,6 +59,8 @@ proc evaluateValue*(node: YumNode, hint: Option[TypeHint]): Value =
     let elements = evaluateListElements(node.children, hint)
     
     if hint.isSome and hint.get.kind == thTuple:
+      return Value(kind: vkTuple, elements: elements)
+    elif hint.isNone and isHeterogeneous(elements):
       return Value(kind: vkTuple, elements: elements)
     else:
       return Value(kind: vkList, elements: elements)
