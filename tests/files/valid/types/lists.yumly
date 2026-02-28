@@ -1,0 +1,8 @@
+;> Lists can only contains homogenius items <;
+
+;> Explicit type declaration <;
+;> types for list: string, bool, int, float, env <;
+myList ;list[string] = ["one", "two", "three", "four"] ;> can only contains string values <;
+
+;> Type inference <;
+myList2 = ["one", "two", "three", "four"]

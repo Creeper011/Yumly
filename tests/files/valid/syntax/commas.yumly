@@ -1,0 +1,15 @@
+;> Root-level variables require commas when written inline <;
+
+name ;string = "John Doe", age ;int = 180 
+job ;string = "Police"
+
+;> Inside blocks, values require commas, except for the last one <;
+(block) {
+    variable ;string = "this is a variable", ;> comma required <;
+    (sub-block) {
+        variable ;string = "this is a variable inside sub-block"
+    }, ;> comma required <;
+    (sub-block2) {
+        variable ;string = "this is a variable inside sub-block2"
+    } ;> no comma required <;
+}

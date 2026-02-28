@@ -1,0 +1,14 @@
+;> Primitive types: string, int, float, bool <;
+
+;> Explicit type declaration <;
+isAdmin ;bool = true
+age ;int = 20
+price ;float = 40.6
+scientific ;float = 40e7
+name ;string = "Wow!"
+
+;> Type inference (type is inferred from value) <;
+flag = true
+count = 40
+ratio = 40.9
+title = "67"

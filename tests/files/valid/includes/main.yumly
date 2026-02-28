@@ -1,0 +1,6 @@
+;> Includes import variables into the current file <;
+
+include { component.yuy } ;> imports variables from component.yuy <;
+include { config.env } ;> loads environment variables <;
+
+hello ;env = $["hello"] ;> reads variable from the environment <;

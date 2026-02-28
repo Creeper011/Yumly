@@ -1,0 +1,8 @@
+;> Tuples are heterogeneous lists <;
+
+;> Explicit type declaration <;
+;> types for tuples: list, int, float, string, bool, env <;
+myTuple ;tuple = [1, "two", "three", 4] ;> contains int and string values <;
+
+;> Type inference <;
+myTuple2 = [1, "two", "three", 4]

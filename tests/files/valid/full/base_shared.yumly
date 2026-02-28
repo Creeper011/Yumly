@@ -1,0 +1,16 @@
+;> Common defaults reused by other full configs <;
+
+include { full.env } ;> loads local env values used by the examples <;
+
+(common) {
+    company ;string = "Yumly Corp",
+    region ;string = "us-east-1",
+    retries ;int = 3,
+    contact ;tuple = ["oncall", 24, true]
+}
+
+(credentials) {
+    db_user ;string = "app_user",
+    db_password ;env = $["DB_PASSWORD"],
+    jwt_secret ;env = $["JWT_SECRET"]
+}

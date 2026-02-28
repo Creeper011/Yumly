@@ -1,0 +1,28 @@
+;> Example using yuy extension with env lookups and nested blocks <;
+
+include { base_shared.yumly }
+
+(plan) {
+    environment ;string = "staging",
+    release ;string = "2026-02-28",
+    author ;string = "automation-bot",
+    git_commit ;string = "abc123def",
+    feature_flags ;list[string] = ["new_ui", "fast_paths"],
+    
+    (canary) {
+        percentage ;int = 10,
+        duration_minutes ;int = 30,
+        rollback_on_error ;bool = true
+    },
+    
+    (traffic) {
+        domains ;list[string] = ["staging.yumly.dev", "staging-api.yumly.dev"],
+        headers ;tuple = ["X-Env", "staging", true]
+    },
+    
+    (secrets) {
+        redis_url ;env = $["REDIS_URL"],
+        api_key ;env = $["API_KEY"],
+        feature_flag_key ;env = $["FF_KEY"]
+    }
+}

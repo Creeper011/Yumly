@@ -1,0 +1,10 @@
+
+(block) {
+    variable ;string = "this is a variable",
+    (sub-block) {
+        variable ;string = "this is a variable inside sub-block"
+    },
+    (sub-block2) {
+        variable ;string = "this a variable inside sub-block2"
+    }
+}

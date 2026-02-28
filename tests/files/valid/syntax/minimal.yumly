@@ -1,0 +1,6 @@
+
+(app) {
+    name = "Yumly", ;> parser i'll consider this an string <;
+    version ;string = "0.0.1",
+    debug = true,
+}

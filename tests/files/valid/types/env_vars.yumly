@@ -1,0 +1,7 @@
+;> include { .env } loads variables from .env file, but this file dosen't need it <;
+
+;> Explicit type declaration <;
+home ;env = $["HOME"] ;> HOME is usually exported by the shell <;
+
+;> Type inference <;
+home2 ;env = $["HOME"]

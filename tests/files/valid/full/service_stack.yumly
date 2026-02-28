@@ -1,0 +1,35 @@
+include { base_shared.yumly }
+
+(global) {
+    stack_name ;string = "orion-prod",
+    version ;string = "2026.02.28",
+    maintenance_mode ;bool = false,
+    rollouts ;list[string] = ["api", "worker", "cron"],
+    cost_center ;int = 4217
+}
+
+(services) {
+    (api_gateway) {
+        host = "api.internal.yumly",
+        port ;int = 8443,
+        tls_enabled ;bool = true,
+        timeouts ;tuple = [30, "seconds", true]
+    },
+    (worker) {
+        replicas ;int = 6,
+        queue ;string = "default",
+        backoff ;list[int] = [1, 2, 4, 8, 16]
+    },
+    (cron) {
+        schedule ;string = "*/5 * * * *",
+        timezone ;string = "UTC",
+        enabled ;bool = true
+    }
+}
+
+(observability) {
+    tracing ;bool = true,
+    metrics_endpoint ;string = "http://prometheus:9090",
+    alert_channels ;list[string] = ["pagerduty", "slack"],
+    dashboards ;tuple = ["grafana", 12, false]
+}
