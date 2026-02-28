@@ -60,11 +60,11 @@ proc loadIncludes(rootNode: YumNode; visited: var HashSet[string]) =
 
         of ".yumly", ".yuy":
           try:
+            let importPath = os.absolutePath(includePath)
+            checkCircularImport(importPath, child, visited)
             let content = readFile(includePath)
             let tokens = tokenize(content)
             let includedAST = generateAST(tokens)
-            let importPath = os.absolutePath(includePath)
-            checkCircularImport(importPath, child, visited)
             visited.incl(importPath)
             loadIncludes(includedAST, visited)
             
