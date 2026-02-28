@@ -26,6 +26,12 @@ proc expectedValueError*(token: Token) =
       "Heyy i expected a value, but found " & $token.kind.toDisplay() &
       " at line " & $token.line & ", column " & $token.col & ".")
 
+proc expectedEnvBracketError*(token: Token) =
+    raise newException(ValueError,
+        "Heeeh... env variables must look like $[\"NAME\"], but I found a lonely '$'" &
+        " at line " & $token.line & ", column " & $token.col & ".\n" &
+        "  hint: wrap the env name inside $[\"MY_ENV\"]")
+
 proc expectedError*(expected_tkind: TokenKind, token: Token) =
     raise newException(ValueError,
       "Heyy i expected " & $expected_tkind.toDisplay() & ", but found " & $token.kind.toDisplay() &
@@ -51,3 +57,13 @@ proc failedToLoadFile*(path: string, line: int, column: int, error: string) =
         "  line: " & $line & ", column: " & $column & "\n" &
         "  detail: " & error
     )
+
+proc unknownTypeHintError*(hint: string, line: int, column: int) =
+    raise newException(ValueError,
+        "Ehhh... unknown type hint '" & hint & "' (line " & $line & ", column " & $column & ")")
+
+proc missingEnvError*(envName: string, line: int, column: int) =
+    raise newException(ValueError,
+        "Kyaa~! the env variable '" & envName & "' does not exist! (；ω；)" &
+        "\n  line: " & $line & ", column: " & $column & "\n" &
+        "  hint: make sure '" & envName & "' is set in your terminal or loaded via include { .env }")

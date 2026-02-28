@@ -46,16 +46,10 @@ proc evaluateValue*(node: YumNode, hint: Option[TypeHint]): Value =
     return Value(kind: vkBool, boolVal: node.boolVal)
     
   of nkEnv:
-    if not os.existsEnv(node.rawValue):
-      raise newException(ValueError,
-        "Kyaa~! the env variable '" & node.rawValue & "' does not exist! (；ω；)" &
-        "\n  line: " & $node.line & ", column: " & $node.col &
-        "\n  hint: make sure '" & node.rawValue & "' is set in your terminal or loaded via include { .env }")
-    
     let realVal = os.getEnv(node.rawValue)
     return Value(kind: vkEnv, envName: node.rawValue, envVal: realVal)
     
-  of nkList:
+  of nkArray:
     let elements = evaluateListElements(node.children, hint)
     
     if hint.isSome and hint.get.kind == thTuple:

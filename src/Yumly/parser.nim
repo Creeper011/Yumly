@@ -6,6 +6,7 @@
 import options, strutils
 import types/ast, types/token
 import error_messages
+import semantic
 
 # says the position of token in parser object
 proc peek(parser: Parser): Token = parser.tokens[parser.pos]
@@ -31,44 +32,24 @@ proc consumeOrExpectComma(parser: var Parser) =
   else:
     parser.consumeComma()
 
-# TODO: add an getAvailableTypeHints 
-  
 proc parseTypeHint(parser: var Parser): Option[TypeHint] =
   if parser.peek().kind != tkDeclaration:
     return none(TypeHint)
   discard parser.advance()
-  let hint = parser.expect(tkIdent)
-  case hint.value
-  of "string": some(TypeHint(kind: thString))
-  of "int":    some(TypeHint(kind: thInt))
-  of "float":  some(TypeHint(kind: thFloat))
-  of "bool":   some(TypeHint(kind: thBool))
-  of "env":    some(TypeHint(kind: thEnv))
-  of "list":
-    # this is for list[type] type hint
+  let hintTok = parser.expect(tkIdent)
+  var hint: TypeHint
+  if hintTok.value.toLowerAscii() == "list":
+    hint = TypeHint(kind: thList, raw: hintTok.value, elementKind: thUnknown, elementRaw: "")
     if parser.peek().kind == tkLBracket:
       discard parser.advance()
       let elemKindTok = parser.expect(tkIdent)
-      let elemKind = case elemKindTok.value
-        of "string": thString
-        of "int":    thInt
-        of "float":  thFloat
-        of "bool":   thBool
-        of "env":    thEnv
-        else:
-          raise newException(
-          ValueError,
-            "Heyy, found an unknown list element type '" & elemKindTok.value &
-            "' at line " & $elemKindTok.line & ", column " & $elemKindTok.col)
+      hint.elementRaw = elemKindTok.value
+      hint.elementKind = thUnknown
       discard parser.expect(tkRBracket)
-      some(TypeHint(kind: thList, elementKind: elemKind))
-    else:
-      some(TypeHint(kind: thList, elementKind: thString))
-  of "tuple":
-    some(TypeHint(kind: thTuple))
   else:
-    raise newException(ValueError, "Heyy, i found an unknown type hint '" &
-    hint.value & "' at line " & intToStr(hint.line) & ", column " & intToStr(hint.col) & ".")
+    hint = TypeHint(kind: thUnknown, raw: hintTok.value)
+  hint = normalizeTypeHint(hint, hintTok.line, hintTok.col)
+  return some(hint)
 
 proc parseValue(parser: var Parser): YumNode
 
@@ -99,28 +80,31 @@ proc parseValue(parser: var Parser): YumNode =
       let envToken = parser.expect(tkString)
       discard parser.expect(tkRBracket)
       return YumNode(kind: nkEnv, rawValue: envToken.value, token: token, line: token.line, col: token.col)
+    else:
+      expectedEnvBracketError(token)
 
   of tkString:
-    let token = parser.advance()
-    return YumNode(kind: nkString, rawValue: token.value, token: token, line: token.line, col: token.col)
+    let tok = parser.advance()
+    let lit = literalToNode(tok)
+    if lit.isSome:
+      return lit.get
 
   of tkNumber:
-    let token = parser.advance()
-    if '.' in token.value or 'e' in token.value or 'E' in token.value:
-      return YumNode(kind: nkFloat, rawValue: token.value, token: token, line: token.line, col: token.col)
-    else:
-      return YumNode(kind: nkInt, rawValue: token.value, token: token, line: token.line, col: token.col)
+    let tok = parser.advance()
+    let lit = literalToNode(tok)
+    if lit.isSome:
+      return lit.get
 
   of tkIdent:
-    let token = parser.advance()
-    case token.value
-    of "true", "false":
-      return YumNode(kind: nkBool, boolVal: token.value == "true", line: token.line, col: token.col)
+    let tok = parser.advance()
+    let lit = literalToNode(tok)
+    if lit.isSome:
+      return lit.get
 
   of tkLBracket:
     let startToken = parser.advance()
     let items = parser.parseListItems()
-    return YumNode(kind: nkList, children: items, token: startToken, line: startToken.line, col: startToken.col)
+    return YumNode(kind: nkArray, children: items, token: startToken, line: startToken.line, col: startToken.col)
   else:
     expectedValueError(parser.peek())
       

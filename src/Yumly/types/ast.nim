@@ -6,18 +6,20 @@ import token, options
 
 type
   # filled in by the parser and validated by validator
-  TypeHintKind* = enum thString, thInt, thFloat, thBool, thEnv, thList, thTuple
+  TypeHintKind* = enum thUnknown, thString, thInt, thFloat, thBool, thEnv, thList, thTuple
 
   TypeHint* = object
+    raw*: string
     case kind*: TypeHintKind
     of thList:
       elementKind*: TypeHintKind
+      elementRaw*: string
     else: discard
 
   NodeKind* = enum 
     nkString, nkInt, nkFloat, nkBool, 
     nkEnv,
-    nkList, nkTuple,
+    nkArray,
     nkBlock,
     nkPair,
     nkConfig, nkInclude
@@ -29,7 +31,7 @@ type
       rawValue*: string
     of nkBool:
       boolVal*: bool
-    of nkList, nkTuple, nkConfig, nkBlock:
+    of nkArray, nkConfig, nkBlock:
       children*: seq[YumNode]
       name*: string
     of nkPair:

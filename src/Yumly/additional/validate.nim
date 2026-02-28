@@ -10,22 +10,20 @@ import ../types/ast
 template loc(line, col: int): string =
   " (line " & $line & ", column " & $col & ")"
 
-# --- Helpers para Mensagens de Erro ---
-
-proc kindName(k: NodeKind): string =
-  case k
+proc kindName(nodeKind: NodeKind): string =
+  case nodeKind
   of nkString: "string"
   of nkInt:    "int"
   of nkFloat:  "float"
   of nkBool:   "bool"
   of nkEnv:    "env"
-  of nkList:   "list"
-  of nkTuple:  "tuple"
+  of nkArray:  "array"
   of nkInclude: "include"
   else: "block/config"
 
-proc hintKindName(k: TypeHintKind): string =
-  case k
+proc hintKindName(hintKind: TypeHintKind): string =
+  case hintKind
+  of thUnknown: "unknown"
   of thString: "string"
   of thInt:    "int"
   of thFloat:  "float"
@@ -34,10 +32,11 @@ proc hintKindName(k: TypeHintKind): string =
   of thList:   "list"
   of thTuple:  "tuple"
 
-proc hintName(h: TypeHint): string =
-  case h.kind
-  of thList: "list[" & hintKindName(h.elementKind) & "]"
-  else: hintKindName(h.kind)
+proc hintName(hint: TypeHint): string =
+  case hint.kind
+  of thList: "list[" & hintKindName(hint.elementKind) & "]"
+  of thUnknown: "unknown"
+  else: hintKindName(hint.kind)
 
 proc checkDuplicates(nodes: seq[YumNode], path: string, errors: var seq[string]) =
   var seenBlocks = initHashSet[string]()
@@ -66,13 +65,54 @@ proc checkDuplicates(nodes: seq[YumNode], path: string, errors: var seq[string])
       else:
         seenPairs.incl(child.key)
 
+proc matchNodeToHint(node: YumNode, hintKind: TypeHintKind): bool =
+  case hintKind
+  of thUnknown: result = true
+  of thString: result = node.kind == nkString
+  of thInt:    result = node.kind == nkInt
+  of thFloat:  result = node.kind == nkFloat
+  of thBool:   result = node.kind == nkBool
+  of thEnv:    result = node.kind == nkEnv
+  of thList, thTuple: result = node.kind == nkArray
+
+proc validateArrayElements(node: YumNode, hint: TypeHint, path: string, errors: var seq[string]) =
+  if hint.kind == thList and hint.elementKind != thUnknown:
+    for i, child in node.children:
+      if not matchNodeToHint(child, hint.elementKind) and child.kind != nkEnv:
+        errors.add(
+          "Mmm, element " & $i & " in list '" & path & "' has the wrong type! >_<" &
+          loc(child.line, child.col) &
+          "\n  got " & kindName(child.kind) & ", but expected " & hintKindName(hint.elementKind)
+        )
+
 proc validatePair(pairNode: YumNode, path: string, errors: var seq[string]) =
   let position = loc(pairNode.line, pairNode.col)
   let valNode = pairNode.valNode
   let got = valNode.kind
+  # ensure env existence (IO allowed per requirements)
+  case valNode.kind
+  of nkEnv:
+    if not os.existsEnv(valNode.rawValue):
+      errors.add(
+        "Kyaa~! the env variable '" & valNode.rawValue & "' does not exist! (；ω；)" &
+        position &
+        "\n  hint: make sure it's set in your terminal or loaded via include { .env }"
+      )
+  of nkArray:
+    for child in valNode.children:
+      if child.kind == nkEnv and not os.existsEnv(child.rawValue):
+        errors.add(
+          "Kyaa~! the env variable '" & child.rawValue & "' does not exist! (；ω；)" &
+          loc(child.line, child.col) &
+          "\n  hint: make sure it's set in your terminal or loaded via include { .env }"
+        )
+  else:
+    discard
 
   if pairNode.typeHint.isSome:
     let hint = pairNode.typeHint.get
+    if hint.kind == thUnknown:
+      return
 
     if got == nkEnv and hint.kind != thEnv and hint.kind != thList:
       errors.add(
@@ -82,20 +122,32 @@ proc validatePair(pairNode: YumNode, path: string, errors: var seq[string]) =
       )
     
     elif hint.kind == thList:
-      if got != nkList:
+      if got != nkArray:
         errors.add(
           "Ehhh... '" & pairNode.key & "' in '" & path & "' has the wrong type! >_<" &
           position &
           "\n  value is " & kindName(got) & ", but the type hint is ;" & hintName(hint)
         )
-
+      else:
+        validateArrayElements(valNode, hint, pairNode.key, errors)
     elif hint.kind == thTuple:
-      if got != nkList and got != nkTuple:
+      if got != nkArray:
         errors.add(
           "Ehhh... '" & pairNode.key & "' in '" & path & "' has the wrong type! >_<" &
           position &
           "\n  value is " & kindName(got) & ", but the type hint is ;tuple"
         )
+    
+    else:
+      # Simple type validation for primitives
+      if not matchNodeToHint(valNode, hint.kind) and got != nkEnv:
+        errors.add(
+          "Ehhh... '" & pairNode.key & "' in '" & path & "' has the wrong type! >_<" &
+          position &
+          "\n  value is " & kindName(got) & ", but the type hint is ;" & hintName(hint)
+        )
+  else:
+    discard
 
 proc validateASTNode(node: YumNode, currentPath: string, errors: var seq[string]) =
   if node.kind in {nkConfig, nkBlock}:
