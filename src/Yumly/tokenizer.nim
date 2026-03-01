@@ -53,16 +53,19 @@ proc tokenize*(source: string): seq[Token] =
     # check if the number contains more than 2 characters and if it's negative
     if source[i] in {'0'..'9'} or (source[i] == '-' and i + 1 < source.len and source[i + 1] in {'0'..'9'}):
       let start = i
+      var isFloat = false
       if source[i] == '-':
         i += 1
       while i < source.len and source[i] in {'0'..'9'}:
         i += 1
       if i < source.len and source[i] == '.' and i + 1 < source.len and source[i + 1] in {'0'..'9'}:
+        isFloat = true
         i += 1
         while i < source.len and source[i] in {'0'..'9'}:
           i += 1
       # resolves scientific notations
       if i < source.len and (source[i] == 'e' or source[i] == 'E'):
+        isFloat = true
         i += 1
         if i < source.len and (source[i] == '+' or source[i] == '-'):
           i += 1
@@ -70,7 +73,11 @@ proc tokenize*(source: string): seq[Token] =
           raise newException(ValueError, "Heyy invalid exponent on line " & $line)
         while i < source.len and source[i] in {'0'..'9'}:
           i += 1
-      emitVal(tkNumber, source[start..i-1])
+      let lexeme = source[start..i-1]
+      if isFloat:
+        emitVal(tkFloat, lexeme)
+      else:
+        emitVal(tkInt, lexeme)
       continue
 
     case source[i]
@@ -108,6 +115,8 @@ proc tokenize*(source: string): seq[Token] =
         let word = source[start..i-1]
         if word == "include":
           emit(tkInclude)
+        elif word == "true" or word == "false":
+          emitVal(tkBool, word)
         else:
           emitVal(tkIdent, word)
       else:

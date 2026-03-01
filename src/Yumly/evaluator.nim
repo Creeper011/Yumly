@@ -43,7 +43,7 @@ proc evaluateValue*(node: YumNode, hint: Option[TypeHint]): Value =
     return Value(kind: vkFloat, floatVal: parseFloat(node.rawValue))
     
   of nkBool:
-    return Value(kind: vkBool, boolVal: node.boolVal)
+    return Value(kind: vkBool, boolVal: node.rawValue.toLowerAscii() == "true")
     
   of nkEnv:
     let realVal = os.getEnv(node.rawValue)

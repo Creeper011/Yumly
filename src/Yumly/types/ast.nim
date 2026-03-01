@@ -15,6 +15,8 @@ type
       elementKind*: TypeHintKind
       elementRaw*: string
     else: discard
+    line*: int
+    col*: int
 
   NodeKind* = enum 
     nkString, nkInt, nkFloat, nkBool, 
@@ -27,10 +29,8 @@ type
   YumNode* = ref object
     token*: Token
     case kind*: NodeKind
-    of nkString, nkInt, nkFloat, nkEnv, nkInclude:
+    of nkString, nkInt, nkBool, nkFloat, nkEnv, nkInclude:
       rawValue*: string
-    of nkBool:
-      boolVal*: bool
     of nkArray, nkConfig, nkBlock:
       children*: seq[YumNode]
       name*: string

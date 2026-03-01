@@ -16,7 +16,9 @@ type
     tkDollar # $
     tkInclude # include
     tkString # "string"
-    tkNumber # 123 or 1.23
+    tkInt    # 123
+    tkFloat  # 1.23 or 1e3
+    tkBool   # true or false
     tkIdent # identifier
     tkEOF # end of file
 
@@ -24,5 +26,5 @@ type
     line*: int
     col*:  int
     case kind*: TokenKind
-    of tkString, tkIdent, tkNumber: value*: string
+    of tkString, tkIdent, tkInt, tkFloat, tkBool: value*: string
     else: discard

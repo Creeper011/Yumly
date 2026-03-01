@@ -17,7 +17,9 @@ proc toDisplay*(kind: TokenKind): string =
     of tkDollar:      "'$'"
     of tkInclude:     "'include'"
     of tkString:      "a string"
-    of tkNumber:      "a number"
+    of tkInt:         "an integer"
+    of tkFloat:       "a float"
+    of tkBool:        "a boolean"
     of tkIdent:       "an identifier"
     of tkEOF:         "end of file"
 

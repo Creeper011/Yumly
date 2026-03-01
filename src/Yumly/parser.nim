@@ -3,10 +3,9 @@
 # and constructs an Abstract Syntax Tree (AST) that represents the structure of the configuration file.
 ##
 
-import options, strutils
+import options
 import types/ast, types/token
 import error_messages
-import semantic
 
 # says the position of token in parser object
 proc peek(parser: Parser): Token = parser.tokens[parser.pos]
@@ -36,20 +35,27 @@ proc parseTypeHint(parser: var Parser): Option[TypeHint] =
   if parser.peek().kind != tkDeclaration:
     return none(TypeHint)
   discard parser.advance()
-  let hintTok = parser.expect(tkIdent)
-  var hint: TypeHint
-  if hintTok.value.toLowerAscii() == "list":
-    hint = TypeHint(kind: thList, raw: hintTok.value, elementKind: thUnknown, elementRaw: "")
-    if parser.peek().kind == tkLBracket:
-      discard parser.advance()
-      let elemKindTok = parser.expect(tkIdent)
-      hint.elementRaw = elemKindTok.value
-      hint.elementKind = thUnknown
-      discard parser.expect(tkRBracket)
-  else:
-    hint = TypeHint(kind: thUnknown, raw: hintTok.value)
-  hint = normalizeTypeHint(hint, hintTok.line, hintTok.col)
-  return some(hint)
+  let baseTok = parser.expect(tkIdent)
+  if parser.peek().kind == tkLBracket:
+    discard parser.advance()
+    let elemTok = parser.expect(tkIdent)
+    discard parser.expect(tkRBracket)
+
+    return some(TypeHint(
+      raw: baseTok.value,
+      kind: thList,
+      elementKind: thUnknown,
+      elementRaw: elemTok.value,
+      line: baseTok.line,
+      col: baseTok.col
+    ))
+
+  some(TypeHint(
+    raw: baseTok.value,
+    kind: thUnknown,
+    line: baseTok.line,
+    col: baseTok.col
+  ))
 
 proc parseValue(parser: var Parser): YumNode
 
@@ -84,22 +90,44 @@ proc parseValue(parser: var Parser): YumNode =
       expectedEnvBracketError(token)
 
   of tkString:
-    let tok = parser.advance()
-    let lit = literalToNode(tok)
-    if lit.isSome:
-      return lit.get
+    let token = parser.advance()
+    return YumNode(
+      kind: nkString,
+      rawValue: token.value,
+      token: token,
+      line: token.line,
+      col: token.col
+    )
 
-  of tkNumber:
-    let tok = parser.advance()
-    let lit = literalToNode(tok)
-    if lit.isSome:
-      return lit.get
+  of tkInt:
+    let token = parser.advance()
+    return YumNode(
+      kind: nkInt,
+      rawValue: token.value,
+      token: token,
+      line: token.line,
+      col: token.col
+    )
 
-  of tkIdent:
-    let tok = parser.advance()
-    let lit = literalToNode(tok)
-    if lit.isSome:
-      return lit.get
+  of tkFloat:
+    let token = parser.advance()
+    return YumNode(
+      kind: nkFloat,
+      rawValue: token.value,
+      token: token,
+      line: token.line,
+      col: token.col
+    )
+
+  of tkBool:
+    let token = parser.advance()
+    return YumNode(
+      kind: nkBool,
+      rawValue: token.value,
+      token: token,
+      line: token.line,
+      col: token.col
+    )
 
   of tkLBracket:
     let startToken = parser.advance()
@@ -140,6 +168,7 @@ proc parseBlock*(parser: var Parser): YumNode =
 proc parseInclude(p: var Parser): YumNode =
   let tok = p.peek() 
   discard p.advance()
+  # {ident}
   discard p.expect(tkLBrace)
   let path = p.expect(tkIdent)
   discard p.expect(tkRBrace)
