@@ -26,7 +26,7 @@ proc checkCommand(content: string): bool =
         result = validateContent(content)
 
 proc loadCommand(path: string): auto =
-  loadYumly(path)
+  loadYumyumy(path)
 
 proc parseOutput() =
     let args = commandLineParams()

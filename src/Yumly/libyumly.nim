@@ -2,7 +2,7 @@ import nimpy
 import os
 import yumly_file
 import tokenizer, parser, resolver, additional/include_loader, additional/validate, evaluator
-import serializers/parser_python
+import serializers/parser_python, serializers/parser_yumyumy
 import types/ast
 
 proc parseContentToAST*(content: string): YumNode =
@@ -58,6 +58,26 @@ proc validateFileWithErrMsg*(path: string): string {.exportpy: "validateFileMsg"
     let error = getCurrentException()
     return error.msg
 
+proc validateContentMsgFFI*(content: cstring): cstring {.exportc: "validateContentMsg", dynlib.} =
+  try:
+    var ast = parseContentToAST($content)
+    resolveAst(ast)
+    validateConfig(ast)
+    return ""
+  except ValueError, IOError:
+    let error = getCurrentException()
+    return error.msg
+
+proc validateFileMsgFFI*(path: cstring): cstring {.exportc: "validateFileMsg", dynlib.} =
+  try:
+    var ast = parseFileToAST($path)
+    resolveAst(ast)
+    validateConfig(ast)
+    return ""
+  except ValueError, IOError:
+    let error = getCurrentException()
+    return error.msg
+
 proc loadYumly*(path: string = "config.yumly"): Config =
   var ast = parseFileToAST(path)
   loadIncludes(ast, parentDir(path))
@@ -68,3 +88,19 @@ proc loadYumly*(path: string = "config.yumly"): Config =
 proc loadYumlyPy*(path: string): PyObject {.exportpy.} =
   let config = loadYumly(path)
   return config.toPython()
+
+proc loadYumyumyFFI*(path: cstring): cstring {.exportc: "loadYumyumy", dynlib.} =
+  try:
+    let config = loadYumly($path)
+    return config.toYumyumy()
+  except ValueError, IOError:
+    let error = getCurrentException()
+    return "Error: " & error.msg
+
+proc loadYumyumy*(path: string): string =
+  try:
+    let config = loadYumly(path)
+    return config.toYumyumy()
+  except ValueError, IOError:
+    let error = getCurrentException()
+    raise error
