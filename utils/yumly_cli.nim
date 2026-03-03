@@ -44,13 +44,16 @@ proc parseOutput() =
                 success("Check passed ✔")
             else:
                 error("Check failed ✖")
+                quit(1)
         of "load":
             let data = loadCommand(value)
             echo data
             success("File loaded ✔")
         else:
             error("Unknown command: " & cmd)
+            quit(1)
     except CatchableError as err:
         error(err.msg)
+        quit(1)
 
 parseOutput()
