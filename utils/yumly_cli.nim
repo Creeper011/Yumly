@@ -1,6 +1,5 @@
-import os
-import std/terminal
-import src/Yumly/libyumly
+import Yumly
+import std/terminal, os
 
 template info(msg: string) =
     setForegroundColor(fgYellow)
