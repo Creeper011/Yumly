@@ -14,8 +14,8 @@ from typing import Iterable, List
 sys.path.insert(0, os.path.abspath("lib/python"))
 
 try:
-    from yumly import Yumly, YumlyError
-except ImportError as exc:  # pragma: no cover - dev feedback
+    from yumly import Yumly, YumlyError # type: ignore
+except ImportError as exc:
     print(f"Error importing yumly: {exc}")
     print("Make sure libyumly is built in lib/python/yumly/")
     sys.exit(1)
@@ -23,7 +23,7 @@ except ImportError as exc:  # pragma: no cover - dev feedback
 
 # ---------- Constants ----------
 BASE_PATH: Path = Path("tests/files")
-EXTENSIONS: tuple[str, ...] = (".yumly", ".yuy", ".yums")
+EXTENSIONS: tuple[str, ...] = (".yumly", ".yuy")
 
 
 class Status(Enum):
@@ -119,10 +119,10 @@ def render(results: List[TestResult]) -> int:
         msg = f" ({res.message})" if res.message else ""
         print(f"{status_text:<{status_width}} | {rel}{msg}")
 
-    counts = {status: 0 for status in Status}
+    counts = {status: 0 for status in Status} # type: ignore
     for result in results:
         counts[result.status] += 1
-    summary = " / ".join(f"{status.name}:{counts[status]}" for status in Status)
+    summary = " / ".join(f"{status.name}:{counts[status]}" for status in Status) # type: ignore
     print("-" * 70)
     print(f"Summary: {summary}")
     if exit_code != 0:

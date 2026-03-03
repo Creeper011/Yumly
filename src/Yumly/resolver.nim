@@ -25,7 +25,6 @@ proc resolveTypeHint(hint: var TypeHint) =
     else: unknownTypeHintError(hint.raw, hint.line, hint.col)
 
   if resolvedKind == thList:
-    # Only touch list-specific fields when the original hint actually had them
     if hint.kind == thList:
       resolvedElemKind = hint.elementKind
       resolvedElemRaw = hint.elementRaw

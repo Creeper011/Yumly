@@ -11,18 +11,11 @@ FALLBACK_VALUE_MESSAGE = "Oh no.. an unexpected error occurred.. :( invalid resu
 class Yumly():
     """Yumly is a configuration file format designed to be a mix of YAML and JSON with type safety."""
 
-    def __init__(self):
-        self.config = None
-
     def load(self, path: Union[str, Path]) -> dict[str, Any]:
         """Loads all yumly data from a path."""
         path_obj = Path(path)
-        self.config = self._parse(path_obj)
-        return self.config
-    
-    def load_env(self) -> dict[str, Any]:
-        """Loads only env yumly data"""
-        raise NotImplementedError()
+        config = self._parse(path_obj)
+        return config
     
     def validate_content(self, yuml_data: str) -> bool:
         """Validate raw string data"""

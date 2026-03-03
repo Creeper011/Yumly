@@ -17,7 +17,10 @@ template emitRaw(ctx: var EncoderCtx, line: string) =
 
 proc formatTypeHint(hint: Option[TypeHint]): string =
   if hint.isSome:
-    return " ;" & hint.get.raw
+    let h = hint.get
+    if h.kind == thList and h.raw == "list":
+      return " ;list[string]"
+    return " ;" & h.raw
   return ""
 
 proc formatValue(val: Value): string =
