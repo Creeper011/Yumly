@@ -65,7 +65,7 @@ proc renderBlock(ctx: var RenderCtx, blk: Block) =
   dec ctx.indent
   ctx.emit(")")
 
-proc toYumyumy*(config: Config): string =
+proc toYumyumy*(config: YumlyKind): string =
   var ctx = RenderCtx(indent: 0)
 
   ctx.emit("[")

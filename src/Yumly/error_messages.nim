@@ -5,23 +5,23 @@ import types/token
 
 proc toDisplay*(kind: TokenKind): string =
     case kind
-    of tkLParen:      "'('"
-    of tkRParen:      "')'"
-    of tkLBrace:      "'{'"
-    of tkRBrace:      "'}'"
-    of tkLBracket:    "'['"
-    of tkRBracket:    "']'"
-    of tkEquals:      "'='"
+    of tkLParen: "'('"
+    of tkRParen: "')'"
+    of tkLBrace: "'{'"
+    of tkRBrace: "'}'"
+    of tkLBracket: "'['"
+    of tkRBracket: "']'"
+    of tkEquals: "'='"
     of tkDeclaration: "';'"
-    of tkComma:       "','"
-    of tkDollar:      "'$'"
-    of tkInclude:     "'include'"
-    of tkString:      "a string"
-    of tkInt:         "an integer"
-    of tkFloat:       "a float"
-    of tkBool:        "a boolean"
-    of tkIdent:       "an identifier"
-    of tkEOF:         "end of file"
+    of tkComma: "','"
+    of tkDollar: "'$'"
+    of tkInclude: "'include'"
+    of tkString: "a string"
+    of tkInt: "an integer"
+    of tkFloat: "a float"
+    of tkBool: "a boolean"
+    of tkIdent: "an identifier"
+    of tkEOF: "end of file"
 
 proc expectedValueError*(token: Token) =
     raise newException(ValueError,
@@ -36,25 +36,31 @@ proc expectedEnvBracketError*(token: Token) =
 
 proc expectedError*(expected_tkind: TokenKind, token: Token) =
     raise newException(ValueError,
-      "Heyy i expected " & $expected_tkind.toDisplay() & ", but found " & $token.kind.toDisplay() &
+      "Heyy i expected " & $expected_tkind.toDisplay() & ", but found " &
+              $token.kind.toDisplay() &
       " at line " & $token.line & ", column " & $token.col & ".")
 
-proc expectedBlockError*(expected: TokenKind, blkName: string, blkLine, blkCol: int, token: Token) =
+proc expectedBlockError*(expected: TokenKind, blkName: string, blkLine,
+        blkCol: int, token: Token) =
     raise newException(ValueError,
-      "Heyy i expected " & expected.toDisplay() & " for block '(" & blkName & ")' opened at line " &
-      $blkLine & ", column " & $blkCol & ", but found " & token.kind.toDisplay() &
+      "Heyy i expected " & expected.toDisplay() & " for block '(" & blkName &
+              ")' opened at line " &
+      $blkLine & ", column " & $blkCol & ", but found " & token.kind.toDisplay(
+              ) &
       " at line " & $token.line & ", column " & $token.col & ".")
 
 proc expectedTopTokenError*(token: Token) =
     raise newException(ValueError,
-        "Ehhh.. found an unexpected token at root: '" & $token.kind.toDisplay() &
+        "Ehhh.. found an unexpected token at root: '" & $token.kind.toDisplay(
+                ) &
         "' at line " & $token.line & ", column " & $token.col & ".\n" &
         "Valid root tokens: include, block, ident.\n" &
         "Tip: make sure you're using commas correctly >,<")
 
 proc failedToLoadFile*(path: string, line: int, column: int, error: string) =
     raise newException(IOError,
-        "Uhh... something went wrong while loading the " & path & "file! (>_<)\n" &
+        "Uhh... something went wrong while loading the " & path &
+        "file! (>_<)\n" &
         "  file: '" & path & "'\n" &
         "  line: " & $line & ", column: " & $column & "\n" &
         "  detail: " & error
@@ -62,7 +68,14 @@ proc failedToLoadFile*(path: string, line: int, column: int, error: string) =
 
 proc unknownTypeHintError*(hint: string, line: int, column: int) =
     raise newException(ValueError,
-        "Ehhh... unknown type hint '" & hint & "' (line " & $line & ", column " & $column & ")")
+        "Ehhh... unknown type hint '" & hint & "' (line " & $line &
+        ", column " & $column & ")")
+
+proc missingListTypeError*(line: int, column: int) =
+    raise newException(ValueError,
+        "Ehhh... the type hint 'list' must specify its element type, e.g. ';list[string]' (line " &
+        $line & ", column " & $column & ")")
+
 
 proc missingEnvError*(envName: string, line: int, column: int) =
     raise newException(ValueError,

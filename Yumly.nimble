@@ -9,7 +9,7 @@ license       = "MIT"
 # the parser API from yumly_core.
 srcDir        = "src"
 installExt    = @["nim"]
-bin           = @["libyumly"]
+bin           = @["Yumly"]
 
 
 # Dependencies

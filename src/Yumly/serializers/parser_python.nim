@@ -40,7 +40,7 @@ proc blockToPyDict(blk: Block): PyObject =
     dict[subBlock.name] = blockToPyDict(subBlock)
   return dict
 
-proc toPython*(config: Config): PyObject =
+proc toPython*(config: YumlyKind): PyObject =
   let root = pyBuiltins.dict()
   # root-level pairs
   for pair in config.pairs:

@@ -15,12 +15,13 @@ proc resolveTypeHint(hint: var TypeHint) =
   if resolvedKind == thUnknown:
     case name
     of "string": resolvedKind = thString
-    of "int":    resolvedKind = thInt
-    of "float":  resolvedKind = thFloat
-    of "bool":   resolvedKind = thBool
-    of "env":    resolvedKind = thEnv
-    of "list":   resolvedKind = thList
-    of "tuple":  resolvedKind = thTuple
+    of "int": resolvedKind = thInt
+    of "float": resolvedKind = thFloat
+    of "bool": resolvedKind = thBool
+    of "env": resolvedKind = thEnv
+    of "list":
+      missingListTypeError(hint.line, hint.col)
+    of "tuple": resolvedKind = thTuple
     else: unknownTypeHintError(hint.raw, hint.line, hint.col)
 
   if resolvedKind == thList:
@@ -33,10 +34,10 @@ proc resolveTypeHint(hint: var TypeHint) =
       let elemName = resolvedElemRaw.toLowerAscii()
       case elemName
       of "string": resolvedElemKind = thString
-      of "int":    resolvedElemKind = thInt
-      of "float":  resolvedElemKind = thFloat
-      of "bool":   resolvedElemKind = thBool
-      of "env":    resolvedElemKind = thEnv
+      of "int": resolvedElemKind = thInt
+      of "float": resolvedElemKind = thFloat
+      of "bool": resolvedElemKind = thBool
+      of "env": resolvedElemKind = thEnv
       else: unknownTypeHintError(resolvedElemRaw, hint.line, hint.col)
 
     if resolvedElemKind == thUnknown:

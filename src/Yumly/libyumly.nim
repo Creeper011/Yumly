@@ -1,9 +1,12 @@
 import nimpy
 import os
 import yumly_file
-import tokenizer, parser, resolver, additional/include_loader, additional/validate, evaluator
+import tokenizer, parser, resolver, additional/include_loader,
+    additional/validate, evaluator
 import serializers/parser_python, serializers/parser_yumyumy
 import types/ast
+import api/nim_api
+export nim_api
 
 proc parseContentToAST*(content: string): YumNode =
   let tokens = tokenize(content)
@@ -78,7 +81,7 @@ proc validateFileMsgFFI*(path: cstring): cstring {.exportc: "validateFileMsg", d
     let error = getCurrentException()
     return error.msg
 
-proc loadYumly*(path: string = "config.yumly"): Config =
+proc loadYumly*(path: string = "config.yumly"): YumlyKind =
   var ast = parseFileToAST(path)
   loadIncludes(ast, parentDir(path))
   resolveAst(ast)
@@ -104,3 +107,7 @@ proc loadYumyumy*(path: string): string =
   except ValueError, IOError:
     let error = getCurrentException()
     raise error
+
+#proc loadY*(path: string = "config.yumly"): Table[string, seq[string]] =
+#  let config = loadYumly(path)
+  # toAbstractConfig(config)

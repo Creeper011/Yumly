@@ -88,8 +88,8 @@ proc evaluateBlock*(node: YumNode): Block =
       
   return blk
 
-proc evaluateConfig*(rootNode: YumNode): Config =
-  var config = Config(blocks: @[], includes: @[])
+proc evaluateConfig*(rootNode: YumNode): YumlyKind =
+  var config = YumlyKind(blocks: @[], includes: @[])
   
   for child in rootNode.children:
     if child.kind == nkBlock:

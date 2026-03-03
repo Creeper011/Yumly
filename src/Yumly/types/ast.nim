@@ -74,7 +74,7 @@ type
   Include* = object
     includePath*: string
 
-  Config* = object
+  YumlyKind* = object
     blocks*: seq[Block]
     pairs*: seq[Pair]
     includes*: seq[Include]

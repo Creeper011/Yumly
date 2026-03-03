@@ -11,7 +11,7 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Iterable, List
 
-sys.path.append(os.path.abspath("lib/python"))
+sys.path.insert(0, os.path.abspath("lib/python"))
 
 try:
     from yumly import Yumly, YumlyError
