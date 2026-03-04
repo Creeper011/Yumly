@@ -88,6 +88,13 @@ proc loadYumly*(path: string = "config.yumly"): YumlyKind =
   validateConfig(ast)
   return evaluateConfig(ast)
 
+proc loadYumlyContent*(content: string, workingDir: string = "."): YumlyKind =
+  var ast = parseContentToAST(content)
+  loadIncludes(ast, workingDir)
+  resolveAst(ast)
+  validateConfig(ast)
+  return evaluateConfig(ast)
+
 proc loadYumlyPy*(path: string): PyObject {.exportpy.} =
   let config = loadYumly(path)
   return config.toPython()
