@@ -69,7 +69,7 @@ proc validateContentMsgFFI*(content: cstring): cstring {.exportc: "validateConte
     return ""
   except ValueError, IOError:
     let error = getCurrentException()
-    return error.msg
+    return error.msg.cstring
 
 proc validateFileMsgFFI*(path: cstring): cstring {.exportc: "validateFileMsg", dynlib.} =
   try:
@@ -79,7 +79,7 @@ proc validateFileMsgFFI*(path: cstring): cstring {.exportc: "validateFileMsg", d
     return ""
   except ValueError, IOError:
     let error = getCurrentException()
-    return error.msg
+    return error.msg.cstring
 
 proc loadYumly*(path: string = "config.yumly"): YumlyKind =
   var ast = parseFileToAST(path)
@@ -95,10 +95,10 @@ proc loadYumlyPy*(path: string): PyObject {.exportpy.} =
 proc loadYumyumyFFI*(path: cstring): cstring {.exportc: "loadYumyumy", dynlib.} =
   try:
     let config = loadYumly($path)
-    return config.toYumyumy()
+    return config.toYumyumy().cstring
   except ValueError, IOError:
     let error = getCurrentException()
-    return "Error: " & error.msg
+    return ("Error: " & error.msg).cstring
 
 proc loadYumyumy*(path: string): string =
   try:
