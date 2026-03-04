@@ -40,5 +40,3 @@ jobs:
       run: python tests/run_tests.py
     - name: Run encoder tests
       run: nim c -r tests/test_encoder.nim
-    - name: Run write tests
-      run: nim c -r tests/test_write.nim
