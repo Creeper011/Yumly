@@ -1,0 +1,59 @@
+
+(menu) {
+    (coffee) {
+        name ;string = "Coffee",
+        type ;string = "drink",
+        price ;float = 2.5,
+        description ;string = "Hot coffee",
+        ingredients ;list[string] = ["Coffee", "Water"]
+    },
+    (tea) {
+        name ;string = "Tea",
+        type ;string = "drink",
+        price ;float = 2.0,
+        description ;string = "Hot tea",
+        ingredients ;list[string] = ["Tea", "Water"]
+    },
+    (juice) {
+        name ;string = "Juice",
+        type ;string = "drink",
+        price ;float = 3.0,
+        description ;string = "Fresh juice",
+        ingredients ;list[string] = ["Juice", "Water"]
+    },
+    (snack) {
+        name ;string = "Snack",
+        type ;string = "food",
+        price ;float = 1.5,
+        description ;string = "Snack",
+        ingredients ;list[string] = ["Snack", "Water"]
+    },
+    (cake) {
+        name ;string = "Cake",
+        type ;string = "food",
+        price ;float = 2.5,
+        description ;string = "Cake",
+        ingredients ;list[string] = ["Cake", "Water"]
+    },
+    (burrito) {
+        name ;string = "Burrito",
+        type ;string = "food",
+        price ;float = 5.0,
+        description ;string = "Burrito",
+        ingredients ;list[string] = ["Burrito", "Water"]
+    },
+    (burguer) {
+        name ;string = "Burguer",
+        type ;string = "food",
+        price ;float = 6.0,
+        description ;string = "Burguer",
+        ingredients ;list[string] = ["Burguer", "Water"]
+    },
+    (pizza) {
+        name ;string = "Pizza",
+        type ;string = "food",
+        price ;float = 7.0,
+        description ;string = "Pizza",
+        ingredients ;list[string] = ["Pizza", "Water"]
+    }
+}
