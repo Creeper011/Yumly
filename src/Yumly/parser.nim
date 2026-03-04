@@ -21,6 +21,11 @@ proc expect(parser: var Parser, kind: TokenKind): Token =
     expectedError(kind, parser.peek())
   parser.advance()
 
+proc expect(parser: var Parser, kind: TokenKind, blkName: string, blkLine, blkCol: int): Token =
+  if parser.peek().kind != kind:
+    expectedBlockError(kind, blkName, blkLine, blkCol, parser.peek())
+  parser.advance()
+
 proc consumeComma(parser: var Parser) =
   if parser.peek().kind == tkComma:
     discard parser.advance()
@@ -163,7 +168,7 @@ proc parseBlock*(parser: var Parser): YumNode =
 
     parser.consumeOrExpectComma()
   # expect an }
-  discard parser.expect(tkRBrace)
+  discard parser.expect(tkRBrace, nameToken.value, lpToken.line, lpToken.col)
 
 proc parseInclude(p: var Parser): YumNode =
   let tok = p.peek() 
