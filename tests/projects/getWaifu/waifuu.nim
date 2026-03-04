@@ -44,24 +44,17 @@ proc downloadWaifu(url: string) =
 proc loadIndex(): YumlyKind =
   if fileExists(indexPath):
     result = loadYumly(indexPath)
-    for p in result.pairs:
-      if p.key == "exclude" and p.value.kind == vkList:
-        for el in p.value.elements:
-          if el.kind == vkString:
-            excludeList.add(el.strVal)
+    if result.hasKey("exclude"):
+      for element in result["exclude"]:
+        excludeList.add(element.getStr())
   else:
     result = newYumly()
     result.addPair("exclude", newListValue(@[]))
 
 proc saveToIndex(url: string) =
-  var found = false
-  for p in config.pairs.mitems:
-    if p.key == "exclude" and p.value.kind == vkList:
-      p.value.elements.add(newStringValue(url))
-      found = true
-      break
-
-  if not found:
+  if config.hasKey("exclude"):
+    config["exclude"].add(url)
+  else:
     config.addPair("exclude", newListValue(@[newStringValue(url)]))
 
   writeYumly(config, indexPath, true)
