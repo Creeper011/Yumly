@@ -52,7 +52,7 @@ proc renderPair(ctx: var EncoderCtx, pair: Pair, isLast: bool) =
   let comma = if isLast: "" else: ","
   ctx.emit(pair.key & t & " = " & v & comma)
 
-proc renderBlock(ctx: var EncoderCtx, blk: Block) =
+proc renderBlock(ctx: var EncoderCtx, blk: Block, isLast: bool) =
   ctx.emit("(" & blk.name & ") {")
   inc ctx.indent
 
@@ -67,12 +67,13 @@ proc renderBlock(ctx: var EncoderCtx, blk: Block) =
     ctx.emitRaw("") # empty line between pairs and subblocks
 
   for i, sub in blk.subBlocks:
-    renderBlock(ctx, sub)
+    renderBlock(ctx, sub, i == blk.subBlocks.len - 1)
     if i < blk.subBlocks.len - 1:
       ctx.emitRaw("") # empty line between sibling subblocks
 
   dec ctx.indent
-  ctx.emit("}")
+  let comma = if isLast: "" else: ","
+  ctx.emit("}" & comma)
 
 proc dumpYumly*(config: YumlyKind): string =
   var ctx = EncoderCtx(indent: 0)
@@ -92,7 +93,7 @@ proc dumpYumly*(config: YumlyKind): string =
     ctx.emitRaw("")
 
   for i, blk in config.blocks:
-    renderBlock(ctx, blk)
+    renderBlock(ctx, blk, true)  # Top-level blocks don't need commas unless inlined in pairs
     if i < config.blocks.len - 1:
       ctx.emitRaw("")
 
