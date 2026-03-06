@@ -1,9 +1,7 @@
 import nimpy
 import ../types/ast
 
-let pyBuiltins = pyBuiltinsModule()
-
-proc valueToPy(value: Value): PyObject =
+proc valueToPy(value: Value, pyBuiltins: PyObject): PyObject =
   case value.kind
   of vkString:
     result = pyBuiltins.str(value.strVal)
@@ -19,33 +17,34 @@ proc valueToPy(value: Value): PyObject =
   of vkList:
     let pyList = pyBuiltins.list()
     for it in value.elements:
-      discard pyList.append(valueToPy(it))
+      discard pyList.append(valueToPy(it, pyBuiltins))
     result = pyList
 
   of vkTuple:
     # im yumly, tuple is not an tuple object like python
     let pyList = pyBuiltins.list()
     for it in value.elements:
-      discard pyList.append(valueToPy(it))
+      discard pyList.append(valueToPy(it, pyBuiltins))
     result = pyList
 
-proc insertValue(dict: PyObject, key: string, value: Value) =
-  dict[key] = valueToPy(value)
+proc insertValue(dict: PyObject, key: string, value: Value, pyBuiltins: PyObject) =
+  dict[key] = valueToPy(value, pyBuiltins)
 
-proc blockToPyDict(blk: Block): PyObject =
+proc blockToPyDict(blk: Block, pyBuiltins: PyObject): PyObject =
   let dict = pyBuiltins.dict()
   for pair in blk.pairs:
-    insertValue(dict, pair.key, pair.value)
+    insertValue(dict, pair.key, pair.value, pyBuiltins)
   for subBlock in blk.subBlocks:
-    dict[subBlock.name] = blockToPyDict(subBlock)
+    dict[subBlock.name] = blockToPyDict(subBlock, pyBuiltins)
   return dict
 
 proc toPython*(config: YumlyKind): PyObject =
+  let pyBuiltins = pyBuiltinsModule()
   let root = pyBuiltins.dict()
   # root-level pairs
   for pair in config.pairs:
-    insertValue(root, pair.key, pair.value)
+    insertValue(root, pair.key, pair.value, pyBuiltins)
   # blocks
   for blk in config.blocks:
-    root[blk.name] = blockToPyDict(blk)
+    root[blk.name] = blockToPyDict(blk, pyBuiltins)
   return root

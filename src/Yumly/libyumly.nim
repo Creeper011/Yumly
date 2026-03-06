@@ -1,11 +1,10 @@
 import nimpy
 import os
 import yumly_file
-import tokenizer, parser, resolver, additional/include_loader,
-    additional/validate, evaluator
-import serializers/parser_python, serializers/parser_yumyumy
+import tokenizer, parser, resolver, additional/include_loader, additional/validate, evaluator
+import serializers/parser_python, serializers/parser_yumyumy, serializers/encoder
 import types/ast
-import api/nim_api
+import api/nim_api, api/python_api
 export nim_api
 
 proc parseContentToAST*(content: string): YumNode =
@@ -18,6 +17,9 @@ proc parseFileToAST*(path: string): YumNode =
   checkFileExtension(path)
   let content = openFileContent(path)
   return parseContentToAST(content)
+
+proc writeYumly*(config: YumlyKind, path: string) =
+  writeFile(path, encoder.dumpYumly(config))
 
 proc validateContent*(content: string): bool {.exportpy.} =
   try:
@@ -99,6 +101,12 @@ proc loadYumlyPy*(path: string): PyObject {.exportpy.} =
   let config = loadYumly(path)
   return config.toPython()
 
+proc dumpPy*(data: PyObject): string {.exportpy.} =
+  if data.isNil:
+    raise newException(ValueError, "HEYY! data is nil")
+  let config = dictToYumlyKind(data)
+  result = encoder.dumpYumly(config)
+
 proc loadYumyumyFFI*(path: cstring): cstring {.exportc: "loadYumyumy", dynlib.} =
   try:
     let config = loadYumly($path)
@@ -114,7 +122,3 @@ proc loadYumyumy*(path: string): string =
   except ValueError, IOError:
     let error = getCurrentException()
     raise error
-
-#proc loadY*(path: string = "config.yumly"): Table[string, seq[string]] =
-#  let config = loadYumly(path)
-  # toAbstractConfig(config)

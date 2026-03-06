@@ -4,9 +4,6 @@ import options
 import tables
 import macros
 
-proc dumpYumly*(config: YumlyKind): string =
-  return encoder.dumpYumly(config)
-
 proc toYumly*(config: YumlyKind): string =
   return dumpYumly(config)
 
@@ -305,9 +302,6 @@ proc applyTypeHints*(config: var YumlyKind) =
 proc writeYumly*(config: var YumlyKind, path: string, inferType: bool = false) =
   if inferType:
     applyTypeHints(config)
-  writeFile(path, dumpYumly(config))
-
-proc writeYumly*(config: YumlyKind, path: string) =
   writeFile(path, dumpYumly(config))
 
 proc toYumly*(pairs: openArray[(string, Value)],

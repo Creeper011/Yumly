@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Union, IO
+from contextlib import contextmanager
 from . import libyumly # type: ignore
 from .yumly_error import YumlyError
 
@@ -12,10 +13,8 @@ class Yumly():
     """Yumly is a configuration file format designed to be a mix of YAML and JSON with type safety."""
 
     def load(self, path: Union[str, Path]) -> dict[str, Any]:
-        """Loads all yumly data from a path."""
         path_obj = Path(path)
-        config = self._parse(path_obj)
-        return config
+        return self._parse(path_obj)
     
     def validate_content(self, yuml_data: str) -> bool:
         """Validate raw string data"""
@@ -28,7 +27,7 @@ class Yumly():
         if error_msg:
             raise YumlyError(error_msg)
         
-        return True
+        return False
 
     def validate_file(self, path: Union[str, Path]) -> bool:
         """Validate data from a file path"""
@@ -42,10 +41,10 @@ class Yumly():
         if error_msg:
             raise YumlyError(error_msg)
 
-        return True
+        return False
 
     def _parse(self, path: Path) -> dict[str, Any]:
-        path_str = str(path.resolve())
+        path_str = str(Path(path).resolve())
         try:
             value = libyumly.loadYumlyPy(path_str)
         except Exception as exc:
@@ -56,3 +55,15 @@ class Yumly():
             raise YumlyError(FALLBACK_VALUE_MESSAGE)
 
         return value
+    
+    def _dumps(self, data: dict[str, Any]) -> str:
+        try:
+            return libyumly.dumpPy(data)
+        except Exception as exc:
+            raise YumlyError(str(exc) or FALLBACK_MESSAGE) from exc
+    
+    def dump(self, data: dict[str, Any], stream: IO[str]) -> None:
+        try:
+            stream.write(self._dumps(data))
+        except Exception as exc:
+            raise YumlyError(str(exc) or FALLBACK_MESSAGE) from exc
