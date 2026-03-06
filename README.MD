@@ -306,12 +306,18 @@ code --install-extension yumly.vsix
 
 ---
 
-## ✿ Desenvolvimento
+## ✿ Testes
 
 ```bash
 python tests/run_tests.py
 nim c -r tests/test_encoder.nim
 ```
+
+---
+
+## ✿ Sobre Projetos (Testes)
+
+- Yumly possui um conjunto de projetos PoC (Proof of Concepts) que visam testar implementações de yumly de forma mais integrada ao um cenário real; podem ser encontrados em [tests/project](tests/project).
 
 ---
 
