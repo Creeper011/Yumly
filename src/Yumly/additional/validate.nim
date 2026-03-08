@@ -17,6 +17,8 @@ proc isEnvNode(node: YumNode): bool =
 
 # Tries each ValueDef decoder to infer which ValueKind a raw literal is.
 # skips env/list/tuple since those are structural, not raw-string-decodable.
+
+#TODO: add an dedicated method: classifyLiteral to values_defs
 proc inferValueKind(raw: string): ValueKind =
   for vk in [vkBool, vkInt, vkFloat, vkString]:
     try:
