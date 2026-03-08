@@ -1,46 +1,11 @@
 ##
-# This module defines AST (Abstract Syntax Tree) types for the Yumly configuration language. These types
-# are used to represent the parsed structure of Yumly configuration files in memory.
+# This module defines AST (Abstract Syntax Tree) after parsing it
 ##
-import token, options
+
+import options
+import ../types/type_hints
 
 type
-  # filled in by the parser and validated by validator
-  TypeHintKind* = enum thUnknown, thString, thInt, thFloat, thBool, thEnv, thList, thTuple
-
-  TypeHint* = object
-    raw*: string
-    case kind*: TypeHintKind
-    of thList:
-      elementKind*: TypeHintKind
-      elementRaw*: string
-    else: discard
-    line*: int
-    col*: int
-
-  NodeKind* = enum 
-    nkString, nkInt, nkFloat, nkBool, 
-    nkEnv,
-    nkArray,
-    nkBlock,
-    nkPair,
-    nkConfig, nkInclude
-
-  YumNode* = ref object
-    token*: Token
-    case kind*: NodeKind
-    of nkString, nkInt, nkBool, nkFloat, nkEnv, nkInclude:
-      rawValue*: string
-    of nkArray, nkConfig, nkBlock:
-      children*: seq[YumNode]
-      name*: string
-    of nkPair:
-      key*: string
-      typeHint*: Option[TypeHint]
-      valNode*: YumNode
-      
-    line*, col*: int
-
   # filled in by the evaluator
   ValueKind* = enum 
     vkString, vkInt, vkFloat, vkBool, vkList, vkTuple, vkEnv
@@ -74,12 +39,7 @@ type
   Include* = object
     includePath*: string
 
-  YumlyKind* = object
+  YumlyConf* = object
     blocks*: seq[Block]
     pairs*: seq[Pair]
     includes*: seq[Include]
-
-  Parser* = object
-    tokens*: seq[Token]
-    pos*: int
-    recursionDepth*: int

@@ -1,4 +1,4 @@
-import Yumly
+import ../src/Yumly/libyumly
 import std/terminal, os
 
 template info(msg: string) =

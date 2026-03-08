@@ -8,3 +8,7 @@
         variable ;string = "this a variable inside sub-block2"
     }
 }
+
+(lonely-block) {
+    ;> he doesn't have any child :( <;
+}

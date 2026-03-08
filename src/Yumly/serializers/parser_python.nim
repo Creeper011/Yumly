@@ -38,7 +38,7 @@ proc blockToPyDict(blk: Block, pyBuiltins: PyObject): PyObject =
     dict[subBlock.name] = blockToPyDict(subBlock, pyBuiltins)
   return dict
 
-proc toPython*(config: YumlyKind): PyObject =
+proc toPython*(config: YumlyConf): PyObject =
   let pyBuiltins = pyBuiltinsModule()
   let root = pyBuiltins.dict()
   # root-level pairs

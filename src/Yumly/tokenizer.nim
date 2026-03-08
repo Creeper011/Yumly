@@ -27,7 +27,8 @@ proc tokenize*(source: string): seq[Token] =
     if source[i] in {' ', '\t', '\r'}:
       i += 1
       continue
-
+    
+    # count lines and advances
     if source[i] == '\n':
       line += 1
       lineStart = i + 1
@@ -49,35 +50,29 @@ proc tokenize*(source: string): seq[Token] =
       else:
         raise newException(ValueError, "Heyy, the comment doesn't close! Expected '<;' at line " & $line)
 
-    # handle numbers (int or float)
-    # check if the number contains more than 2 characters and if it's negative
+    # handle literals (int, float)
+    # emit an tkLiteral token
     if source[i] in {'0'..'9'} or (source[i] == '-' and i + 1 < source.len and source[i + 1] in {'0'..'9'}):
       let start = i
-      var isFloat = false
-      if source[i] == '-':
-        i += 1
+      i += 1
+
+      # consume digits
       while i < source.len and source[i] in {'0'..'9'}:
         i += 1
-      if i < source.len and source[i] == '.' and i + 1 < source.len and source[i + 1] in {'0'..'9'}:
-        isFloat = true
+
+      # float part
+      if i < source.len and source[i] == '.':
         i += 1
         while i < source.len and source[i] in {'0'..'9'}:
           i += 1
-      # resolves scientific notations
-      if i < source.len and (source[i] == 'e' or source[i] == 'E'):
-        isFloat = true
+
+      # scientific notation
+      if i < source.len and source[i] in {'e', 'E'}:
         i += 1
-        if i < source.len and (source[i] == '+' or source[i] == '-'):
-          i += 1
-        if i >= source.len or source[i] notin {'0'..'9'}:
-          raise newException(ValueError, "Heyy invalid exponent on line " & $line)
         while i < source.len and source[i] in {'0'..'9'}:
           i += 1
-      let lexeme = source[start..i-1]
-      if isFloat:
-        emitVal(tkFloat, lexeme)
-      else:
-        emitVal(tkInt, lexeme)
+
+      emitVal(tkLiteral, source[start ..< i])
       continue
 
     case source[i]
@@ -91,7 +86,7 @@ proc tokenize*(source: string): seq[Token] =
     of ';': emit(tkDeclaration); i += 1
     of ',': emit(tkComma);       i += 1
     of '$': emit(tkDollar);      i += 1
-
+    # if string
     of '"', '\'':
       let quote = source[i]
       i += 1
@@ -113,12 +108,13 @@ proc tokenize*(source: string): seq[Token] =
         while i < source.len and source[i] in IdentChars + {'.', '-', '/'}:
           i += 1
         let word = source[start..i-1]
-        if word == "include":
-          emit(tkInclude)
-        elif word == "true" or word == "false":
-          emitVal(tkBool, word)
-        else:
-          emitVal(tkIdent, word)
+        case word:
+          of "include":
+            emit(tkInclude)
+          of "true", "false":
+            emitVal(tkLiteral, word)
+          else:
+            emitVal(tkIdent, word)
       else:
         raise newException(ValueError,
           "Wow, an unexpected character '" & $source[i] & "' on line " & $line)

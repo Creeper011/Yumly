@@ -1,5 +1,5 @@
 import strutils, options
-import ../types/ast
+import ../types/ast, ../types/type_hints, ../types/values_defs
 
 type
   RenderCtx = object
@@ -12,52 +12,22 @@ proc pad(n: int): string =
 proc emit(ctx: var RenderCtx, line: string) =
   ctx.lines.add(pad(ctx.indent) & line)
 
-proc formatType(hint: Option[TypeHint], kind: ValueKind): string =
+proc formatTypeHint(hint: Option[TypeHint], kind: ValueKind): string =
   if hint.isSome:
     return hint.get.raw
-  case kind
-  of vkString: "string"
-  of vkInt: "int"
-  of vkFloat: "float"
-  of vkBool: "bool"
-  of vkList: "list"
-  of vkTuple: "tuple"
-  of vkEnv: "env"
+  return VALUES_DEF[kind].typeHint
 
-proc formatValue(val: Value): string =
-  case val.kind
-  of vkString:
-    "\"" & val.strVal & "\""
-  of vkInt:
-    $val.intVal
-  of vkFloat:
-    $val.floatVal
-  of vkBool:
-    if val.boolVal: "true" else: "false"
-  of vkEnv:
-    "\"" & val.envVal & "\""
-  of vkList:
-    var parts: seq[string] = @[]
-    for el in val.elements:
-      parts.add(formatValue(el))
-    "[" & parts.join(", ") & "]"
-  of vkTuple:
-    var parts: seq[string] = @[]
-    for el in val.elements:
-      parts.add(formatValue(el))
-    "(" & parts.join(", ") & ")"
-
-proc renderPair(ctx: var RenderCtx, pair: Pair, isBlock: bool) =
-  let t = formatType(pair.typeHint, pair.value.kind)
-  let v = formatValue(pair.value)
-  ctx.emit(pair.key & " (" & t & ") -> " & v)
+proc renderPair(ctx: var RenderCtx, pair: Pair) =
+  let typeName = formatTypeHint(pair.typeHint, pair.value.kind)
+  let valueStr = encodeValue(pair.value, styleYumyumy)
+  ctx.emit(pair.key & " (" & typeName & ") -> " & valueStr)
 
 proc renderBlock(ctx: var RenderCtx, blk: Block) =
   ctx.emit("[" & blk.name & "] (")
   inc ctx.indent
 
   for pair in blk.pairs:
-    renderPair(ctx, pair, true)
+    renderPair(ctx, pair)
 
   for sub in blk.subBlocks:
     renderBlock(ctx, sub)
@@ -65,14 +35,14 @@ proc renderBlock(ctx: var RenderCtx, blk: Block) =
   dec ctx.indent
   ctx.emit(")")
 
-proc toYumyumy*(config: YumlyKind): string =
+proc toYumyumy*(config: YumlyConf): string =
   var ctx = RenderCtx(indent: 0)
 
   ctx.emit("[")
   inc ctx.indent
 
   for pair in config.pairs:
-    renderPair(ctx, pair, false)
+    renderPair(ctx, pair)
 
   for blk in config.blocks:
     renderBlock(ctx, blk)
@@ -80,4 +50,4 @@ proc toYumyumy*(config: YumlyKind): string =
   dec ctx.indent
   ctx.emit("]")
 
-  ctx.lines.join("\n")
+  return ctx.lines.join("\n")

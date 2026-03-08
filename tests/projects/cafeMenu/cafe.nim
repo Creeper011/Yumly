@@ -16,10 +16,10 @@ type
         menu: Menu
         custumerName: string
 
-proc getConfig(): YumlyKind =
+proc getConfig(): YumlyConf =
     return loadYumly(configPath)
 
-proc toMenu(yumly: YumlyKind): Menu =
+proc toMenu(yumly: YumlyConf): Menu =
     var menu: Menu
     let menuBlock = yumly.getBlock("menu")
     for item in menuBlock:
@@ -104,7 +104,7 @@ proc main() =
     var menu = toMenu(config)
     let order = Order(
         menu: menu,
-        custumerName: config.pairs[^1].value.strVal # the root pairs are the last ones
+        custumerName: config["custumerName"].getStr()
     )
     showMenu(order)
 

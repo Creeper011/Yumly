@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yumly"
-version = "0.2.2"
+version = "0.3.0"
 description = "Yumly is a configuration file format designed to be a mix of YAML and JSON with type safety and a rigorous structure."
 readme = "README.md"
 authors = [{ name = "Yumene", email = " yumene@yume.dev.br " }]

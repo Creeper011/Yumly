@@ -8,7 +8,7 @@ const
   saveDir = "waifus"
   indexPath = saveDir / "data.yumly"
 
-var config: YumlyKind
+var config: YumlyConf
 var excludeList: seq[string] = @[]
 
 proc getWaifus(exclude: seq[string]): JsonNode =
@@ -41,7 +41,7 @@ proc downloadWaifu(url: string) =
   client.downloadFile(url, path)
   client.close()
 
-proc loadIndex(): YumlyKind =
+proc loadIndex(): YumlyConf =
   if fileExists(indexPath):
     result = loadYumly(indexPath)
     if result.hasKey("exclude"):

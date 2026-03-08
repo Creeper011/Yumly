@@ -11,13 +11,14 @@ nimble.paths
 __pycache__
 libyumly.so
 waifus
+tasks.yumly
 
 #binaries
 waifuu
 test_write
 test_encoder
+test_tokenizer
 /Yumly
 change_version
 yumly_cli
 cafe
-test_api_ergonomics

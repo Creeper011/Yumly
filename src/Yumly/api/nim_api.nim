@@ -1,25 +1,25 @@
-import ../types/ast
+import ../types/ast, ../types/type_hints
 import ../serializers/encoder
 import options
 import tables
 import macros
 
-proc toYumly*(config: YumlyKind): string =
+proc toYumly*(config: YumlyConf): string =
   return dumpYumly(config)
 
-proc newYumly*(): YumlyKind =
-  YumlyKind(blocks: @[], pairs: @[], includes: @[])
+proc newYumly*(): YumlyConf =
+  YumlyConf(blocks: @[], pairs: @[], includes: @[])
 
 proc newBlock*(name: string): Block =
   Block(name: name, pairs: @[], subBlocks: @[], line: 0, col: 0)
 
-proc addPair*(container: var YumlyKind, key: string, value: Value,
+proc addPair*(container: var YumlyConf, key: string, value: Value,
     typeHint: string = "") =
   let hintOpt = if typeHint == "": none(TypeHint) else: some(TypeHint(
       raw: typeHint, kind: thUnknown))
   container.pairs.add(Pair(key: key, value: value, typeHint: hintOpt, line: 0, col: 0))
 
-proc addBlock*(container: var YumlyKind, blk: Block) =
+proc addBlock*(container: var YumlyConf, blk: Block) =
   container.blocks.add(blk)
 
 proc addPair*(container: var Block, key: string, value: Value,
@@ -83,12 +83,12 @@ proc `[]`*(val: var Value, index: int): var Value =
 proc raiseKeyError(msg: string) {.noreturn.} =
   raise newException(KeyError, msg)
 
-proc `[]`*(config: YumlyKind, key: string): Value =
+proc `[]`*(config: YumlyConf, key: string): Value =
   for pair in config.pairs:
     if pair.key == key: return pair.value
   raise newException(KeyError, "Key not found in Yumly config: " & key)
 
-proc `[]`*(config: var YumlyKind, key: string): var Value =
+proc `[]`*(config: var YumlyConf, key: string): var Value =
   if config.pairs.len == 0:
     raiseKeyError("Key not found in Yumly config: " & key)
   result = config.pairs[0].value
@@ -120,7 +120,7 @@ iterator items*(blk: Block): Block =
   for subBlock in blk.subBlocks:
     yield subBlock
 
-iterator items*(config: YumlyKind): Block =
+iterator items*(config: YumlyConf): Block =
   for rootBlock in config.blocks:
     yield rootBlock
 
@@ -130,7 +130,7 @@ iterator mitems*(val: var Value): var Value =
   for element in val.elements.mitems:
     yield element
 
-iterator mitems*(config: var YumlyKind): var Pair =
+iterator mitems*(config: var YumlyConf): var Pair =
   for pair in config.pairs.mitems:
     yield pair
 
@@ -138,13 +138,13 @@ iterator pairs*(blk: Block): (string, Value) =
   for pair in blk.pairs:
     yield (pair.key, pair.value)
 
-iterator pairs*(config: YumlyKind): (string, Value) =
+iterator pairs*(config: YumlyConf): (string, Value) =
   for pair in config.pairs:
     yield (pair.key, pair.value)
 
 # Macros
 
-macro to*(node: YumlyKind | Block, T: typedesc): untyped =
+macro to*(node: YumlyConf | Block, T: typedesc): untyped =
   let resultIdent = genSym(nskVar, "res")
   let typeImpl = T.getTypeImpl()
 
@@ -199,7 +199,7 @@ macro to*(node: YumlyKind | Block, T: typedesc): untyped =
 
 # Search Utilities
 
-proc findPair*(config: YumlyKind, key: string): Option[Value] =
+proc findPair*(config: YumlyConf, key: string): Option[Value] =
   for pair in config.pairs:
     if pair.key == key: return some(pair.value)
   return none(Value)
@@ -209,7 +209,7 @@ proc findPair*(blk: Block, key: string): Option[Value] =
     if pair.key == key: return some(pair.value)
   return none(Value)
 
-proc findBlock*(config: YumlyKind, name: string): Option[Block] =
+proc findBlock*(config: YumlyConf, name: string): Option[Block] =
   for blk in config.blocks:
     if blk.name == name: return some(blk)
   return none(Block)
@@ -219,13 +219,13 @@ proc findBlock*(blk: Block, name: string): Option[Block] =
     if subBlock.name == name: return some(subBlock)
   return none(Block)
 
-proc search*(config: YumlyKind, key: string): Option[Value] =
+proc search*(config: YumlyConf, key: string): Option[Value] =
   return config.findPair(key)
 
 proc search*(blk: Block, key: string): Option[Value] =
   return blk.findPair(key)
 
-proc addInclude*(container: var YumlyKind, path: string) =
+proc addInclude*(container: var YumlyConf, path: string) =
   container.includes.add(Include(includePath: path))
 
 proc inferTypeHint(val: Value): string =
@@ -241,7 +241,7 @@ proc inferTypeHint(val: Value): string =
   of vkTuple: return "tuple"
   of vkEnv: return "env"
 
-proc hasKey*(config: YumlyKind, key: string): bool =
+proc hasKey*(config: YumlyConf, key: string): bool =
   for pair in config.pairs:
     if pair.key == key: return true
   return false
@@ -251,7 +251,7 @@ proc hasKey*(blk: Block, key: string): bool =
     if pair.key == key: return true
   return false
 
-proc hasBlock*(config: YumlyKind, name: string): bool =
+proc hasBlock*(config: YumlyConf, name: string): bool =
   for blk in config.blocks:
     if blk.name == name: return true
   return false
@@ -261,7 +261,7 @@ proc hasBlock*(blk: Block, name: string): bool =
     if subBlock.name == name: return true
   return false
 
-proc getBlock*(config: YumlyKind, name: string): Block =
+proc getBlock*(config: YumlyConf, name: string): Block =
   for blk in config.blocks:
     if blk.name == name: return blk
   raise newException(KeyError, "Block not found: " & name)
@@ -295,11 +295,11 @@ proc applyTypeHintsRec(blocks: var seq[Block]) =
     applyTypeHints(b.pairs)
     applyTypeHintsRec(b.subBlocks)
 
-proc applyTypeHints*(config: var YumlyKind) =
+proc applyTypeHints*(config: var YumlyConf) =
   applyTypeHints(config.pairs)
   applyTypeHintsRec(config.blocks)
 
-proc writeYumly*(config: var YumlyKind, path: string, inferType: bool = false) =
+proc writeYumly*(config: var YumlyConf, path: string, inferType: bool = false) =
   if inferType:
     applyTypeHints(config)
   writeFile(path, dumpYumly(config))

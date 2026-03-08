@@ -2,7 +2,7 @@
 # Python API to create Yumly files (this modules only create data, not serialize. serializer is in serializers/parser_python)
 ##
 import nimpy, os, strutils
-import ../types/ast
+import ../types/ast, ../types/nodes
 import ../tokenizer, ../parser, ../resolver, ../evaluator
 import ../additional/include_loader, ../additional/validate
 import nim_api
@@ -17,22 +17,22 @@ proc parseFileToAST*(path: string): YumNode =
   let content = readFile(path)
   parseContentToAST(content)
 
-proc loadYumly*(path: string): YumlyKind =
+proc loadYumly*(path: string): YumlyConf =
   var ast = parseFileToAST(path)
   loadIncludes(ast, parentDir(path))
   resolveAst(ast)
   validateConfig(ast)
   return evaluateConfig(ast)
 
-proc loadYumlyContent*(content: string, workingDir: string = "."): YumlyKind =
+proc loadYumlyContent*(content: string, workingDir: string = "."): YumlyConf =
   var ast = parseContentToAST(content)
   loadIncludes(ast, workingDir)
   resolveAst(ast)
   validateConfig(ast)
   return evaluateConfig(ast)
 
-proc newYumly*(): YumlyKind =
-  YumlyKind(blocks: @[], pairs: @[], includes: @[])
+proc newYumly*(): YumlyConf =
+  YumlyConf(blocks: @[], pairs: @[], includes: @[])
 
 proc parseValue(value: PyObject, pyTypes: tuple[bool, int, float, str, list, `tuple`, dict: PyObject], pyBuiltins: PyObject): Value =
   if pyBuiltins.callMethod("isinstance", value, pyTypes.bool).to(bool):
@@ -67,7 +67,7 @@ proc parseBlock(name: string, data: PyObject, pyTypes: tuple[bool, int, float, s
     else:
       result.addPair(safeKey, parseValue(val, pyTypes, pyBuiltins))
 
-proc dictToYumlyKind*(data: PyObject): YumlyKind =
+proc dictToYumlyConf*(data: PyObject): YumlyConf =
   let pyBuiltins = nimpy.pyBuiltinsModule()
   if pyBuiltins.isNil:
     raise newException(ValueError, "pyBuiltins is nil")

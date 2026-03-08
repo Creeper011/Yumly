@@ -1,5 +1,5 @@
 import strutils, options
-import ../types/ast
+import ../types/ast, ../types/type_hints, ../types/values_defs
 
 type
   EncoderCtx = object
@@ -17,84 +17,79 @@ template emitRaw(ctx: var EncoderCtx, line: string) =
 
 proc formatTypeHint(hint: Option[TypeHint]): string =
   if hint.isSome:
-    let h = hint.get
-    if h.kind == thList and h.raw == "list":
-      return " ;list[string]"
-    return " ;" & h.raw
+    return " ;" & hint.get.raw
   return ""
 
-proc formatValue(val: Value): string =
-  case val.kind
-  of vkString:
-    "\"" & val.strVal & "\""
-  of vkInt:
-    $val.intVal
-  of vkFloat:
-    $val.floatVal
-  of vkBool:
-    if val.boolVal: "true" else: "false"
-  of vkEnv:
-    "$[\"" & val.envVal & "\"]"
-  of vkList:
-    var parts: seq[string] = @[]
-    for el in val.elements:
-      parts.add(formatValue(el))
-    "[" & parts.join(", ") & "]"
-  of vkTuple:
-    var parts: seq[string] = @[]
-    for el in val.elements:
-      parts.add(formatValue(el))
-    "[" & parts.join(", ") & "]"
+proc formatPair(pair: Pair): string =
+  ## formats a single pair: key ;type = value
+  let typeHintStr = formatTypeHint(pair.typeHint)
+  let valueStr = encodeValue(pair.value)
+  result = pair.key & typeHintStr & " = " & valueStr
 
-proc renderPair(ctx: var EncoderCtx, pair: Pair, isLast: bool) =
-  let t = formatTypeHint(pair.typeHint)
-  let v = formatValue(pair.value)
-  let comma = if isLast: "" else: ","
-  ctx.emit(pair.key & t & " = " & v & comma)
+proc renderPairs(ctx: var EncoderCtx, pairs: seq[Pair], isRoot: bool, hasBlocksAfter: bool) =
+  for i, pair in pairs:
+    let isLastPair = (i == pairs.len - 1)
+    # no commas if is in root
+    let needsComma = not isRoot and (not isLastPair or hasBlocksAfter)
+    let comma = if needsComma: "," else: ""
+    
+    ctx.emit(formatPair(pair) & comma)
 
-proc renderBlock(ctx: var EncoderCtx, blk: Block, isLast: bool) =
+proc renderBlock(ctx: var EncoderCtx, blk: Block, isRoot: bool, isLastInScope: bool) =
   ctx.emit("(" & blk.name & ") {")
   inc ctx.indent
+  
+  let hasPairs = blk.pairs.len > 0
+  let hasSubBlocks = blk.subBlocks.len > 0
 
-  let totalPairs = blk.pairs.len
-  for i, pair in blk.pairs:
-    # If there are subblocks, no comma after the last pair unless there are no subblocks? Actually in Yumly commas separate pairs.
-    # Usually pairs end with a comma, except the last one in the block (or before subblocks, though usually they can have commas too).
-    let isLast = (i == totalPairs - 1) and (blk.subBlocks.len == 0)
-    renderPair(ctx, pair, isLast)
-
-  if totalPairs > 0 and blk.subBlocks.len > 0:
-    ctx.emitRaw("") # empty line between pairs and subblocks
-
-  for i, sub in blk.subBlocks:
-    renderBlock(ctx, sub, i == blk.subBlocks.len - 1)
-    if i < blk.subBlocks.len - 1:
-      ctx.emitRaw("") # empty line between sibling subblocks
-
+  if hasPairs:
+    renderPairs(ctx, blk.pairs, isRoot = false, hasBlocksAfter = hasSubBlocks)
+  
+  if hasPairs and hasSubBlocks:
+    ctx.emitRaw("")
+    
+  if hasSubBlocks:
+    for i, sub in blk.subBlocks:
+      let isLastSub = (i == blk.subBlocks.len - 1)
+      renderBlock(ctx, sub, isRoot = false, isLastInScope = isLastSub)
+      if not isLastSub:
+        ctx.emitRaw("")
+    
   dec ctx.indent
-  let comma = if isLast: "" else: ","
+  
+  # blocks at root level never have trailing commas.
+  # inside blocks, commas separate siblings.
+  let needsComma = not isRoot and not isLastInScope
+  let comma = if needsComma: "," else: ""
   ctx.emit("}" & comma)
 
-proc dumpYumly*(config: YumlyKind): string =
+proc dumpYumly*(config: YumlyConf): string =
   var ctx = EncoderCtx(indent: 0)
 
-  for inc_stmt in config.includes:
-    ctx.emit("include { " & inc_stmt.includePath & " }")
+  # include always on top with no commas
+  for incl in config.includes:
+    ctx.emit("include { " & incl.includePath & " }")
 
-  if config.includes.len > 0 and (config.pairs.len > 0 or config.blocks.len > 0):
+  let hasIncludes = config.includes.len > 0
+  let hasPairs = config.pairs.len > 0
+  let hasBlocks = config.blocks.len > 0
+
+  if hasIncludes and (hasPairs or hasBlocks):
     ctx.emitRaw("")
 
-  let totalPairs = config.pairs.len
-  for i, pair in config.pairs:
-    let isLast = (i == totalPairs - 1) and (config.blocks.len == 0)
-    renderPair(ctx, pair, isLast)
+  # root pairs one per line
+  if hasPairs:
+    renderPairs(ctx, config.pairs, isRoot = true, hasBlocksAfter = hasBlocks)
 
-  if config.pairs.len > 0 and config.blocks.len > 0:
+  if hasPairs and hasBlocks:
     ctx.emitRaw("")
 
-  for i, blk in config.blocks:
-    renderBlock(ctx, blk, true)  # Top-level blocks don't need commas unless inlined in pairs
-    if i < config.blocks.len - 1:
-      ctx.emitRaw("")
+  # root blocks
+  if hasBlocks:
+    for i, blk in config.blocks:
+      let isLast = (i == config.blocks.len - 1)
+      renderBlock(ctx, blk, isRoot = true, isLastInScope = isLast)
+      if not isLast:
+        ctx.emitRaw("")
 
   return ctx.lines.join("\n")

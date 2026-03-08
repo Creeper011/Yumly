@@ -1,5 +1,6 @@
-import ../src/Yumly/api/nim_api
-import ../src/Yumly/libyumly
+import ../../src/Yumly/api/nim_api
+import ../../src/Yumly/serializers/encoder
+import ../../src/Yumly/libyumly
 import os
 
 proc runEncoderTest() =

@@ -3,7 +3,7 @@
 ##
 
 import strutils, options
-import types/ast
+import types/nodes, types/type_hints
 import error_messages
 
 proc resolveTypeHint(hint: var TypeHint) =

@@ -4,7 +4,7 @@
 
 import os, strutils, sets
 import dotenv
-import ../types/ast
+import ../types/nodes
 import ../tokenizer, ../parser
 import ../error_messages
 
@@ -20,7 +20,7 @@ proc checkCircularImport(path: string, child: YumNode, visited: var HashSet[stri
 proc loadIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[string]) =
   for child in rootNode.children:
     if child.kind == nkInclude:
-      let rawIncludePath = child.rawValue
+      let rawIncludePath = child.includePath
       let includePath = if isAbsolute(rawIncludePath): rawIncludePath
                         else: baseDir / rawIncludePath
       

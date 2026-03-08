@@ -3,59 +3,68 @@
 ##
 import types/token
 
-proc toDisplay*(kind: TokenKind): string =
-    case kind
-    of tkLParen: "'('"
-    of tkRParen: "')'"
-    of tkLBrace: "'{'"
-    of tkRBrace: "'}'"
-    of tkLBracket: "'['"
-    of tkRBracket: "']'"
-    of tkEquals: "'='"
-    of tkDeclaration: "';'"
-    of tkComma: "','"
-    of tkDollar: "'$'"
-    of tkInclude: "'include'"
-    of tkString: "a string"
-    of tkInt: "an integer"
-    of tkFloat: "a float"
-    of tkBool: "a boolean"
-    of tkIdent: "an identifier"
-    of tkEOF: "end of file"
+type Expected* = enum
+  expValue        = "a value"
+  expIdentifier   = "an identifier"
+  expString       = "a string"
+  expInteger      = "an integer"
+  expFloat        = "a float"
+  expBoolean      = "a boolean"
+  expEnvVar       = "an environment variable"
+  expBlockName    = "a block name"
+  expEquals       = "'='"
+  expLBrace       = "'{'"
+  expRBrace       = "'}'"
+  expLBracket     = "'['"
+  expRBracket     = "']'"
+  expComma        = "','"
+  expEOF          = "end of file"
 
-proc expectedValueError*(token: Token) =
-    raise newException(ValueError,
-      "Heyy i expected a value, but found " & $token.kind.toDisplay() &
-      " at line " & $token.line & ", column " & $token.col & ".")
+proc getTokenValue(token: Token): string =
+  case token.kind
+  of tkString, tkIdent, tkLiteral: token.value
+  of tkEOF: "EOF"
+  of tkLParen: "("
+  of tkRParen: ")"
+  of tkLBrace: "{"
+  of tkRBrace: "}"
+  of tkLBracket: "["
+  of tkRBracket: "]"
+  of tkEquals: "="
+  of tkComma: ","
+  of tkDollar: "$"
+  of tkInclude: "include"
+  of tkDeclaration: ";"
 
-proc expectedEnvBracketError*(token: Token) =
+# Parser errors
+
+proc expectedEnvBracketError*(expected: Expected, token: Token) =
     raise newException(ValueError,
-        "Heeeh... env variables must look like $[\"NAME\"], but I found a lonely '$'" &
+        "Heeeh... env variables must look like $[\"NAME\"], but I found " & getTokenValue(token) &
         " at line " & $token.line & ", column " & $token.col & ".\n" &
         "  hint: wrap the env name inside $[\"MY_ENV\"]")
 
-proc expectedError*(expected_tkind: TokenKind, token: Token) =
+proc expectedError*(expected: Expected, token: Token) =
     raise newException(ValueError,
-      "Heyy i expected " & $expected_tkind.toDisplay() & ", but found " &
-              $token.kind.toDisplay() &
+      "Heyy i expected " & $expected & ", but found " & getTokenValue(token) &
       " at line " & $token.line & ", column " & $token.col & ".")
 
-proc expectedBlockError*(expected: TokenKind, blkName: string, blkLine,
+proc expectedBlockError*(expected: Expected, blkName: string, blkLine,
         blkCol: int, token: Token) =
     raise newException(ValueError,
-      "Heyy i expected " & expected.toDisplay() & " for block '(" & blkName &
+      "Heyy i expected " & $expected & " for block '(" & blkName &
               ")' opened at line " &
-      $blkLine & ", column " & $blkCol & ", but found " & token.kind.toDisplay(
-              ) &
+      $blkLine & ", column " & $blkCol & ", but found " & getTokenValue(token) &
       " at line " & $token.line & ", column " & $token.col & ".")
 
-proc expectedTopTokenError*(token: Token) =
+proc expectedTopTokenError*(expected: Expected, token: Token) =
     raise newException(ValueError,
-        "Ehhh.. found an unexpected token at root: '" & $token.kind.toDisplay(
-                ) &
+        "Ehhh.. found an unexpected token at root: '" & getTokenValue(token) &
         "' at line " & $token.line & ", column " & $token.col & ".\n" &
         "Valid root tokens: include, block, ident.\n" &
         "Tip: make sure you're using commas correctly >,<")
+
+# IO errors
 
 proc failedToLoadFile*(path: string, line: int, column: int, error: string) =
     raise newException(IOError,
