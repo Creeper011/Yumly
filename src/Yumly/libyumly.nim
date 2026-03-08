@@ -29,8 +29,7 @@ proc validateContent*(content: string): bool {.exportpy.} =
     return true
   except ValueError, IOError:
     let error = getCurrentException()
-    echo error.msg
-    return false
+    raise error
 
 proc validateFile*(path: string): bool {.exportpy.} =
   try:
@@ -40,8 +39,7 @@ proc validateFile*(path: string): bool {.exportpy.} =
     return true
   except ValueError, IOError:
     let error = getCurrentException()
-    echo error.msg
-    return false
+    raise error
 
 proc validateContentWithErrMsg*(content: string): string {.exportpy: "validateContentMsg".} =
   try:

@@ -32,6 +32,7 @@ help:
 	@echo "  make clean   Remove build artifacts"
 
 build: $(OUT)
+	$(PIP) install .
 
 $(OUT): $(SRC)
 	@mkdir -p $(OUT_DIR)
