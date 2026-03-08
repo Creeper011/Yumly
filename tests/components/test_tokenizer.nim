@@ -10,7 +10,7 @@ include { .env }
   is_production ;bool = false,
   max_retries ;int = 5,
   pi_precision = 3.14159265,
-  uptime_goal = 9.99e12,
+  uptime_goal = 1.5e+3,
 
   (metadata) {
     tags ;list[string] = ["cloud", "high-availability", "scalable"],
@@ -79,8 +79,8 @@ const expected = @[
 
   T(tkIdent, "uptime_goal", 9, 14),
   T(tkEquals, line = 9, col = 15),
-  T(tkLiteral, "9.99e12", 9, 24),
-  T(tkComma, line = 9, col = 24),
+  T(tkLiteral, "1.5e+3", 9, 23),
+  T(tkComma, line = 9, col = 23),
 
   T(tkLParen, line = 11, col = 3),
   T(tkIdent, "metadata", 11, 12),

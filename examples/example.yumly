@@ -6,7 +6,7 @@ include { .env }
     is_production ;bool = false,
     max_retries ;int = 5,
     pi_precision = 3.14159265,
-    uptime_goal = 9.99e1, ;> 99.9% <;
+    uptime_goal = 1.5e+3, ;> 1500 <;
     
     (metadata) {
         tags ;list[string] = ["cloud", "high-availability", "scalable"],

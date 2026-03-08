@@ -52,7 +52,7 @@ proc tokenize*(source: string): seq[Token] =
 
     # handle literals (int, float)
     # emit an tkLiteral token
-    if source[i] in {'0'..'9'} or (source[i] == '-' and i + 1 < source.len and source[i + 1] in {'0'..'9'}):
+    if source[i] in {'0'..'9'} or (source[i] in {'+', '-'} and i + 1 < source.len and source[i + 1] in {'0'..'9'}):
       let start = i
       i += 1
 
@@ -66,9 +66,13 @@ proc tokenize*(source: string): seq[Token] =
         while i < source.len and source[i] in {'0'..'9'}:
           i += 1
 
-      # scientific notation
       if i < source.len and source[i] in {'e', 'E'}:
         i += 1
+        if i < source.len and source[i] in {'+', '-'}:
+          i += 1
+        if i >= source.len or source[i] notin {'0'..'9'}:
+          raise newException(ValueError,
+            "Heyy invalid exponent on line " & $line)
         while i < source.len and source[i] in {'0'..'9'}:
           i += 1
 
