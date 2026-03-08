@@ -37,6 +37,7 @@ jobs:
       run: pip install .
 
     - name: Run tests
-      run: python tests/run_tests.py
-    - name: Run encoder tests
-      run: nim c -r tests/test_encoder.nim
+      run: |
+        python tests/run_tests.py
+        nim c -r tests/components/test_encoder.nim
+        nim c -r tests/components/test_tokenizer.nim
