@@ -99,6 +99,13 @@ proc loadYumlyPy*(path: string): PyObject {.exportpy.} =
   let config = loadYumly(path)
   return config.toPython()
 
+proc loadYumlyContentPy*(content: string, workingDir: string = "."): PyObject {.exportpy.} =
+  var ast = parseContentToAST(content)
+  loadIncludes(ast, workingDir)
+  resolveAst(ast)
+  validateConfig(ast)
+  return evaluateConfig(ast).toPython()
+
 proc dumpPy*(data: PyObject): string {.exportpy.} =
   if data.isNil:
     raise newException(ValueError, "HEYY! data is nil")
