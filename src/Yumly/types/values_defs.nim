@@ -16,8 +16,22 @@ type
     decode*: proc (raw: string): Value
     encode*: proc (val: Value, style: EncodingStyle): string
 
+proc decodeEscapes(raw: string): string =
+  var i = 0
+  while i < raw.len:
+    if raw[i] == '\\' and i + 1 < raw.len:
+      case raw[i+1]:
+      of 'n':  result.add('\n'); i += 2
+      of 't':  result.add('\t'); i += 2
+      of '\\': result.add('\\'); i += 2
+      of '"':  result.add('"');  i += 2
+      of '\'': result.add('\''); i += 2
+      else: raise newException(ValueError, "Heyy, invalid escape: \\" & raw[i+1] & " ;-;")
+    else:
+      result.add(raw[i]); i += 1
+
 proc decodeString(raw: string): Value = 
-  Value(kind: vkString, strVal: raw)
+  Value(kind: vkString, strVal: decodeEscapes(raw))
 proc decodeInt(raw: string): Value = 
   Value(kind: vkInt, intVal: parseInt(raw))
 proc decodeFloat(raw: string): Value = 
@@ -39,8 +53,8 @@ proc decodeTuple(raw: string): Value =
 
 proc encodeValue*(val: Value, style: EncodingStyle = styleYumly): string # forward
 
-proc encodeString(val: Value, style: EncodingStyle): string = 
-  "\"" & val.strVal & "\""
+proc encodeString(val: Value, style: EncodingStyle): string =
+  return "\"" & val.strVal & "\""
 proc encodeInt(val: Value, style: EncodingStyle): string = 
   $val.intVal
 proc encodeFloat(val: Value, style: EncodingStyle): string = 

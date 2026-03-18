@@ -1,0 +1,3 @@
+(invalid_escapes) {
+    bad_escape = "This string has an invalid \x escape"
+}

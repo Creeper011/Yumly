@@ -96,6 +96,10 @@ proc tokenize*(source: string): seq[Token] =
       i += 1
       let start = i
       while i < source.len and source[i] != quote:
+        if source[i] == '\\':
+          i += 2 # we skip the backslash and the character after it, evaluator (via value_defs) will resolve it
+          continue
+
         if source[i] == '\n':
           raise newException(ValueError, "Heyy the string doesn't close on line " & $line)
         i += 1

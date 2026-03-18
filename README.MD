@@ -102,6 +102,18 @@ include { shared.yuy }     ;> também aceita .yuy ou .yumly <;
 </details>
 
 <details>
+<summary>Strings e Escapes</summary>
+
+```yumly
+newline = "Line 1\nLine 2"
+tab = "Column 1\tColumn 2"
+backslash = "C:\\Path\\Windows"
+quotes = "He said: \"Hello!\""
+```
+
+</details>
+
+<details>
 <summary>Listas e Tuples</summary>
 
 **Listas** — homogêneas, todos os itens do mesmo tipo:

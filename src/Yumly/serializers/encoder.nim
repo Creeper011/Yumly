@@ -15,7 +15,7 @@ template emit(ctx: var EncoderCtx, line: string) =
 template emitRaw(ctx: var EncoderCtx, line: string) =
   ctx.lines.add(line)
 
-proc formatTypeHint(hint: Option[TypeHint]): string =
+func formatTypeHint(hint: Option[TypeHint]): string =
   if hint.isSome:
     return " ;" & hint.get.raw
   return ""
