@@ -1,38 +1,61 @@
+static:
+  echo "defined(python) = ", defined(python)
+when not defined(python):
+  {.error: "python_api.nim requires -d:python".}
+
 ##
 # Python API to create Yumly files (this modules only create data, not serialize. serializer is in serializers/parser_python)
 ##
 import nimpy, os, strutils
-import ../types/ast, ../types/nodes
-import ../tokenizer, ../parser, ../resolver, ../evaluator
-import ../additional/include_loader, ../additional/validate
-import nim_api
+import ../types/ast
+import ../core/pipeline
+import ../core/builders
+import ../serializers/parser_python
 
-proc parseContentToAST*(content: string): YumNode =
-  let tokens = tokenize(content)
-  let ast = generateAST(tokens)
-  resolveAst(ast)
-  return ast
+proc validateContent*(content: string): bool {.exportpy.} =
+  try:
+    var ast = parseContentToAST(content)
+    resolveYumly(ast, ".")
+    validateYumly(ast)
+    return true
+  except ValueError, IOError:
+    raise getCurrentException()
 
-proc parseFileToAST*(path: string): YumNode =
-  let content = readFile(path)
-  parseContentToAST(content)
+proc validateFile*(path: string): bool {.exportpy.} =
+  try:
+    var ast = parseFileToAST(path)
+    resolveYumly(ast, parentDir(path))
+    validateYumly(ast)
+    return true
+  except ValueError, IOError:
+    raise getCurrentException()
 
-proc loadYumly*(path: string): YumlyConf =
-  var ast = parseFileToAST(path)
-  loadIncludes(ast, parentDir(path))
-  resolveAst(ast)
-  validateConfig(ast)
-  return evaluateConfig(ast)
+proc validateContentMsg*(content: string): string {.exportpy: "validateContentMsg".} =
+  try:
+    var ast = parseContentToAST(content)
+    resolveYumly(ast, ".")
+    validateYumly(ast)
+    return ""
+  except ValueError, IOError:
+    return getCurrentException().msg
 
-proc loadYumlyContent*(content: string, workingDir: string = "."): YumlyConf =
-  var ast = parseContentToAST(content)
-  loadIncludes(ast, workingDir)
-  resolveAst(ast)
-  validateConfig(ast)
-  return evaluateConfig(ast)
+proc validateFileMsg*(path: string): string {.exportpy: "validateFileMsg".} =
+  try:
+    var ast = parseFileToAST(path)
+    resolveYumly(ast, parentDir(path))
+    validateYumly(ast)
+    return ""
+  except ValueError, IOError:
+    return getCurrentException().msg
 
-proc newYumly*(): YumlyConf =
-  YumlyConf(blocks: @[], pairs: @[], includes: @[])
+proc loadYumlyPy*(path: string): PyObject {.exportpy.} =
+  let config = pipeline.loadYumly(path)
+  return config.toPython()
+
+proc loadYumlyContentPy*(content: string, workingDir: string = "."): PyObject {.exportpy.} =
+  let config = pipeline.loadYumlyContent(content, workingDir)
+  return config.toPython()
+
 
 proc parseValue(value: PyObject, pyTypes: tuple[bool, int, float, str, list, `tuple`, dict: PyObject], pyBuiltins: PyObject): Value =
   if pyBuiltins.callMethod("isinstance", value, pyTypes.bool).to(bool):
@@ -97,9 +120,15 @@ proc dictToYumlyConf*(data: PyObject): YumlyConf =
 
     if val.isNil:
       continue
-    
-    # note: for some reason pyBuiltins.isInstance are causing SIGSEGV Error
+
+    # NOTE: for some reason pyBuiltins.isInstance are causing SIGSEGV Error
     if pyBuiltins.callMethod("isinstance", val, pyTypes.dict).to(bool):
       result.addBlock(parseBlock(safeKey, val, pyTypes, pyBuiltins))
     else:
       result.addPair(safeKey, parseValue(val, pyTypes, pyBuiltins))
+
+proc dumpPy*(data: PyObject): string {.exportpy.} =
+  if data.isNil:
+    raise newException(ValueError, "HEYY! data is nil")
+  let config = dictToYumlyConf(data)
+  result = dumpYumly(config)

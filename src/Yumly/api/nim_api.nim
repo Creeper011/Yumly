@@ -1,5 +1,8 @@
 import ../types/ast, ../types/type_hints
-import ../serializers/encoder
+import ../core/pipeline
+import ../core/builders
+export builders
+
 import options
 import tables
 import macros
@@ -7,43 +10,7 @@ import macros
 proc toYumly*(config: YumlyConf): string =
   return dumpYumly(config)
 
-proc newYumly*(): YumlyConf =
-  YumlyConf(blocks: @[], pairs: @[], includes: @[])
-
-proc newBlock*(name: string): Block =
-  Block(name: name, pairs: @[], subBlocks: @[], line: 0, col: 0)
-
-proc addPair*(container: var YumlyConf, key: string, value: Value,
-    typeHint: string = "") =
-  let hintOpt = if typeHint == "": none(TypeHint) else: some(TypeHint(
-      raw: typeHint, kind: thUnknown))
-  container.pairs.add(Pair(key: key, value: value, typeHint: hintOpt, line: 0, col: 0))
-
-proc addBlock*(container: var YumlyConf, blk: Block) =
-  container.blocks.add(blk)
-
-proc addPair*(container: var Block, key: string, value: Value,
-    typeHint: string = "") =
-  let hintOpt = if typeHint == "": none(TypeHint) else: some(TypeHint(
-      raw: typeHint, kind: thUnknown))
-  container.pairs.add(Pair(key: key, value: value, typeHint: hintOpt, line: 0, col: 0))
-
-proc addSubBlock*(container: var Block, blk: Block) =
-  container.subBlocks.add(blk)
-
-proc newStringValue*(v: string): Value = Value(kind: vkString, strVal: v)
-proc newIntValue*(v: int): Value = Value(kind: vkInt, intVal: v)
-proc newFloatValue*(v: float): Value = Value(kind: vkFloat, floatVal: v)
-proc newBoolValue*(v: bool): Value = Value(kind: vkBool, boolVal: v)
-proc newEnvValue*(name: string, val: string = ""): Value = Value(kind: vkEnv,
-    envName: name, envVal: if val == "": name else: val)
-proc newListValue*(elements: seq[Value]): Value = Value(kind: vkList,
-    elements: elements)
-proc newTupleValue*(elements: seq[Value]): Value = Value(kind: vkTuple,
-    elements: elements)
-
 # Getters for Value
-
 proc getStr*(val: Value): string =
   if val.kind != vkString:
     raise newException(ValueError, "Expected vkString, but got " & $val.kind)

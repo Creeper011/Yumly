@@ -1,12 +1,11 @@
 # Package
 
-version       = "0.4.0"
+version       = "0.5.0"
 author        = "Creeper011"
 description   = "A declarative config language inspired by YAML/JSON with type safety"
 license       = "MIT"
 
 # Source tree lives in ./src; public entrypoint is src/Yumly.nim which re-exports
-# the parser API from yumly_core.
 srcDir        = "src"
 installExt    = @["nim"]
 bin           = @["Yumly"]

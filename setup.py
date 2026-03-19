@@ -24,7 +24,7 @@ class BuildNim(build_py):
         nimcache_path = Path("build/nimcache")
         nimcache_path.mkdir(parents=True, exist_ok=True)
         command = [
-            "nim", "c", "-d:release", "--app:lib",
+            "nim", "c", "-d:release", "-d:python", "--app:lib",
             f"--nimcache:{nimcache_path}",
             f"--out:{output_path}",
             NIM_SOURCE_PATH

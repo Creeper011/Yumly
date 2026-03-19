@@ -8,11 +8,8 @@ PYTHON ?= $(VENV_BIN)python3
 PIP ?= $(VENV_BIN)pip
 NIM ?= nim
 NIMBLE ?= nimble
-NIM_FLAGS ?= -d:release --app:lib
-
-ifeq ($(PYTHON),python3)
-	PYTHON := python
-endif
+NIM_FLAGS ?= -d:release
+PYTHON_FLAGS ?= -d:python --app:lib
 
 ifeq ($(OS),Windows_NT)
 	EXT := pyd
@@ -22,28 +19,30 @@ endif
 
 OUT := $(OUT_DIR)/$(MODULE_NAME).$(EXT)
 
-.PHONY: build clean deps tests help
+.PHONY: build build-nim build-py clean deps tests help
 
 help:
 	@echo "Yumly Makefile"
-	@echo "  make deps    Install Nim dependencies"
-	@echo "  make build   Build the Nim shared library for Python"
-	@echo "  make tests   Run integration and unit tests (like CI)"
-	@echo "  make clean   Remove build artifacts"
+	@echo "  make deps       Install Nim dependencies"
+	@echo "  make build-py   Build the Nim shared library for Python"
+	@echo "  make build-nim  Build the Nim source for Nim use"
+	@echo "  make tests      Run integration and unit tests"
+	@echo "  make clean      Remove build artifacts"
 
-build: $(OUT)
+build-py: $(OUT)
 	$(PIP) install .
+
+build-nim:
+	$(NIM) c $(NIM_FLAGS) $(SRC)
 
 $(OUT): $(SRC)
 	@mkdir -p $(OUT_DIR)
-	$(NIM) c $(NIM_FLAGS) --out:$@ $(SRC)
+	$(NIM) c $(NIM_FLAGS) $(PYTHON_FLAGS) --out:$@ $(SRC)
 
 deps:
 	$(NIMBLE) install -y nimpy dotenv
 
-tests: build
-	@echo "--- Installing Python package ---"
-	$(PIP) install -q .
+tests: build-py
 	@echo "--- Running Integration Tests ---"
 	$(PYTHON) tests/run_tests.py
 	@echo "--- Running Nim Unit Tests ---"

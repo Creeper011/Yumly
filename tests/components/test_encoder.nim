@@ -1,5 +1,7 @@
 import ../../src/Yumly/api/nim_api
 import ../../src/Yumly/serializers/encoder
+import ../../src/Yumly/core/builders
+import ../../src/Yumly/core/pipeline
 import ../../src/Yumly/libyumly
 import os
 
@@ -30,7 +32,7 @@ proc runEncoderTest() =
       newBoolValue(false)]))
   cfg.addBlock(serverBlock)
 
-  let dumped = dumpYumly(cfg)
+  let dumped = encoder.dumpYumly(cfg)
   echo "--- YUMLY ENCODER OUTPUT ---"
   echo dumped
   echo "----------------------------"
@@ -41,7 +43,7 @@ proc runEncoderTest() =
     quit(1)
 
   echo "Loading dumped content back..."
-  let loaded = loadYumlyContent(dumped)
+  let loaded = pipeline.loadYumlyContent(dumped)
 
   assert loaded["project_name"].getStr() == "Test Project"
   assert loaded["version"].getStr() == "1.0.0"
