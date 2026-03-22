@@ -15,24 +15,11 @@ template loc(line, col: int): string =
 proc isEnvNode(node: YumNode): bool =
   node.kind == nkLiteral and node.token.kind == tkDollar
 
-# Tries each ValueDef decoder to infer which ValueKind a raw literal is.
-# skips env/list/tuple since those are structural, not raw-string-decodable.
-
-#TODO: add an dedicated method: classifyLiteral to values_defs
-proc inferValueKind(raw: string): ValueKind =
-  for vk in [vkBool, vkInt, vkFloat, vkString]:
-    try:
-      discard VALUES_DEF[vk].decode(raw)
-      return vk
-    except:
-      discard
-  vkString
-
 proc nodeTypeName(node: YumNode): string =
   if isEnvNode(node):
     return VALUES_DEF[vkEnv].typeHint
   case node.kind
-  of nkLiteral: VALUES_DEF[inferValueKind(node.rawValue)].typeHint
+  of nkLiteral: VALUES_DEF[classifyLiteral(node.rawValue).kind].typeHint
   of nkArray:   VALUES_DEF[vkList].typeHint
   of nkBlock:   "block"
   of nkPair:    "pair"
@@ -49,7 +36,8 @@ proc toValueKind(hk: TypeHintKind): ValueKind =
   of thEnv:    vkEnv
   of thList:   vkList
   of thTuple:  vkTuple
-  of thUnknown: vkString  # won't be reached in practice
+  else: 
+    raise newException(ValueError, "RAHHH >_<, invalid, i can't convert TypeHintKind to ValueKind")
 
 proc matchNodeToHint(node: YumNode, hintKind: TypeHintKind): bool =
   case hintKind
@@ -59,7 +47,7 @@ proc matchNodeToHint(node: YumNode, hintKind: TypeHintKind): bool =
   else:
     if node.kind != nkLiteral or isEnvNode(node):
       return false
-    VALUES_DEF[inferValueKind(node.rawValue)].typeHint ==
+    VALUES_DEF[classifyLiteral(node.rawValue).kind].typeHint ==
       VALUES_DEF[toValueKind(hintKind)].typeHint
 
 proc checkDuplicates(nodes: seq[YumNode], path: string, errors: var seq[string]) =

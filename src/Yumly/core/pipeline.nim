@@ -1,3 +1,9 @@
+##
+# This module defines the pipeline process to build an yumly config
+# the steps in pipeline are: tokenizer (lexer) [Tokens]-> parser (ast) [YumNodes]-> include loader -> [YumNodes] resolver (resolve type hints) -> validator [value defs] -> evaluator (evaluate variables like env) [value defs]
+# or: text -> encoder
+##
+
 import os
 import ../yumly_file
 import ../tokenizer

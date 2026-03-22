@@ -4,7 +4,7 @@
 ##
 
 import ../types/ast
-import strutils, sequtils
+import strutils, sequtils, options
 
 type 
   EncodingStyle* = enum
@@ -30,12 +30,17 @@ proc decodeEscapes(raw: string): string =
     else:
       result.add(raw[i]); i += 1
 
+# Decode Methods
+
 proc decodeString(raw: string): Value = 
   Value(kind: vkString, strVal: decodeEscapes(raw))
+
 proc decodeInt(raw: string): Value = 
   Value(kind: vkInt, intVal: parseInt(raw))
+
 proc decodeFloat(raw: string): Value = 
   Value(kind: vkFloat, floatVal: parseFloat(raw))
+
 proc decodeBool(raw: string): Value = 
   if raw == "true":
     Value(kind: vkBool, boolVal: true)
@@ -43,22 +48,30 @@ proc decodeBool(raw: string): Value =
     Value(kind: vkBool, boolVal: false)
   else:
     raise newException(ValueError, "Invalid boolean: " & raw)
+
 proc decodeEnv(raw: string): Value =
   # value def doesn't do env val resolution (IO)
   Value(kind: vkEnv, envName: raw, envVal: "")
+
 proc decodeList(raw: string): Value = 
   Value(kind: vkList, elements: @[])
+
 proc decodeTuple(raw: string): Value = 
   Value(kind: vkTuple, elements: @[])
+
+# Encode Methods
 
 proc encodeValue*(val: Value, style: EncodingStyle = styleYumly): string # forward
 
 proc encodeString(val: Value, style: EncodingStyle): string =
   return "\"" & val.strVal & "\""
+
 proc encodeInt(val: Value, style: EncodingStyle): string = 
   $val.intVal
-proc encodeFloat(val: Value, style: EncodingStyle): string = 
+
+proc encodeFloat(val: Value, style: EncodingStyle): string =
   $val.floatVal
+
 proc encodeBool(val: Value, style: EncodingStyle): string = 
   if val.boolVal: "true" else: "false"
 
@@ -125,3 +138,13 @@ let VALUES_DEF*: array[ValueKind, ValueDef] = [
     encode: encodeEnv
   ),
 ]
+
+proc tryDecode*(raw: string, vk: ValueKind): Option[Value] =
+  try: some(VALUES_DEF[vk].decode(raw))
+  except: none(Value)
+
+proc classifyLiteral*(raw: string): Value =
+  for vk in [vkBool, vkInt, vkFloat, vkString]:
+    let response = tryDecode(raw, vk)
+    if response.isSome: return response.get
+  raise newException(Defect, "RAHHH >_<, could not decode literal: '" & raw & "'")

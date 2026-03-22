@@ -73,6 +73,5 @@ proc resolveAst*(node: YumNode) =
   of nkArray, nkBlock, nkConfig:
     for child in node.children:
       resolveAst(child)
-
   else:
     discard

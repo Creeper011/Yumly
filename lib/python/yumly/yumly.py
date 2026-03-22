@@ -85,6 +85,6 @@ class Yumly():
     def dump(self, data: dict[str, Any], stream: IO[str]) -> None:
         """Dump data to a yumly content stream"""
         try:
-            stream.write(self.dumps(data))
+            stream.write(libyumly.dumpPy(data))
         except Exception as exc:
             raise YumlyError(str(exc) or FALLBACK_MESSAGE) from exc

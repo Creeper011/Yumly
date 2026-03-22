@@ -38,15 +38,8 @@ proc evaluateValue*(node: YumNode, hint: Option[TypeHint]): Value =
       return Value(kind: vkEnv, envName: node.rawValue,
                    envVal: os.getEnv(node.rawValue))
 
-    for vk in [vkBool, vkInt, vkFloat, vkString]:
-      try:
-        return VALUES_DEF[vk].decode(node.rawValue)
-      except:
-        discard
-
-    # Unreachable in practice; strings never fail to decode
-    raise newException(Defect,
-      "RAHHH >_<, could not decode literal: '" & node.rawValue & "'")
+    # try classify literal in bool, int, string and float
+    return classifyLiteral(node.rawValue)
 
   of nkArray:
     let elements = evaluateListElements(node.children, hint)

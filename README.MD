@@ -209,37 +209,56 @@ include { .env }
 ### ✦ Instalação
 
 ```bash
+git clone https://github.com/Creeper011/Yumly
+cd Yumly/
 make deps   # instala dependências Nim
-make build  # compila a biblioteca
-pip install .
+pip install . # ou caminho para o repositório Yumly
 ```
 
 ### ✦ Uso
 
 ```python
 from yumly import Yumly
+from typing import Any
 
-data = Yumly().load("config.yumly")
-print(data["global"]["project"])   # "Orion"
-print(data["database"]["port"])    # 5432
-```
-
-<details>
-<summary>Validação</summary>
-
-```python
-from yumly import Yumly
+PORT = 6767
 
 yumly = Yumly()
-yumly.validate_file("config.yumly")
-yumly.validate_content('(app) { name = "test" }')
-```
 
-</details>
+data: dict[str, Any] = yumly.load("config.yumly")
+print(data["global"]["project"])   # "Orion"
+print(data["database"]["port"])    # 5432
+
+data_to_write: dict[str, str] = {
+    "port": PORT,
+    "uri": "127.0.0.1", 
+}
+with open("config2.yumly", "w") as file:
+    yumly.dump(data_to_write, file)
+
+# or:
+content: str = yumly.dumps(data_to_write)
+print(content)
+
+result: bool = yumly.validate_content(content)
+print(f"Content validation result: {result}")
+
+file_result: bool = yumly.validate_file("config2.yumly")
+print(f"File validation result: {file_result}")
+
+```
 
 ---
 
 ## ✿ Nim
+
+### ✦ Instalação
+
+```bash
+git clone https://github.com/Creeper011/Yumly
+cd Yumly/
+nimble install --path:.
+```
 
 ### ✦ Uso básico
 
@@ -329,7 +348,7 @@ nim c -r tests/test_encoder.nim
 
 ## ✿ Sobre Projetos (Testes)
 
-- Yumly possui um conjunto de projetos PoC (Proof of Concepts) que visam testar implementações de yumly de forma mais integrada ao um cenário real; podem ser encontrados em [tests/project](tests/project).
+- Yumly possui um conjunto de projetos PoC (Proof of Concepts) que visam testar implementações de yumly de forma mais integrada ao um cenário real; podem ser encontrados em [tests/projects](./tests/projects/).
 
 ---
 
