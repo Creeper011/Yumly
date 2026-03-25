@@ -7,13 +7,13 @@
 import std/strutils
 import types/token
 
-template col(): int = i - lineStart + 1
+template col(startPos: int): int = startPos - lineStart + 1
 
-template emit(k: TokenKind) =
-  tokens.add(Token(kind: k, line: line, col: col()))
+template emit(k: TokenKind, startPos: int) =
+  tokens.add(Token(kind: k, line: line, col: col(startPos)))
 
-template emitVal(k: TokenKind, v: string) =
-  tokens.add(Token(kind: k, line: line, col: col(), value: v))
+template emitVal(k: TokenKind, v: string, startPos: int) =
+  tokens.add(Token(kind: k, line: line, col: col(startPos), value: v))
 
 proc tokenize*(source: string): seq[Token] =
   # Tokenize the source, we will iterate through each character and build tokens based on the rules of the Yumly language.
@@ -24,6 +24,7 @@ proc tokenize*(source: string): seq[Token] =
   var lineStart = 0
 
   while i < source.len:
+    # skip whitespace
     if source[i] in {' ', '\t', '\r'}:
       i += 1
       continue
@@ -53,19 +54,21 @@ proc tokenize*(source: string): seq[Token] =
     # handle literals (int, float)
     # emit an tkLiteral token
     if source[i] in {'0'..'9'} or (source[i] in {'+', '-'} and i + 1 < source.len and source[i + 1] in {'0'..'9'}):
+      # consume first digit or sign
       let start = i
       i += 1
 
-      # consume digits
+      # consume the other digits
       while i < source.len and source[i] in {'0'..'9'}:
         i += 1
 
-      # float part
+      # consume float part
       if i < source.len and source[i] == '.':
         i += 1
         while i < source.len and source[i] in {'0'..'9'}:
           i += 1
 
+      # consume exponent part
       if i < source.len and source[i] in {'e', 'E'}:
         i += 1
         if i < source.len and source[i] in {'+', '-'}:
@@ -76,24 +79,27 @@ proc tokenize*(source: string): seq[Token] =
         while i < source.len and source[i] in {'0'..'9'}:
           i += 1
 
-      emitVal(tkLiteral, source[start ..< i])
+      emitVal(tkLiteral, source[start ..< i], start)
       continue
 
     case source[i]
-    of '(': emit(tkLParen);      i += 1
-    of ')': emit(tkRParen);      i += 1
-    of '{': emit(tkLBrace);      i += 1
-    of '}': emit(tkRBrace);      i += 1
-    of '[': emit(tkLBracket);    i += 1
-    of ']': emit(tkRBracket);    i += 1
-    of '=': emit(tkEquals);      i += 1
-    of ';': emit(tkDeclaration); i += 1
-    of ',': emit(tkComma);       i += 1
-    of '$': emit(tkDollar);      i += 1
+    of '(': emit(tkLParen, i);      i += 1
+    of ')': emit(tkRParen, i);      i += 1
+    of '{': emit(tkLBrace, i);      i += 1
+    of '}': emit(tkRBrace, i);      i += 1
+    of '[': emit(tkLBracket, i);    i += 1
+    of ']': emit(tkRBracket, i);    i += 1
+    of '=': emit(tkEquals, i);      i += 1
+    of ';': emit(tkDeclaration, i); i += 1
+    of ',': emit(tkComma, i);       i += 1
+    of '$': emit(tkDollar, i);      i += 1
     # if string
     of '"', '\'':
       let quote = source[i]
+      # the start of the string with the quote
+      let stringStart = i
       i += 1
+      # the start of the string without the quote
       let start = i
       while i < source.len and source[i] != quote:
         if source[i] == '\\':
@@ -107,25 +113,26 @@ proc tokenize*(source: string): seq[Token] =
       if i >= source.len:
         raise newException(ValueError, "Heyy the string doesn't close at the end of the file on line " & $line)
       
-      emitVal(tkString, source[start..i-1])
+      emitVal(tkString, source[start..i-1], stringStart)
       i += 1
 
     else:
-      if source[i] in IdentStartChars + {'.'}:
+      # handle identifiers and keywords
+      if source[i] in IdentStartChars + {'/', '.'}:
         let start = i
-        while i < source.len and source[i] in IdentChars + {'.', '-', '/'}:
+        while i < source.len and source[i] in IdentChars + {'/', '.', '-', '/'}:
           i += 1
         let word = source[start..i-1]
         case word:
           of "include":
-            emit(tkInclude)
+            emit(tkInclude, start)
           of "true", "false":
-            emitVal(tkLiteral, word)
+            emitVal(tkLiteral, word, start)
           else:
-            emitVal(tkIdent, word)
+            emitVal(tkIdent, word, start)
       else:
         raise newException(ValueError,
           "Wow, an unexpected character '" & $source[i] & "' on line " & $line)
 
-  emit(tkEOF)
+  emit(tkEOF, source.len)
   return tokens

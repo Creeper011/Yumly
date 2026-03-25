@@ -2,6 +2,7 @@ import ../types/ast, ../types/type_hints
 import ../core/pipeline
 import ../core/builders
 export builders
+export pipeline
 
 import options
 import tables
