@@ -90,4 +90,4 @@ proc missingEnvError*(envName: string, line: int, column: int) =
     raise newException(ValueError,
         "Kyaa~! the env variable '" & envName & "' does not exist! (；ω；)" &
         "\n  line: " & $line & ", column: " & $column & "\n" &
-        "  hint: make sure '" & envName & "' is set in your terminal or loaded via include { .env }")
+        "  hint: make sure '" & envName & "' is set in your terminal or loaded via include { \".env\" }")

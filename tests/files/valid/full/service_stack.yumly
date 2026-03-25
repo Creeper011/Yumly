@@ -1,4 +1,4 @@
-include { base_shared.yumly }
+include { "base_shared.yumly" }
 
 (global) {
     stack_name ;string = "orion-prod",

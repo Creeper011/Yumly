@@ -40,7 +40,7 @@ proc loadIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[strin
         
       if ext notin allowedIncludeExts:
         raise newException(ValueError,
-          "Mmm, this file type isn't supported in include { } ;-; \n" &
+          "Mmm, this file type isn't supported in include { \"\" } ;-; \n" &
           "  file: '" & includePath & "'\n" &
           "  got type: '" & ext & "'\n" &
           "  line: " & $child.line & ", column: " & $child.col & "\n" &

@@ -1,6 +1,6 @@
 ;> Example using yuy extension with env lookups and nested blocks <;
 
-include { base_shared.yumly }
+include { "base_shared.yumly" }
 
 (plan) {
     environment ;string = "staging",

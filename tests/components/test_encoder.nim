@@ -8,6 +8,8 @@ import os
 proc runEncoderTest() =
   putEnv("DB_PASS", "secret_password")
   var cfg = newYumly()
+  # NOTE: in validation, this will check the env file.. but it will fail if the env file is not present
+  #cfg.addInclude(".env")
 
   cfg.addPair("project_name", newStringValue("Test Project"), "string")
   cfg.addPair("version", newStringValue("1.0.0"))

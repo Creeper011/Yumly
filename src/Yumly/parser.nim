@@ -143,10 +143,10 @@ proc parseBlock*(parser: var Parser): YumNode =
                         nameToken.value, lpToken.line, lpToken.col)
 
 proc parseInclude(parser: var Parser): YumNode =
-  # Syntax: include { path }
+  # Syntax: include { "path" }
   let tok = parser.advance() # consume tkInclude
   discard parser.expect(tkLBrace, expLBrace)
-  let pathToken = parser.expect(tkIdent, expIdentifier)
+  let pathToken = parser.expect(tkString, expString)
   discard parser.expect(tkRBrace, expRBrace)
   return YumNode(kind: nkInclude, includePath: pathToken.value,
                  token: tok, line: tok.line, col: tok.col)

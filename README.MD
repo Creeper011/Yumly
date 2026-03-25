@@ -12,7 +12,7 @@ O parser é escrito em [Nim](https://nim-lang.org/) e exporta bindings para [Pyt
 
 - **Sem indentação** — blocos delimitados por `{ }` permitindo organização flexível
 - **Type hints opcionais** — você pode declarar intenção ._.
-- **Env vars nativas** — `$["VAR"]` e `include { .env }` de primeira classe ;)
+- **Env vars nativas** — `$["VAR"]` e `include { ".env" }` de primeira classe ;)
 - **Legível** — você lê de cima pra baixo e entende tudo ^_^ (human friendly)
 - **Extensões** `.yumly` e `.yuy` (é mto fofo!!)
 
@@ -94,9 +94,9 @@ home  ;env = $["HOME"]
 <summary>Include</summary>
 
 ```yumly
-include { .env }           ;> carrega variáveis de ambiente <;
-include { base.yumly }     ;> importa blocos de outro arquivo <;
-include { shared.yuy }     ;> também aceita .yuy ou .yumly <;
+include { ".env" }           ;> carrega variáveis de ambiente <;
+include { "base.yumly" }     ;> importa blocos de outro arquivo <;
+include { "shared.yuy" }     ;> também aceita .yuy ou .yumly <;
 ```
 
 </details>
@@ -164,7 +164,7 @@ job = "dev"
 ### Exemplo completo
 
 ```yumly
-include { .env }
+include { ".env" }
 
 (global) {
     project ;string = "Orion",

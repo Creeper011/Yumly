@@ -98,7 +98,7 @@ proc validateEnvExistence(node: YumNode, errors: var seq[string]) =
     errors.add(
       "Kyaa~! the env variable '" & node.rawValue & "' does not exist! (；ω；)" &
       loc(node.line, node.col) &
-      "\n  hint: make sure it's set in your terminal or loaded via include { .env }"
+      "\n  hint: make sure it's set in your terminal or loaded via include { \".env\" }"
     )
 
 proc validatePair(pairNode: YumNode, path: string, errors: var seq[string]) =

@@ -1,6 +1,6 @@
 ;> Common defaults reused by other full configs <;
 
-include { full.env } ;> loads local env values used by the examples <;
+include { "full.env" } ;> loads local env values used by the examples <;
 
 (common) {
     company ;string = "Yumly Corp",

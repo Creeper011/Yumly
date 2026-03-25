@@ -5,7 +5,7 @@ import ../src/Yumly/tokenizer
 import ../src/Yumly/types/token
 
 const fileContent = """
-include { example.yumly }
+include { "example.yumly" }
 
 name ;string = "John Doe", fullName ;string = "John Doe 67!",
 age ;int = 30

@@ -1,1 +1,1 @@
-include { ../circular_include.yumly }
+include { "../circular_include.yumly" }

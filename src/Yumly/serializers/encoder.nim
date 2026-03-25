@@ -68,7 +68,7 @@ proc dumpYumly*(config: YumlyConf): string =
 
   # include always on top with no commas
   for incl in config.includes:
-    ctx.emit("include { " & incl.includePath & " }")
+    ctx.emit("include { \"" & incl.includePath & "\" }")
 
   let hasIncludes = config.includes.len > 0
   let hasPairs = config.pairs.len > 0
