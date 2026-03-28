@@ -1,51 +1,51 @@
 # ✧*･ﾟ Yumly ･ﾟ*✧
 
-> ⚠️ MVP — sujeito a mudanças. 
+> ⚠️ MVP — subject to changes. 
 
-Yumly é uma linguagem de configuração declarativa com type safety opcional, misturando elementos de YAML e JSON — sem depender de indentação.
+Yumly is a cute, declarative configuration language with fail-fast behavior and optional type safety, blending elements of YAML and JSON — without relying on indentation.
 
-O parser é escrito em [Nim](https://nim-lang.org/) e exporta bindings para [Python](https://www.python.org/) via [NimPy](https://github.com/yglukhov/nimpy). Há também uma API Nim nativa para uso direto.
-
----
-
-## ✿ O que tem Yumly?
-
-- **Sem indentação** — blocos delimitados por `{ }` permitindo organização flexível
-- **Type hints opcionais** — você pode declarar intenção ._.
-- **Env vars nativas** — `$["VAR"]` e `include { ".env" }` de primeira classe ;)
-- **Legível** — você lê de cima pra baixo e entende tudo ^_^ (human friendly)
-- **Extensões** `.yumly` e `.yuy` (é mto fofo!!)
+The parser is written in [Nim](https://nim-lang.org/) and exports bindings for [Python](https://www.python.org/) via [NimPy](https://github.com/yglukhov/nimpy). There's also a native Nim API for direct usage.
 
 ---
 
-## ✿ Sintaxe
+## ✿ What's in Yumly?
+
+- **No indentation** — blocks delimited by `{ }` allowing flexible organization
+- **Optional type hints** — you can declare intent UwU
+- **Native env vars** — `$["VAR"]` and `include { ".env" }` are first class ;)
+- **Readable** — it's easy to read and understand ^_^
+- **Extensions** `.yumly` and `.yuy` (it's so cute!!)
+
+---
+
+## ✿ Syntax
 
 <details>
-<summary>Comentários</summary>
+<summary>Comments</summary>
 
 ```yumly
-;> isso é um comentário <;
+;> this is a comment <;
 
 ;>
-comentário
-de múltiplas linhas
+multiline
+comment
 <;
 ```
 
 </details>
 
 <details>
-<summary>Pares chave-valor</summary>
+<summary>Key-value pairs</summary>
 
 ```yumly
-;> type hints são opcionais <;
+;> type hints are optional <;
 name ;string = "Yumly"
 version ;string = "1.0.0"
 debug ;bool = true
 port ;int = 8080
 ratio ;float = 3.14
 
-;> sem type hint, o tipo é inferido pelo valor <;
+;> without type hint, type is inferred from value <;
 active = true
 count = 42
 ```
@@ -53,7 +53,7 @@ count = 42
 </details>
 
 <details>
-<summary>Blocos</summary>
+<summary>Blocks</summary>
 
 ```yumly
 (app) {
@@ -63,7 +63,7 @@ count = 42
 }
 ```
 
-Blocos podem ser aninhados:
+Blocks can be nested:
 
 ```yumly
 (database) {
@@ -81,7 +81,7 @@ Blocos podem ser aninhados:
 </details>
 
 <details>
-<summary>Variáveis de ambiente</summary>
+<summary>Environment variables</summary>
 
 ```yumly
 token ;env = $["DISCORD_TOKEN"]
@@ -94,15 +94,15 @@ home  ;env = $["HOME"]
 <summary>Include</summary>
 
 ```yumly
-include { ".env" }           ;> carrega variáveis de ambiente <;
-include { "base.yumly" }     ;> importa blocos de outro arquivo <;
-include { "shared.yuy" }     ;> também aceita .yuy ou .yumly <;
+include { ".env" }           ;> loads environment variables <;
+include { "base.yumly" }     ;> imports blocks from another file <;
+include { "shared.yuy" }     ;> also accepts .yuy or .yumly <;
 ```
 
 </details>
 
 <details>
-<summary>Strings e Escapes</summary>
+<summary>Strings and Escapes</summary>
 
 ```yumly
 newline = "Line 1\nLine 2"
@@ -114,45 +114,45 @@ quotes = "He said: \"Hello!\""
 </details>
 
 <details>
-<summary>Listas e Tuples</summary>
+<summary>Lists and Tuples</summary>
 
-**Listas** — homogêneas, todos os itens do mesmo tipo:
+**Lists** — homogeneous, all items of the same type:
 
 ```yumly
 tags    ;list[string] = ["api", "v2", "stable"]
 ports   ;list[int]    = [8080, 8081, 8082]
 
-;> sem type hint, inferido pelo primeiro elemento <;
+;> without type hint, inferred from first element <;
 hosts = ["localhost", "0.0.0.0"]
 ```
 
-Tipos válidos: `string`, `int`, `float`, `bool`, `env`.
+Valid types: `string`, `int`, `float`, `bool`, `env`.
 
-**Tuples** — heterogêneas, tipos diferentes:
+**Tuples** — heterogeneous, different types:
 
 ```yumly
 server_info ;tuple = ["localhost", 8080, true]
 
-;> inferido automaticamente se os tipos forem mistos <;
+;> automatically inferred if types are mixed <;
 meta = ["staging", 42, false]
 ```
 
 </details>
 
 <details>
-<summary>Regras de vírgula</summary>
+<summary>Comma rules</summary>
 
-Dentro de blocos, vírgulas separam pares e sub-blocos. O último item não precisa de vírgula:
+Inside blocks, commas separate pairs and sub-blocks. The last item doesn't need a comma:
 
 ```yumly
 (block) {
     a = "x",
     b = "y",
-    c = "z"    ;> última, sem vírgula <;
+    c = "z"    ;> last, no comma <;
 }
 ```
 
-No root, pares na mesma linha precisam de vírgula:
+At root, pairs on the same line need a comma:
 
 ```yumly
 name = "John", age = 30
@@ -161,21 +161,21 @@ job = "dev"
 
 </details>
 
-### Exemplo completo
+### Complete example
 
 ```yumly
 include { ".env" }
 
 (global) {
-    project ;string = "Orion",
-    version ;string = "2.0.0",
-    production ;bool = false,
+    project ;string = "Cid",
+    version ;string = "6.0.0",
+    production ;bool = true,
     tags ;list[string] = ["cloud", "scalable"]
 }
 
 (database) {
     host = "localhost",
-    port ;int = 5432,
+    port ;int = 6767,
     password ;env = $["DB_PASSWORD"]
 }
 
@@ -190,32 +190,32 @@ include { ".env" }
 
 ---
 
-## ✿ Tipos disponíveis
+## ✿ Available types
 
-| Type hint    | Exemplo                                      |
+| Type hint    | Example                                      |
 |--------------|----------------------------------------------|
-| `;string`    | `name ;string = "Yumly"`                    |
-| `;int`       | `port ;int = 8080`                           |
-| `;float`     | `ratio ;float = 3.14`                        |
-| `;bool`      | `debug ;bool = true`                         |
-| `;env`       | `token ;env = $["TOKEN"]`                   |
-| `;list[T]`   | `tags ;list[string] = ["a", "b"]`           |
-| `;tuple`     | `info ;tuple = ["host", 8080, true]`        |
+| `;string`   | `name ;string = "Yumly"`                    |
+| `;int`      | `port ;int = 8080`                           |
+| `;float`    | `ratio ;float = 3.14`                        |
+| `;bool`     | `debug ;bool = true`                         |
+| `;env`      | `token ;env = $["TOKEN"]`                   |
+| `;list[T]`  | `tags ;list[string] = ["a", "b"]`            |
+| `;tuple`    | `info ;tuple = ["host", 6767, true]`        |
 
 ---
 
 ## ✿ Python
 
-### ✦ Instalação
+### ✦ Installation
 
 ```bash
 git clone https://github.com/Creeper011/Yumly
 cd Yumly/
-make deps   # instala dependências Nim
-pip install . # ou caminho para o repositório Yumly
+make deps   # install Nim dependencies
+pip install . # or path to Yumly repository
 ```
 
-### ✦ Uso
+### ✦ Usage
 
 ```python
 from yumly import Yumly
@@ -226,8 +226,8 @@ PORT = 6767
 yumly = Yumly()
 
 data: dict[str, Any] = yumly.load("config.yumly")
-print(data["global"]["project"])   # "Orion"
-print(data["database"]["port"])    # 5432
+print(data["global"]["project"])
+print(data["database"]["port"])
 
 data_to_write: dict[str, str] = {
     "port": PORT,
@@ -252,7 +252,7 @@ print(f"File validation result: {file_result}")
 
 ## ✿ Nim
 
-### ✦ Instalação
+### ✦ Installation
 
 ```bash
 git clone https://github.com/Creeper011/Yumly
@@ -260,7 +260,7 @@ cd Yumly/
 nimble install --path:.
 ```
 
-### ✦ Uso básico
+### ✦ Basic usage
 
 ```nim
 import Yumly
@@ -272,7 +272,7 @@ echo config.getBlock("database")["port"].getInt()
 ```
 
 <details>
-<summary>Iteração</summary>
+<summary>Iteration</summary>
 
 ```nim
 for blk in config:
@@ -284,7 +284,7 @@ for blk in config:
 </details>
 
 <details>
-<summary>Mapeamento para objetos com macro <code>to</code></summary>
+<summary>Mapping to objects with the <code>to</code> macro</summary>
 
 ```nim
 type
@@ -300,7 +300,7 @@ echo app.project   # "Orion"
 </details>
 
 <details>
-<summary>Escrita de arquivos</summary>
+<summary>File writing</summary>
 
 ```nim
 var cfg = newYumly()
@@ -327,7 +327,7 @@ yumly_cli load config.yumly
 
 ---
 
-## ✿ Extensão VSCode
+## ✿ VSCode Extension
 
 ```bash
 cd yumly-vscode
@@ -337,7 +337,7 @@ code --install-extension yumly.vsix
 
 ---
 
-## ✿ Testes
+## ✿ Tests
 
 ```bash
 python tests/run_tests.py
@@ -346,12 +346,12 @@ nim c -r tests/test_encoder.nim
 
 ---
 
-## ✿ Sobre Projetos (Testes)
+## ✿ About Projects (Tests)
 
-- Yumly possui um conjunto de projetos PoC (Proof of Concepts) que visam testar implementações de yumly de forma mais integrada ao um cenário real; podem ser encontrados em [tests/projects](./tests/projects/).
+- Yumly has a set of PoC (Proof of Concepts) projects that aim to test yumly implementations in a more integrated real-world scenario; they can be found in [tests/projects](./tests/projects/).
 
 ---
 
-## ★ Licença ★
+## ★ License ★
 
-MIT — veja [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
