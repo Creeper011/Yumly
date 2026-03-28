@@ -1,5 +1,5 @@
 # Package
-version       = "0.7.0"
+version       = "0.8.0"
 author        = "Creeper011"
 description   = "A declarative config language inspired by YAML/JSON with type safety"
 license       = "MIT"

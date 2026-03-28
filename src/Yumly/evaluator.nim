@@ -64,8 +64,12 @@ proc evaluatePair*(node: YumNode): Pair =
   )
 
 proc evaluateBlock*(node: YumNode): Block =
-  result = Block(name: node.name, line: node.line, col: node.col,
-                 pairs: @[], subBlocks: @[])
+  new(result)
+  result.name = node.name
+  result.line = node.line
+  result.col = node.col
+  result.pairs = @[]
+  result.subBlocks = @[]
   for child in node.children:
     case child.kind
     of nkPair:  result.pairs.add(evaluatePair(child))
@@ -73,7 +77,10 @@ proc evaluateBlock*(node: YumNode): Block =
     else: discard
 
 proc evaluateConfig*(rootNode: YumNode): YumlyConf =
-  result = YumlyConf(blocks: @[], pairs: @[], includes: @[])
+  new(result)
+  result.blocks = @[]
+  result.pairs = @[]
+  result.includes = @[]
   for child in rootNode.children:
     case child.kind
     of nkBlock:   result.blocks.add(evaluateBlock(child))

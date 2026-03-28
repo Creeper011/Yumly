@@ -4,37 +4,77 @@ import ../core/builders
 export builders
 export pipeline
 
-import options
-import tables
-import macros
+import std/[options, tables, macros, sequtils, strutils]
 
 proc toYumly*(config: YumlyConf): string =
   return dumpYumly(config)
 
-# Getters for Value
-proc getStr*(val: Value): string =
-  if val.kind != vkString:
-    raise newException(ValueError, "Expected vkString, but got " & $val.kind)
+# % operator for creating Values
+proc `%`*(s: string): Value = newStringValue(s)
+proc `%`*(i: int): Value = newIntValue(i)
+proc `%`*(f: float): Value = newFloatValue(f)
+proc `%`*(b: bool): Value = newBoolValue(b)
+proc `%`*(elems: seq[Value]): Value = newListValue(elems)
+proc `%`*(t: tuple): Value = 
+  var elems: seq[Value] = @[]
+  for k, v in t.fieldPairs:
+    elems.add(%v)
+  newTupleValue(elems)
+
+proc `%`*(keyVals: openArray[tuple[key: string, val: Value]]): YumlyConf =
+  result = newYumly()
+  for kv in keyVals:
+    result.addPair(kv.key, kv.val)
+
+# %* macro for creating Values from expressions
+macro `%*`*(x: untyped): untyped =
+  proc `%Recurse`(node: NimNode): NimNode =
+    result = node
+    case node.kind
+    of nnkIntLit:
+      result = newCall(bindSym"newIntValue", node)
+    of nnkFloatLit:
+      result = newCall(bindSym"newFloatValue", node)
+    of nnkStrLit, nnkTripleStrLit:
+      result = newCall(bindSym"newStringValue", node)
+    of nnkIdent:
+      if node.strVal == "true" or node.strVal == "false":
+        result = newCall(bindSym"newBoolValue", node)
+    of nnkBracket:
+      let elems = node.mapIt(`%Recurse`(it))
+      result = newCall(bindSym"newListValue", newTree(nnkBracket, elems))
+    of nnkPar, nnkTupleConstr:
+      let elems = node.mapIt(`%Recurse`(it))
+      result = newCall(bindSym"newTupleValue", newTree(nnkBracket, elems))
+    of nnkTableConstr:
+      result = newCall(bindSym"newYumly")
+      let pairs = node.mapIt(newTree(nnkExprColonExpr, 
+        newStrLitNode(it[0].strVal),
+        `%Recurse`(it[1])))
+      result.add(newTree(nnkBracket, pairs))
+    else:
+      discard
+  result = `%Recurse`(x)
+
+# Getters for Value with default value
+proc getStr*(val: Value, default: string = ""): string =
+  if val.kind != vkString: return default
   return val.strVal
 
-proc getInt*(val: Value): int =
-  if val.kind != vkInt:
-    raise newException(ValueError, "Expected vkInt, but got " & $val.kind)
+proc getInt*(val: Value, default: int = 0): int =
+  if val.kind != vkInt: return default
   return val.intVal
 
-proc getFloat*(val: Value): float =
-  if val.kind != vkFloat:
-    raise newException(ValueError, "Expected vkFloat, but got " & $val.kind)
+proc getFloat*(val: Value, default: float = 0.0): float =
+  if val.kind != vkFloat: return default
   return val.floatVal
 
-proc getBool*(val: Value): bool =
-  if val.kind != vkBool:
-    raise newException(ValueError, "Expected vkBool, but got " & $val.kind)
+proc getBool*(val: Value, default: bool = false): bool =
+  if val.kind != vkBool: return default
   return val.boolVal
 
-proc getElems*(val: Value): seq[Value] =
-  if val.kind notin {vkList, vkTuple}:
-    raise newException(ValueError, "Expected vkList or vkTuple, but got " & $val.kind)
+proc getElems*(val: Value, default: seq[Value] = @[]): seq[Value] =
+  if val.kind notin {vkList, vkTuple}: return default
   return val.elements
 
 # Indexing operators
@@ -76,6 +116,43 @@ proc `[]`*(blk: var Block, key: string): var Value =
   for pair in blk.pairs.mitems:
     if pair.key == key: return pair.value
   raiseKeyError("Key not found in block '" & blk.name & "': " & key)
+
+# Safe {} operator - returns Option[Value]
+proc safeGet*(config: YumlyConf, key: string): Option[Value] =
+  for pair in config.pairs:
+    if pair.key == key: return some(pair.value)
+  return none(Value)
+
+proc safeGet*(blk: Block, key: string): Option[Value] =
+  for pair in blk.pairs:
+    if pair.key == key: return some(pair.value)
+  return none(Value)
+
+proc safeGet*(val: Value, index: int): Option[Value] =
+  if val.kind notin {vkList, vkTuple}: return none(Value)
+  if index < 0 or index >= val.elements.len: return none(Value)
+  return some(val.elements[index])
+
+proc `{}`*(config: YumlyConf, key: string): Option[Value] = safeGet(config, key)
+proc `{}`*(blk: Block, key: string): Option[Value] = safeGet(blk, key)
+proc `{}`*(val: Value, index: int): Option[Value] = safeGet(val, index)
+
+proc `{}`*(config: YumlyConf, keys: varargs[string]): Option[Value] =
+  result = some(Value(kind: vkString, strVal: ""))
+  for key in keys:
+    if result.isNone: return none(Value)
+    let curr = result.get()
+    if curr.kind in {vkList, vkTuple}:
+      try:
+        let idx = parseInt(key)
+        result = safeGet(curr, idx)
+      except:
+        return none(Value)
+    else:
+      result = none(Value)
+  if result.isSome and result.get().kind == vkString and result.get().strVal == "":
+    return none(Value)
+  return result
 
 # Iterators
 iterator items*(val: Value): Value =

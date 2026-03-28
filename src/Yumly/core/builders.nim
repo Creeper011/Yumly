@@ -15,10 +15,18 @@ func newTupleValue*(elements: seq[Value]): Value = Value(kind: vkTuple,
 
 # Block/Pair helpers
 func newYumly*(): YumlyConf =
-  YumlyConf(blocks: @[], pairs: @[], includes: @[])
+  new(result)
+  result.blocks = @[]
+  result.pairs = @[]
+  result.includes = @[]
 
 func newBlock*(name: string): Block =
-  Block(name: name, pairs: @[], subBlocks: @[], line: 0, col: 0)
+  new(result)
+  result.name = name
+  result.pairs = @[]
+  result.subBlocks = @[]
+  result.line = 0
+  result.col = 0
 
 func addPair*(container: var YumlyConf, key: string, value: Value,
     typeHint: string = "") =

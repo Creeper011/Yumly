@@ -29,7 +29,7 @@ type
     line*: int
     col*: int
 
-  Block* = object
+  Block* = ref object
     name*: string
     pairs*: seq[Pair]
     subBlocks*: seq[Block]
@@ -39,7 +39,7 @@ type
   Include* = object
     includePath*: string
 
-  YumlyConf* = object
+  YumlyConf* = ref object
     blocks*: seq[Block]
     pairs*: seq[Pair]
     includes*: seq[Include]

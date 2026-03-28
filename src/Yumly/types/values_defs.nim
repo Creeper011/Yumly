@@ -30,6 +30,15 @@ proc decodeEscapes(raw: string): string =
     else:
       result.add(raw[i]); i += 1
 
+proc encodeEscapes(raw: string): string = 
+  for ch in raw:
+    case ch:
+    of '\n': result.add("\\n")
+    of '\t': result.add("\\t")
+    of '\\': result.add("\\\\")
+    of '"':  result.add("\\\"")
+    else:    result.add(ch)
+
 # Decode Methods
 
 proc decodeString(raw: string): Value = 
@@ -64,7 +73,9 @@ proc decodeTuple(raw: string): Value =
 proc encodeValue*(val: Value, style: EncodingStyle = styleYumly): string # forward
 
 proc encodeString(val: Value, style: EncodingStyle): string =
-  return "\"" & val.strVal & "\""
+  case style
+  of styleYumly: return "\"" & encodeEscapes(val.strVal) & "\""
+  of styleYumyumy: return val.strVal
 
 proc encodeInt(val: Value, style: EncodingStyle): string = 
   $val.intVal
