@@ -8,8 +8,8 @@ PYTHON ?= $(VENV_BIN)python3
 PIP ?= $(VENV_BIN)pip
 NIM ?= nim
 NIMBLE ?= nimble
-NIM_FLAGS ?= -d:release
-PYTHON_FLAGS ?= -d:python --app:lib
+NIM_FLAGS ?= -d:release --opt:size --debuginfo:off --passL:-Wl,--strip-all --lineTrace:off
+PYTHON_FLAGS ?= -d:python -d:release --app:lib --opt:size --debuginfo:off --passL:-Wl,--strip-all --lineTrace:off
 
 ifeq ($(OS),Windows_NT)
 	EXT := pyd

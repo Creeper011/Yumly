@@ -1,6 +1,6 @@
 # ✧*･ﾟ Yumly ･ﾟ*✧
 
-> ⚠️ MVP — subject to changes. 
+> ⚠️ Warning — subject to changes. 
 
 Yumly is a cute, declarative configuration language with fail-fast behavior and optional type safety, blending elements of YAML and JSON — without relying on indentation.
 

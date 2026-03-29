@@ -1,15 +1,15 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "yumly"
 version = "0.8.0"
-description = "A cute,declarative config language with fail-fast behavior and optional type safety."
+description = "A cute, declarative config language with fail-fast behavior and optional type safety."
 readme = "README.md"
-authors = [{ name = "Yumene", email = " yumene@yume.dev.br " }]
+authors = [{ name = "Yumene", email = "yumene@yume.dev.br" }]
 license = { file = "LICENSE" }
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 
 [tool.setuptools]
 packages = ["yumly"]

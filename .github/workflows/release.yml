@@ -1,0 +1,71 @@
+name: Build and Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Nim (macOS and Windows)
+        if: matrix.os != 'ubuntu-latest'
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: 'stable'
+
+      - name: Install Nim dependencies (macOS and Windows)
+        if: matrix.os != 'ubuntu-latest'
+        run: nimble install -y nimpy dotenv
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.19.0
+        env:
+          CIBW_BUILD: "cp310-* cp311-* cp312-*"
+          CIBW_SKIP: "*-musllinux* *-win32 *-manylinux_i686"
+
+          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
+
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: "python -c \"import os, shutil; src = '{wheel}'; dst = '{dest_dir}'; name = os.path.basename(src).replace('linux_x86_64', 'manylinux_2_28_x86_64'); shutil.copy(src, os.path.join(dst, name))\""
+
+          CIBW_BEFORE_ALL_LINUX: >
+            NIM_VERSION=2.2.0 &&
+            curl -sSfL
+            https://nim-lang.org/download/nim-${NIM_VERSION}-linux_x64.tar.xz
+            -o /tmp/nim.tar.xz &&
+            tar xf /tmp/nim.tar.xz -C /opt &&
+            /opt/nim-${NIM_VERSION}/bin/nimble install -y nimpy dotenv
+
+          CIBW_ENVIRONMENT_LINUX: 'PATH="/opt/nim-2.2.0/bin:$PATH"'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+
+  publish:
+    name: Publish to PyPI
+    needs: [build_wheels]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
