@@ -10,7 +10,7 @@ try:
     from wheel.bdist_wheel import bdist_wheel as _bdist_wheel  # type: ignore[assignment]
 
     class bdist_wheel(_bdist_wheel):
-        """Force the wheel to be tagged as platform-specific."""
+        """Force the wheel to be tagged as platform-specific but Python-version agnostic."""
         def run(self):
             self.run_command("build_py")
             _bdist_wheel.run(self)
@@ -18,6 +18,10 @@ try:
         def finalize_options(self):
             _bdist_wheel.finalize_options(self)
             self.root_is_pure = False
+
+        def get_tag(self):
+            python, abi, plat = _bdist_wheel.get_tag(self)
+            return ("py3", "none", plat)
 except ImportError:
     pass
 
