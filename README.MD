@@ -209,11 +209,20 @@ include { ".env" }
 ### ✦ Installation
 
 ```bash
+pip install yumly
+```
+
+<details>
+<summary>Install from source</summary>
+
+```bash
 git clone https://github.com/Creeper011/Yumly
 cd Yumly/
 make deps   # install Nim dependencies
 pip install . # or path to Yumly repository
 ```
+
+</details>
 
 ### ✦ Usage
 
