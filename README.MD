@@ -213,13 +213,13 @@ pip install yumly
 ```
 
 <details>
-<summary>Install from source</summary>
+<summary>Install from source (unstable/git version)</summary>
 
 ```bash
 git clone https://github.com/Creeper011/Yumly
 cd Yumly/
 make deps   # install Nim dependencies
-pip install . # or path to Yumly repository
+pip install .
 ```
 
 </details>
