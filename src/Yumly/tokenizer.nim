@@ -107,23 +107,35 @@ proc tokenize*(source: string): seq[Token] =
       if quoteChar == '"' and i + 2 < source.len and source[i+1] == '"' and source[i+2] == '"':
         i += 3 # skip opening """
         
-        # skip leading formatting on the first line
+        # skip leading formatting on the first line with buffering
+        var buffer = ""
         while i < source.len:
           if i + 1 < source.len and source[i] == '\\':
-            if source[i+1] == 'n':
-              i += 2 # skip \n escape
-            else:
-              stringContent.add(source[i .. i+1]) # keep other escapes
-              i += 2
+            buffer.add(source[i .. i+1])
+            i += 2
           elif source[i] == '\n':
-            i += 1 # skip first literal newline
+            # hit newline: skip all whitespace and \n escapes in the buffer
+            # but keep other escapes (like \t) as they are likely content
+            var j = 0
+            while j < buffer.len:
+              if buffer[j] == '\\' and j + 1 < buffer.len:
+                if buffer[j+1] != 'n':
+                  stringContent.add(buffer[j .. j+1])
+                j += 2
+              else: # discard whitespace
+                j += 1
+            
+            # skip the newline itself
+            i += 1
             line += 1
             lineStart = i
-            break 
+            break
           elif source[i] in {' ', '\t', '\r'}:
-            i += 1 # skip whitespace on the first line
+            buffer.add(source[i])
+            i += 1
           else:
-            # found real content on the first line, stop skipping
+            # hit actual content: keep the full buffer
+            stringContent.add(buffer)
             break
 
         # main loop of the multiline string
