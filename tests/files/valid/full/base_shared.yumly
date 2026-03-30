@@ -4,6 +4,10 @@ include { "full.env" } ;> loads local env values used by the examples <;
 
 (common) {
     company ;string = "Yumly Corp",
+    description ;string = """
+    Yumly Corp is a company that sells yummy yummy products ;).
+    it's a very good company.
+    """,
     region ;string = "us-east-1",
     retries ;int = 3,
     contact ;tuple = ["oncall", 24, true]

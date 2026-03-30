@@ -148,6 +148,13 @@ def test_string_escapes():
     assert "\\" in data["test_escapes"]["valid_backslash"]
     assert '"' in data["test_escapes"]["valid_quote"]
 
+@test(suite="syntax")
+def test_strings():
+    data = assert_loads(BASE / "valid/syntax/strings.yumly")
+    assert_equal(data["variable"], "Hello World")
+    assert_equal(data["variable2"], "Hello World,\nbut's a multiline string")
+    assert_equal(data["variable3"], "Hello world in a multiline string,\nbut with \t scape sequences \t, \n new lines and \""" quotes")
+    assert_equal(data["variable4"], "\tHello")
 
 # ---------------------------------------------------------------------------
 # Valid file tests — types

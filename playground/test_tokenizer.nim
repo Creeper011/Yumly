@@ -4,6 +4,7 @@
 import ../src/Yumly/tokenizer
 import ../src/Yumly/types/token
 
+const q = "\"\"\""
 const fileContent = """
 include { "example.yumly" }
 
@@ -16,6 +17,12 @@ hobbies ;list[string] = ["reading", "hiking", "cooking"]
 multiple line
 commentary
 <;
+
+multiline_string ;string = """ & q & """
+Hello, this is a multiline string.
+It can contain "quotes" and backslashes \\.
+It can also contain newlines.
+""" & q & """
 
 (block1) {
     variable1 ;string = "value",

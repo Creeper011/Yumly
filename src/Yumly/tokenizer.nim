@@ -12,8 +12,11 @@ template col(startPos: int): int = startPos - lineStart + 1
 template emit(k: TokenKind, startPos: int) =
   tokens.add(Token(kind: k, line: line, col: col(startPos)))
 
-template emitVal(k: TokenKind, v: string, startPos: int) =
-  tokens.add(Token(kind: k, line: line, col: col(startPos), value: v))
+template emitVal(k: TokenKind, val: string, startPos: int) =
+  tokens.add(Token(kind: k, line: line, col: col(startPos), value: val))
+
+template emitValFull(k: TokenKind, l: int, column: int, val: string) =
+  tokens.add(Token(kind: k, line: l, col: column, value: val))
 
 proc tokenize*(source: string): seq[Token] =
   # Tokenize the source, we will iterate through each character and build tokens based on the rules of the Yumly language.
@@ -95,26 +98,90 @@ proc tokenize*(source: string): seq[Token] =
     of '$': emit(tkDollar, i);      i += 1
     # if string
     of '"', '\'':
-      let quote = source[i]
-      # the start of the string with the quote
-      let stringStart = i
-      i += 1
-      # the start of the string without the quote
-      let start = i
-      while i < source.len and source[i] != quote:
-        if source[i] == '\\':
-          i += 2 # we skip the backslash and the character after it, evaluator (via value_defs) will resolve it
-          continue
+      let quoteChar = source[i]
+      let startLine = line
+      let startCol  = col(i)
+      var stringContent = ""
+      
+      # multiline string logic
+      if quoteChar == '"' and i + 2 < source.len and source[i+1] == '"' and source[i+2] == '"':
+        i += 3 # skip opening """
+        
+        # skip leading formatting on the first line
+        while i < source.len:
+          if i + 1 < source.len and source[i] == '\\':
+            if source[i+1] == 'n':
+              i += 2 # skip \n escape
+            else:
+              stringContent.add(source[i .. i+1]) # keep other escapes
+              i += 2
+          elif source[i] == '\n':
+            i += 1 # skip first literal newline
+            line += 1
+            lineStart = i
+            break 
+          elif source[i] in {' ', '\t', '\r'}:
+            i += 1 # skip whitespace on the first line
+          else:
+            # found real content on the first line, stop skipping
+            break
 
-        if source[i] == '\n':
-          raise newException(ValueError, "Heyy the string doesn't close on line " & $line)
-        i += 1
-      
-      if i >= source.len:
-        raise newException(ValueError, "Heyy the string doesn't close at the end of the file on line " & $line)
-      
-      emitVal(tkString, source[start..i-1], stringStart)
-      i += 1
+        # main loop of the multiline string
+        while i < source.len:
+          # handle escaped triple quote
+          if i + 3 < source.len and source[i..i+3] == "\\\"\"\"":
+            stringContent.add("\\\"")
+            i += 4
+            continue
+          
+          # handle real closing delimiter
+          if i + 2 < source.len and source[i..i+2] == "\"\"\"":
+            i += 3
+            break
+          
+          # handle regular escapes
+          if source[i] == '\\' and i + 1 < source.len:
+            stringContent.add(source[i])
+            stringContent.add(source[i+1])
+            if source[i+1] == '\n': 
+              line += 1
+              lineStart = i + 2
+            i += 2
+            continue
+
+          # handle regular character & line tracking
+          if source[i] == '\n':
+            line += 1
+            lineStart = i + 1
+          
+          stringContent.add(source[i])
+          i += 1
+        
+        # strip trailing newline before the closing delimiter
+        if stringContent.len > 0 and stringContent[^1] == '\n':
+          stringContent.setLen(stringContent.len - 1)
+          
+        emitValFull(tkString, startLine, startCol, stringContent)
+        
+      # single line logic
+      else:
+        i += 1 # skip opening quote
+        while i < source.len and source[i] != quoteChar:
+          if source[i] == '\\' and i + 1 < source.len:
+            # pass escape sequence through raw for the parser
+            stringContent.add(source[i .. i+1])
+            i += 2
+          elif source[i] == '\n':
+            raise newException(ValueError, "Heyy the string doesn't close on line " & $line)
+          else:
+            stringContent.add(source[i])
+            i += 1
+        
+        if i >= source.len:
+          raise newException(ValueError, "Heyy the string doesn't close at the end of the file")
+        
+        emitValFull(tkString, startLine, startCol, stringContent)
+        i += 1 # skip closing quote
 
     else:
       # handle identifiers and keywords

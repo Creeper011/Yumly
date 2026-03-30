@@ -13,6 +13,10 @@ proc runEncoderTest() =
 
   cfg.addPair("project_name", newStringValue("Test Project"), "string")
   cfg.addPair("description", newStringValue("\tAn \"test\" project\nwith multiples features"), "string")
+  cfg.addPair("detailedDescription", newStringValue("""
+  \tAn \"test\" project\nwith multiples features
+  Its amazing, you can do very things with this project
+  """), "string")
   cfg.addPair("version", newStringValue("1.0.0"))
   cfg.addPair("is_active", newBoolValue(true), "bool")
   cfg.addPair("tags", newListValue(@[newStringValue("api"), newStringValue("v1")]))
@@ -61,6 +65,10 @@ proc runEncoderTest() =
 
   assert loaded["project_name"].getStr() == "Test Project"
   assert loaded["description"].getStr() == "\tAn \"test\" project\nwith multiples features"
+  assert loaded["detailedDescription"].getStr() == """
+  \tAn \"test\" project\nwith multiples features
+  Its amazing, you can do very things with this project
+  """
   assert loaded["version"].getStr() == "1.0.0"
   assert loaded["is_active"].getBool() == true
   assert loaded["tags"].getElems()[0].getStr() == "api"

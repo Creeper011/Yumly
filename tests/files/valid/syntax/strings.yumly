@@ -1,0 +1,17 @@
+;> string types <;
+
+variable = "Hello World"
+
+variable2 = """
+Hello World,
+but's a multiline string
+"""
+
+variable3 = """\n
+Hello world in a multiline string,
+but with \t scape sequences \t, \n new lines and \""" quotes
+"""
+
+variable4 = """\t
+Hello
+"""
