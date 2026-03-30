@@ -1,5 +1,5 @@
 # Package
-version       = "0.8.0"
+version       = "0.8.2"
 author        = "Creeper011"
 description   = "A cute, declarative config language with fail-fast behavior and optional type safety."
 license       = "MIT"
