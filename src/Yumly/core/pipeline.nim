@@ -15,6 +15,7 @@ import ../additional/validate
 import ../serializers/encoder
 import ../types/ast
 import ../types/nodes
+import ../types/symbol_resolver
 
 proc parseContentToAST*(content: string): YumNode =
   let tokens = tokenize(content)
@@ -28,6 +29,7 @@ proc parseFileToAST*(path: string): YumNode =
 proc resolveYumly*(ast: var YumNode; workingDir: string) =
   loadIncludes(ast, workingDir)
   resolveAst(ast)
+  resolveSymbols(ast)
 
 proc validateYumly*(ast: var YumNode) =
   validateConfig(ast)

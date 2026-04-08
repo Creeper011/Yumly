@@ -63,7 +63,7 @@ proc resolveTypeHint(hint: var TypeHint) =
 
 proc resolveAst*(node: YumNode) =
   case node.kind
-  of nkPair:
+  of nkPair, nkSymbolDecl:
     if node.typeHint.isSome:
       var hint = node.typeHint.get
       resolveTypeHint(hint)

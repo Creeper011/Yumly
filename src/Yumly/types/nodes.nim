@@ -14,6 +14,7 @@ type
     nkBlock,
     nkPair,
     nkConfig, nkInclude
+    nkGlobalRef, nkSymbolDecl
 
   YumNode* = ref object
     token*: Token
@@ -23,13 +24,14 @@ type
     of nkArray, nkConfig, nkBlock:
       children*: seq[YumNode]
       name*: string
-    of nkPair:
+    of nkPair, nkSymbolDecl:
       key*: string
       typeHint*: Option[TypeHint]
-      valNode*: YumNode
+      valNode*: YumNode # the value node can be a literal, array, block or global ref
     of nkInclude:
       includePath*: string
-      
+    of nkGlobalRef:
+      refName*: string
     line*, col*: int
 
   Parser* = object
