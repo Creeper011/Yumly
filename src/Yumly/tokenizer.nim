@@ -6,6 +6,7 @@
 
 import std/strutils
 import types/token
+import error_messages
 
 template col(startPos: int): int = startPos - lineStart + 1
 
@@ -52,7 +53,7 @@ proc tokenize*(source: string): seq[Token] =
         i = closePos + 2
         continue
       else:
-        raise newException(ValueError, "Heyy, the comment doesn't close! Expected '<;' at line " & $line)
+        commentNotClosedError(line, col(i))
 
     # handle literals (int, float)
     # emit an tkLiteral token
@@ -77,8 +78,7 @@ proc tokenize*(source: string): seq[Token] =
         if i < source.len and source[i] in {'+', '-'}:
           i += 1
         if i >= source.len or source[i] notin {'0'..'9'}:
-          raise newException(ValueError,
-            "Heyy invalid exponent on line " & $line)
+          invalidExponentError(line, col(start))
         while i < source.len and source[i] in {'0'..'9'}:
           i += 1
 
@@ -96,6 +96,8 @@ proc tokenize*(source: string): seq[Token] =
     of ';': emit(tkDeclaration, i); i += 1
     of ',': emit(tkComma, i);       i += 1
     of '$': emit(tkDollar, i);      i += 1
+    of '@': emit(tkAt, i);          i += 1
+    of '!': emit(tkBang, i);        i += 1
     # if string
     of '"', '\'':
       let quoteChar = source[i]
@@ -184,20 +186,20 @@ proc tokenize*(source: string): seq[Token] =
             stringContent.add(source[i .. i+1])
             i += 2
           elif source[i] == '\n':
-            raise newException(ValueError, "Heyy the string doesn't close on line " & $line)
+            unclosedStringError(line, startCol)
           else:
             stringContent.add(source[i])
             i += 1
         
         if i >= source.len:
-          raise newException(ValueError, "Heyy the string doesn't close at the end of the file")
+          unclosedStringAtEofError()
         
         emitValFull(tkString, startLine, startCol, stringContent)
         i += 1 # skip closing quote
 
     else:
       # handle identifiers and keywords
-      if source[i] in IdentStartChars + {'/', '.'}:
+      if source[i] in IdentStartChars:
         let start = i
         while i < source.len and source[i] in IdentChars + {'/', '.', '-', '/'}:
           i += 1
@@ -210,8 +212,7 @@ proc tokenize*(source: string): seq[Token] =
           else:
             emitVal(tkIdent, word, start)
       else:
-        raise newException(ValueError,
-          "Wow, an unexpected character '" & $source[i] & "' on line " & $line)
+        unexpectedCharError($source[i], line, col(i))
 
   emit(tkEOF, source.len)
   return tokens

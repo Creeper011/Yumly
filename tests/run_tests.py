@@ -189,6 +189,11 @@ def test_env_vars():
         assert_equal(data["home2"], "/test/home")
 
 
+@test(suite="types")
+def test_symbol_refs_other_symbol():
+    assert_loads(BASE / "valid/types/symbol_refs_other_symbol.yumly")
+
+
 # ---------------------------------------------------------------------------
 # Valid file tests — includes
 # ---------------------------------------------------------------------------
@@ -217,6 +222,12 @@ def test_service_stack():
 @test(suite="full")
 def test_deployment_plan():
     data = assert_loads(BASE / "valid/full/deployment_plan.yuy")
+    assert_equal(data["common"]["company"], "Yumly Corp")
+    assert_equal(data["common"]["company_string"], "Yumly Corp")
+    assert "Yumly Corp is a company" in data["common"]["description"]
+    assert_equal(data["credentials"]["db_user"], "app_user")
+    assert_equal(data["credentials"]["db_password"], "secret")
+    assert_equal(data["credentials"]["jwt_secret"], "supersecretjwt")
     assert_equal(data["plan"]["environment"], "staging")
     assert "canary" in data["plan"]
     assert "traffic" in data["plan"]
@@ -244,7 +255,7 @@ def test_unclosed_comment():
 
 @test(suite="invalid")
 def test_bad_string_escape():
-    assert_fails(BASE / "invalid/bad_string_escape.yumly", contains="could not decode literal: 'This string has an invalid")
+    assert_fails(BASE / "invalid/bad_string_escape.yumly", contains="invalid escape")
 
 @test(suite="invalid")
 def test_env_only_with_dollar():
@@ -269,6 +280,16 @@ def test_no_comma_list():
 @test(suite="invalid")
 def test_circular_include():
     assert_fails(BASE / "invalid/semantic/circular_include.yumly", contains="Circular")
+
+@test(suite="invalid")
+def test_duplicate_symbol():
+    assert_fails(BASE / "invalid/semantic/duplicate_symbol.yumly", contains="duplicated")
+
+def test_unknown_symbol():
+    assert_fails(BASE / "invalid/semantic/unknown_symbol.yumly", contains="unknown symbol")
+
+def test_circular_symbol():
+    assert_fails(BASE / "invalid/semantic/circular_symbol.yumly", contains="circular")
 
 @test(suite="invalid")
 def test_unexpected_token():

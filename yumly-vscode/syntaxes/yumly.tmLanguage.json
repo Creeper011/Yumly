@@ -10,6 +10,7 @@
     { "include": "#comment" },
     { "include": "#include" },
     { "include": "#block" },
+    { "include": "#global-symbol" },
     { "include": "#pair" },
     { "include": "#values" },
     { "include": "#punctuation" }
@@ -47,6 +48,7 @@
         { "include": "#comment" },
         { "include": "#include" },
         { "include": "#block" },
+        { "include": "#global-symbol" },
         { "include": "#pair" },
         { "include": "#values" },
         { "include": "#punctuation" }
@@ -68,6 +70,22 @@
       ]
     },
 
+    "global-symbol": {
+      "name": "meta.global-symbol.yumly",
+      "begin": "(@)([A-Za-z_][\\w\\.-]*)\\s*(;)\\s*(string|int|float|bool|env|tuple|list(?:\\[(string|int|float|bool|env)\\])?)\\s*(=)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.symbol.yumly" },
+        "2": { "name": "variable.other.global.yumly" },
+        "3": { "name": "punctuation.separator.typehint.yumly" },
+        "4": { "name": "storage.type.yumly" },
+        "5": { "name": "punctuation.separator.key-value.yumly" }
+      },
+      "end": "(?=,|\\}|$)",
+      "patterns": [
+        { "include": "#values" }
+      ]
+    },
+
     "values": {
       "patterns": [
         { "include": "#comment" },
@@ -75,6 +93,7 @@
         { "include": "#string" },
         { "include": "#number" },
         { "include": "#boolean" },
+        { "include": "#global-ref" },
         { "include": "#identifier" }
       ]
     },
@@ -153,6 +172,11 @@
     "identifier": {
       "name": "variable.other.unquoted.yumly",
       "match": "\\b[A-Za-z_][\\w\\.-]*\\b"
+    },
+
+    "global-ref": {
+      "name": "variable.other.global.ref.yumly",
+      "match": "@([A-Za-z_][\\w\\.-]*)"
     },
 
     "punctuation": {
