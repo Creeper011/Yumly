@@ -127,6 +127,8 @@ proc dictToYumlyConf*(data: PyObject): YumlyConf =
     else:
       result.addPair(safeKey, parseValue(val, pyTypes, pyBuiltins))
 
+  applyPythonTypeHints(result)
+
 proc dumpPy*(data: PyObject): string {.exportpy.} =
   if data.isNil:
     raise newException(ValueError, "HEYY! data is nil")
