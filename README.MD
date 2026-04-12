@@ -174,11 +174,6 @@ job = "dev"
 
 </details>
 
-<details>
-
-```
-</details>
-
 ### Complete example
 
 ```yumly
