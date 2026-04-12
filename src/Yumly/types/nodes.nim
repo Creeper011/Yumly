@@ -26,10 +26,9 @@ type
     of nkPair:
       key*: string
       typeHint*: Option[TypeHint]
-      valNode*: YumNode
+      valNode*: YumNode # the value node can be a literal, array, block or global ref
     of nkInclude:
       includePath*: string
-      
     line*, col*: int
 
   Parser* = object

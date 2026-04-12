@@ -5,6 +5,7 @@
 
 import ../types/ast
 import strutils, sequtils, options
+import ../error_messages
 
 type 
   EncodingStyle* = enum
@@ -13,10 +14,10 @@ type
 
   ValueDef* = object
     typeHint*: string
-    decode*: proc (raw: string): Value
+    decode*: proc (raw: string, line: int, col: int): Value
     encode*: proc (val: Value, style: EncodingStyle): string
 
-proc decodeEscapes(raw: string): string =
+proc decodeEscapes(raw: string, line, col: int): string =
   var i = 0
   while i < raw.len:
     if raw[i] == '\\' and i + 1 < raw.len:
@@ -26,7 +27,7 @@ proc decodeEscapes(raw: string): string =
       of '\\': result.add('\\'); i += 2
       of '"':  result.add('"');  i += 2
       of '\'': result.add('\''); i += 2
-      else: raise newException(ValueError, "Heyy, invalid escape: \\" & raw[i+1] & " ;-;")
+      else: invalidEscapeError(raw[i+1], line, col)
     else:
       result.add(raw[i]); i += 1
 
@@ -41,36 +42,35 @@ proc encodeEscapes(raw: string): string =
 
 # Decode Methods
 
-proc decodeString(raw: string): Value = 
-  Value(kind: vkString, strVal: decodeEscapes(raw))
+proc decodeString*(raw: string, line, col: int): Value = 
+  Value(kind: vkString, strVal: decodeEscapes(raw, line, col))
 
-proc decodeInt(raw: string): Value = 
+proc decodeInt*(raw: string, line, col: int): Value = 
   Value(kind: vkInt, intVal: parseInt(raw))
 
-proc decodeFloat(raw: string): Value = 
+proc decodeFloat*(raw: string, line, col: int): Value = 
   Value(kind: vkFloat, floatVal: parseFloat(raw))
 
-proc decodeBool(raw: string): Value = 
+proc decodeBool*(raw: string, line, col: int): Value = 
   if raw == "true":
-    Value(kind: vkBool, boolVal: true)
+    result = Value(kind: vkBool, boolVal: true)
   elif raw == "false":
-    Value(kind: vkBool, boolVal: false)
+    result = Value(kind: vkBool, boolVal: false)
   else:
-    raise newException(ValueError, "Invalid boolean: " & raw)
+    invalidBooleanError(raw)
 
-proc decodeEnv(raw: string): Value =
-  # value def doesn't do env val resolution (IO)
+proc decodeEnv*(raw: string, line, col: int): Value =
   Value(kind: vkEnv, envName: raw, envVal: "")
 
-proc decodeList(raw: string): Value = 
+proc decodeList*(raw: string, line, col: int): Value = 
   Value(kind: vkList, elements: @[])
 
-proc decodeTuple(raw: string): Value = 
+proc decodeTuple*(raw: string, line, col: int): Value = 
   Value(kind: vkTuple, elements: @[])
 
 # Encode Methods
 
-proc encodeValue*(val: Value, style: EncodingStyle = styleYumly): string # forward
+proc encodeValue*(val: Value, style: EncodingStyle = styleYumly): string
 
 proc encodeString(val: Value, style: EncodingStyle): string =
   case style
@@ -89,7 +89,6 @@ proc encodeBool(val: Value, style: EncodingStyle): string =
 proc encodeEnv(val: Value, style: EncodingStyle): string = 
   case style
   of styleYumly: "$[\"" & val.envName & "\"]"
-  #  Yumyumy uses the resolved value in quotes because is a representative format
   of styleYumyumy: "\"" & val.envVal & "\""
 
 proc encodeList(val: Value, style: EncodingStyle): string =
@@ -150,12 +149,12 @@ let VALUES_DEF*: array[ValueKind, ValueDef] = [
   ),
 ]
 
-proc tryDecode*(raw: string, vk: ValueKind): Option[Value] =
-  try: some(VALUES_DEF[vk].decode(raw))
+proc tryDecode*(raw: string, vk: ValueKind, line = 0, col = 0): Option[Value] =
+  try: some(VALUES_DEF[vk].decode(raw, line, col))
   except: none(Value)
 
 proc classifyLiteral*(raw: string): Value =
   for vk in [vkBool, vkInt, vkFloat, vkString]:
     let response = tryDecode(raw, vk)
     if response.isSome: return response.get
-  raise newException(Defect, "RAHHH >_<, could not decode literal: '" & raw & "'")
+  couldNotDecodeLiteralError(raw)

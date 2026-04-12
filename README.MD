@@ -2,7 +2,8 @@
 
 > ⚠️ Warning — subject to changes. 
 
-Yumly is a cute, declarative configuration language with fail-fast behavior and optional type safety, blending elements of YAML and JSON — without relying on indentation.
+Yumly is a cute, declarative configuration language with fail-fast behavior and optional type safety, blending elements from many configuration formats and some ideas from my head.
+The goal is a simple, secure and a personal configuration format that i can use in my projects..
 
 The parser is written in [Nim](https://nim-lang.org/) and exports bindings for [Python](https://www.python.org/) via [NimPy](https://github.com/yglukhov/nimpy). There's also a native Nim API for direct usage.
 
@@ -12,11 +13,23 @@ The parser is written in [Nim](https://nim-lang.org/) and exports bindings for [
 
 - **No indentation** — blocks delimited by `{ }` allowing flexible organization
 - **Optional type hints** — you can declare intent UwU
+- **Fail-fast** — syntax and validation errors are raised immediately with cute cute messages (you can disable this, baka!)
+- **No overwriting** — duplicate keys and bindings are not allowed.
 - **Native env vars** — `$["VAR"]` and `include { ".env" }` are first class ;)
 - **Readable** — it's easy to read and understand ^_^
 - **Extensions** `.yumly` and `.yuy` (it's so cute!!)
 
 ---
+
+<details>
+<summary>Why i created Yumly</summary>
+
+1. I created Yumly for fun — I had never built a parser before. I wanted something simple and special to use in my own projects.
+2. Yumly mixes ideas from many formats, but initially YAML and JSON, but tries to be more explicit, safe.
+3. I know the “cuteness” and personality won’t be for everyone — and that’s okay.
+4. I also wanted to learn Nim and avoid going down the “Holy C” path.
+
+</details>
 
 ## ✿ Syntax
 
@@ -122,7 +135,7 @@ quotes = "He said: \"Hello!\""
 tags    ;list[string] = ["api", "v2", "stable"]
 ports   ;list[int]    = [8080, 8081, 8082]
 
-;> without type hint, inferred from first element <;
+;> without type hint, inferred from elements <;
 hosts = ["localhost", "0.0.0.0"]
 ```
 
@@ -169,6 +182,10 @@ include { ".env" }
 (global) {
     project ;string = "Cid",
     version ;string = "6.0.0",
+    description ;string = """
+    The Cid project is a revolutionary platform that will change the world!
+    Currently in version 6.0.0!
+    """,
     production ;bool = true,
     tags ;list[string] = ["cloud", "scalable"]
 }
@@ -359,7 +376,11 @@ nim c -r tests/test_encoder.nim
 
 - Yumly has a set of PoC (Proof of Concepts) projects that aim to test yumly implementations in a more integrated real-world scenario; they can be found in [tests/projects](./tests/projects/).
 
----
+
+## ✿ Limitations:
+- hahaha, i made sure to leave this down here.
+- The current limitations are:
+    - Yumly is not streamable by my clean/modular dumb architecture and by design, as it needs all context to resolve includes, blocks and pairs. This means that the entire file needs to be loaded and parsed before any data can be accessed.
 
 ## ★ License ★
 

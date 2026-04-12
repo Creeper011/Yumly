@@ -38,6 +38,14 @@ proc consumeOrExpectComma(parser: var Parser) =
   else:
     parser.consumeComma()
 
+proc consumeRootSeparator(parser: var Parser, nodeLine: int) =
+  let nextTok = parser.peek()
+  if nextTok.kind != tkEOF:
+    if nextTok.line == nodeLine:
+      discard parser.expect(tkComma, expComma)
+    else:
+      parser.consumeComma()
+
 proc parseTypeHint(parser: var Parser): Option[TypeHint] =
   if parser.peek().kind != tkDeclaration:
     return none(TypeHint)
@@ -93,13 +101,7 @@ proc parseValue(parser: var Parser): YumNode =
     return YumNode(kind: nkLiteral, rawValue: envToken.value,
                    token: token, line: token.line, col: token.col)
 
-  of tkString:
-    let tok = parser.advance()
-    return YumNode(kind: nkLiteral, rawValue: tok.value,
-                   token: tok, line: tok.line, col: tok.col)
-
-  of tkLiteral:
-    # Covers integers, floats and booleans (true / false)
+  of tkString, tkLiteral:
     let tok = parser.advance()
     return YumNode(kind: nkLiteral, rawValue: tok.value,
                    token: tok, line: tok.line, col: tok.col)
@@ -155,23 +157,29 @@ proc generateAST*(tokens: seq[Token]): YumNode =
   var parser = Parser(tokens: tokens, pos: 0, recursionDepth: 0)
   result = YumNode(kind: nkConfig, children: @[])
 
+  # defines the orders of the different root-level constructs. this allows a consistent structure/style across Yumly files
+  type RootPhase = enum
+    rpIncludes,
+    rpRegular
+
+  var phase = rpIncludes
+
   while parser.peek().kind != tkEOF:
     case parser.peek().kind
     of tkInclude:
+      if phase != rpIncludes:
+        includeOrderError(parser.peek())
       result.children.add(parser.parseInclude())
 
     of tkLParen:
+      phase = rpRegular
       result.children.add(parser.parseBlock())
 
     of tkIdent:
+      phase = rpRegular
       let pairNode = parser.parsePair()
       result.children.add(pairNode)
-      let nextTok = parser.peek()
-      if nextTok.kind != tkEOF:
-        if nextTok.line == pairNode.line:
-          discard parser.expect(tkComma, expComma)
-        else:
-          parser.consumeComma()
+      parser.consumeRootSeparator(pairNode.line)
 
     else:
       expectedTopTokenError(expValue, parser.peek())

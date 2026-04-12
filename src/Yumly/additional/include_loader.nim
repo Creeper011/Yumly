@@ -12,10 +12,7 @@ const allowedIncludeExts = [".env", ".yumly", ".yuy"]
 
 proc checkCircularImport(path: string, child: YumNode, visited: var HashSet[string]) =
   if path in visited:
-    raise newException(IOError,
-      "Circular include detected! '" & path & "' is already being loaded\n" &
-      "  line: " & $child.line & ", column: " & $child.col
-    )
+    circularIncludeError(path, child.line, child.col)
 
 proc loadIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[string]) =
   for child in rootNode.children:
@@ -25,12 +22,7 @@ proc loadIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[strin
                         else: baseDir / rawIncludePath
       
       if not os.fileExists(includePath):
-        raise newException(IOError,
-          "Heeeh?! i can't find '" & rawIncludePath & "' anywhere... (T_T)\n" &
-          "  searched at: " & os.absolutePath(includePath) & "\n" &
-          "  line: " & $child.line & ", column: " & $child.col & "\n" &
-          "  hint: check if the path is correct and the file actually exists"
-        )
+        includeFileNotFoundError(rawIncludePath, os.absolutePath(includePath), child.line, child.col)
 
       # checks the file extension
       let sf = os.splitFile(includePath)
@@ -39,13 +31,7 @@ proc loadIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[strin
         ext = ".env"
         
       if ext notin allowedIncludeExts:
-        raise newException(ValueError,
-          "Mmm, this file type isn't supported in include { \"\" } ;-; \n" &
-          "  file: '" & includePath & "'\n" &
-          "  got type: '" & ext & "'\n" &
-          "  line: " & $child.line & ", column: " & $child.col & "\n" &
-          "  hint: only " & allowedIncludeExts.join(", ") & " files are supported for now"
-        )
+        includeUnsupportedExtError(includePath, ext, child.line, child.col)
 
       case ext:
         of ".env":
