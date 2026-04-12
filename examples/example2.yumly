@@ -5,15 +5,11 @@ include { ".env" }
 include { "file.yumly" }
 <;
 
-;> globals <;
-@specialNumber ;int = 67
-@globalEnv ;env = $["HOME"]
-
 ;> full names interpolates to a string <;
-name ;string = "John Doe", fullName ;string = !"John Doe @specialNumber!",
+name ;string = "John Doe", fullName ;string = "John Doe 67!",
 age ;int = 30
 hobbies ;list[string] = ["reading", "hiking", "cooking"]
-homeDir ;env = @globalEnv
+homeDir ;env = $["HOME"]
 
 ;> an commentary <;
 ;>

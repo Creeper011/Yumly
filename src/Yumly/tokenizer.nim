@@ -96,8 +96,6 @@ proc tokenize*(source: string): seq[Token] =
     of ';': emit(tkDeclaration, i); i += 1
     of ',': emit(tkComma, i);       i += 1
     of '$': emit(tkDollar, i);      i += 1
-    of '@': emit(tkAt, i);          i += 1
-    of '!': emit(tkBang, i);        i += 1
     # if string
     of '"', '\'':
       let quoteChar = source[i]

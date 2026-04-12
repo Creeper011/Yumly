@@ -44,7 +44,7 @@ deps:
 
 tests: build-py
 	@echo "--- Running Integration Tests ---"
-	pytest tests/run_tests.py
+	.venv/bin/pytest tests/run_tests.py
 	@echo "--- Running Nim Unit Tests ---"
 	$(NIM) c -r --path:src tests/components/test_encoder.nim
 	$(NIM) c -r --path:src tests/components/test_tokenizer.nim

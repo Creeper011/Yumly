@@ -20,7 +20,6 @@ type Expected* = enum
   expRBracket     = "']'"
   expComma        = "','"
   expEOF          = "end of file"
-  expAt           = "an '@'"
 
 proc getTokenValue(token: Token): string =
   case token.kind
@@ -35,10 +34,8 @@ proc getTokenValue(token: Token): string =
   of tkEquals: "="
   of tkComma: ","
   of tkDollar: "$"
-  of tkBang: "!"
   of tkInclude: "include"
   of tkDeclaration: ";"
-  of tkAt: "@"
 
 # Parser errors
 
@@ -73,18 +70,6 @@ proc includeOrderError*(token: Token) =
         "Ehhh... include statements must stay at the very top of the file! >_<\n" &
         loc(token.line, token.col) & "\n" &
         "  hint: keep include { \"...\" } above all global symbols, pairs, and blocks")
-
-proc symbolRootOnlyError*(token: Token) =
-    raise newException(ValueError,
-        "Ehhh... global symbols are only allowed at the root level! >_<\n" &
-        loc(token.line, token.col) & "\n" &
-        "  hint: move '@name = ...' above the root pairs/blocks and outside of any block")
-
-proc symbolOrderError*(token: Token) =
-    raise newException(ValueError,
-        "Ehhh... global symbols must stay in the root top section, right below includes! >_<\n" &
-        loc(token.line, token.col) & "\n" &
-        "  hint: place all '@name = ...' declarations after include { \"...\" } and before any root pair or block")
 
 # IO errors
 
@@ -181,38 +166,6 @@ proc invalidLiteralTokenError*(tokenKind: string) =
 
 proc invalidNodeKindInEvaluateError*(nodeKind: string) =
     raise newException(Defect, "RAHHH >_<, invalid YumNode kind in evaluateValue: " & nodeKind)
-
-# Symbol resolver errors
-
-proc duplicateSymbolError*(key: string, line: int, col: int) =
-    raise newException(ValueError,
-        "Oh no! The symbol '@" & key & "' is duplicated at root! (°ロ°)" &
-        loc(line, col) & "\n" &
-        "  hint: keep only one symbol for each name.")
-
-proc evaluateLiteralExpectedError*(nodeKind: string) =
-    raise newException(Defect, "RAHHH >_<, evaluateLiteralNode expected nkLiteral, got " & nodeKind)
-
-proc literalCannotInterpolateError*(symbolName: string, line: int, col: int) =
-    raise newException(ValueError,
-        "Ehhh... '@" & symbolName & "' can't be interpolated inside a string because it is not a literal value! >_<" &
-        loc(line, col))
-
-proc collectionCannotInterpolateError*(symbolName: string, line: int, col: int) =
-    raise newException(ValueError,
-        "Ehhh... '@" & symbolName & "' can't be interpolated inside a string because it resolves to a collection! >_<" &
-        loc(line, col))
-
-proc unknownSymbolError*(name: string, line: int, col: int) =
-    raise newException(ValueError,
-        "Ehhh... unknown symbol '@" & name & "'" &
-        loc(line, col) & ".\n" &
-        "  hint: declare it at the root after includes and before blocks.")
-
-proc circularSymbolRefError*(cycle: string, line: int, col: int) =
-    raise newException(ValueError,
-        "Oh no! circular symbol reference detected: @" & cycle & " (°ロ°)" &
-        loc(line, col))
 
 # Validate errors
 
