@@ -5,11 +5,8 @@
 ##
 
 import os, options
-import types/nodes, types/token, types/type_hints, types/ast
-import types/values_defs
-
-proc isEnvNode(node: YumNode): bool =
-  node.kind == nkLiteral and node.token.kind == tkDollar
+import types/nodes, types/type_hints, types/ast, types/token, types/values_defs
+import error_messages
 
 proc evaluateValue*(node: YumNode, hint: Option[TypeHint]): Value
 
@@ -33,13 +30,15 @@ proc isHeterogeneous(elements: seq[Value]): bool =
 proc evaluateValue*(node: YumNode, hint: Option[TypeHint]): Value =
   case node.kind
   of nkLiteral:
-    if isEnvNode(node):
-      # Resolve the env variable at evaluation time
-      return Value(kind: vkEnv, envName: node.rawValue,
-                   envVal: os.getEnv(node.rawValue))
-
-    # try classify literal in bool, int, string and float
-    return classifyLiteral(node.rawValue)
+    case node.token.kind
+    of tkString:
+      result = decodeString(node.rawValue, node.line, node.col)
+    of tkLiteral:
+      result = classifyLiteral(node.rawValue)
+    of tkDollar:
+      result = Value(kind: vkEnv, envName: node.rawValue, envVal: os.getEnv(node.rawValue))
+    else:
+      invalidLiteralTokenError($node.token.kind)
 
   of nkArray:
     let elements = evaluateListElements(node.children, hint)
@@ -51,8 +50,7 @@ proc evaluateValue*(node: YumNode, hint: Option[TypeHint]): Value =
       return Value(kind: vkList, elements: elements)
 
   else:
-    raise newException(Defect,
-      "RAHHH >_<, invalid YumNode kind in evaluateValue: " & $node.kind)
+    invalidNodeKindInEvaluateError($node.kind)
 
 proc evaluatePair*(node: YumNode): Pair =
   Pair(

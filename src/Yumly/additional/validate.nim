@@ -4,40 +4,75 @@
 ##
 
 import os, options, sets, strutils
-import ../types/nodes, ../types/token, ../types/type_hints, ../types/ast
+import ../types/nodes, ../types/type_hints, ../types/ast, ../types/token
 import ../types/values_defs
+import ../utils/loc
+import ../error_messages
 
-# Helpers
+proc isEnvLiteralNode(node: YumNode): bool =
+  node.kind == nkLiteral and node.token.kind == tkDollar
 
-template loc(line, col: int): string =
-  " (line " & $line & ", column " & $col & ")"
+proc literalValueKind(node: YumNode): ValueKind =
+  if node.kind != nkLiteral:
+    literalValueKindError($node.kind)
+
+  case node.token.kind
+  of tkString:
+    result = vkString
+  of tkLiteral:
+    result = classifyLiteral(node.rawValue).kind
+  of tkDollar:
+    result = vkEnv
+  else:
+    invalidLiteralTokenError($node.token.kind)
+
+proc literalMatchesHint(node: YumNode, hintKind: TypeHintKind): bool =
+  let valueKind = literalValueKind(node)
+  case hintKind
+  of thUnknown:
+    true
+  of thString:
+    valueKind == vkString
+  of thInt:
+    valueKind == vkInt
+  of thFloat:
+    valueKind == vkFloat
+  of thBool:
+    valueKind == vkBool
+  of thEnv:
+    valueKind == vkEnv
+  of thList, thTuple:
+    false
+
+proc literalTypeName(node: YumNode): string =
+  VALUES_DEF[literalValueKind(node)].typeHint
 
 proc isEnvNode(node: YumNode): bool =
-  node.kind == nkLiteral and node.token.kind == tkDollar
+  isEnvLiteralNode(node)
 
 proc nodeTypeName(node: YumNode): string =
   if isEnvNode(node):
     return VALUES_DEF[vkEnv].typeHint
   case node.kind
-  of nkLiteral: VALUES_DEF[classifyLiteral(node.rawValue).kind].typeHint
-  of nkArray:   VALUES_DEF[vkList].typeHint
-  of nkBlock:   "block"
-  of nkPair:    "pair"
-  of nkConfig:  "config"
-  of nkInclude: "include"
+  of nkLiteral:     literalTypeName(node)
+  of nkArray:       VALUES_DEF[vkList].typeHint
+  of nkBlock:       "block"
+  of nkPair:        "pair"
+  of nkConfig:      "config"
+  of nkInclude:     "include"
 
 # maps a TypeHintKind to its corresponding ValueKind so we can look up VALUES_DEF.
 proc toValueKind(hk: TypeHintKind): ValueKind =
   case hk
-  of thString: vkString
-  of thInt:    vkInt
-  of thFloat:  vkFloat
-  of thBool:   vkBool
-  of thEnv:    vkEnv
-  of thList:   vkList
-  of thTuple:  vkTuple
+  of thString: result = vkString
+  of thInt:    result = vkInt
+  of thFloat:  result = vkFloat
+  of thBool:   result = vkBool
+  of thEnv:    result = vkEnv
+  of thList:   result = vkList
+  of thTuple:  result = vkTuple
   else: 
-    raise newException(ValueError, "RAHHH >_<, invalid, i can't convert TypeHintKind to ValueKind")
+    invalidTypeHintKindError()
 
 proc matchNodeToHint(node: YumNode, hintKind: TypeHintKind): bool =
   case hintKind
@@ -47,8 +82,7 @@ proc matchNodeToHint(node: YumNode, hintKind: TypeHintKind): bool =
   else:
     if node.kind != nkLiteral or isEnvNode(node):
       return false
-    VALUES_DEF[classifyLiteral(node.rawValue).kind].typeHint ==
-      VALUES_DEF[toValueKind(hintKind)].typeHint
+    literalMatchesHint(node, hintKind)
 
 proc checkDuplicates(nodes: seq[YumNode], path: string, errors: var seq[string]) =
   var seenBlocks = initHashSet[string]()
@@ -78,8 +112,7 @@ proc checkDuplicates(nodes: seq[YumNode], path: string, errors: var seq[string])
     else:
       discard
 
-proc validateArrayElements(node: YumNode, hint: TypeHint,
-                           pairKey: string, errors: var seq[string]) =
+proc validateArrayElements(node: YumNode, hint: TypeHint, pairKey: string, errors: var seq[string]) =
   if hint.kind != thList or hint.elementKind == thUnknown:
     return
   for i, child in node.children:
@@ -187,6 +220,4 @@ proc validateConfig*(rootNode: YumNode) =
   validateNode(rootNode, currentPath = "", errors = errors)
 
   if errors.len > 0:
-    raise newException(ValueError,
-      "Yooo! config validation failed with " & $errors.len & " error(s):\n\n" &
-      errors.join("\n\n"))
+    configValidationFailedError(errors.len, errors.join("\n\n"))

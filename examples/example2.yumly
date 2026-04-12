@@ -1,6 +1,15 @@
+;> an include <;
+include { ".env" }
+
+;> you can use too:
+include { "file.yumly" }
+<;
+
+;> full names interpolates to a string <;
 name ;string = "John Doe", fullName ;string = "John Doe 67!",
 age ;int = 30
 hobbies ;list[string] = ["reading", "hiking", "cooking"]
+homeDir ;env = $["HOME"]
 
 ;> an commentary <;
 ;>

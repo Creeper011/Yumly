@@ -1,6 +1,10 @@
+"""
+Yumly is a cute, declarative config language with fail-fast behavior and optional type safety.
+Python Library for parsing and validating yumly files and content strings.
+"""
+
 from pathlib import Path
 from typing import Any, Union, IO
-from contextlib import contextmanager
 from . import libyumly # type: ignore
 from .yumly_error import YumlyError
 
@@ -10,21 +14,24 @@ FALLBACK_MESSAGE = "Oh no.. an unexpected error occurred.. :( the Yumly parser f
 FALLBACK_VALUE_MESSAGE = "Oh no.. an unexpected error occurred.. :( invalid result structure"
 
 class Yumly():
-    """Yumly is a configuration file format designed to be a mix of YAML and JSON with type safety."""
+    """
+    Yumly is a cute, declarative config language with fail-fast behavior and optional type safety.
+    Python Library for parsing and validating yumly files and content strings.
+    """
 
     def load(self, path: Union[str, Path]) -> dict[str, Any]:
         """Load data from a yumly file"""
         path_obj = Path(path)
         return self._parse_file(path_obj)
     
-    def loads(self, yuml_data: str, working_dir: str = ".") -> dict[str, Any]:
+    def loads(self, yumly_data: str, working_dir: str = ".") -> dict[str, Any]:
         """Load data from a yumly content string"""
-        return self._parse_content(yuml_data, working_dir)
+        return self._parse_content(yumly_data, working_dir)
     
-    def validate_content(self, yuml_data: str) -> bool:
+    def validate_content(self, yumly_data: str) -> bool:
         """Validate raw yumly content string (this skips the resolving of env vars and includes)"""
         try:
-            msg = libyumly.validateContentMsg(yuml_data)
+            msg = libyumly.validateContentMsg(yumly_data)
             if msg:
                 raise YumlyError(msg)
         except YumlyError:
@@ -63,9 +70,9 @@ class Yumly():
 
         return value
     
-    def _parse_content(self, yuml_data: str, working_dir: str = ".") -> dict[str, Any]:
+    def _parse_content(self, yumly_data: str, working_dir: str = ".") -> dict[str, Any]:
         try:
-            value = libyumly.loadYumlyContentPy(yuml_data, working_dir)
+            value = libyumly.loadYumlyContentPy(yumly_data, working_dir)
         except Exception as exc:
             msg = str(exc).strip() or FALLBACK_MESSAGE
             raise YumlyError(msg) from exc
@@ -83,7 +90,10 @@ class Yumly():
             raise YumlyError(str(exc) or FALLBACK_MESSAGE) from exc
     
     def dump(self, data: dict[str, Any], stream: IO[str]) -> None:
-        """Dump data to a yumly content stream"""
+        """
+        Dump data to a yumly content stream
+        WARNING: Yumly by design/archquiteture does not support streaming, so we have to dump the whole content at once.
+        """
         try:
             stream.write(libyumly.dumpPy(data))
         except Exception as exc:

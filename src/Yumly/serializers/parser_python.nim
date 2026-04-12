@@ -1,5 +1,6 @@
 import nimpy
-import ../types/ast
+import options
+import ../types/ast, ../types/type_hints, ../utils/value_utils
 
 proc valueToPy(value: Value, pyBuiltins: PyObject): PyObject =
   case value.kind
@@ -48,3 +49,17 @@ proc toPython*(config: YumlyConf): PyObject =
   for blk in config.blocks:
     root[blk.name] = blockToPyDict(blk, pyBuiltins)
   return root
+
+proc applyPythonTypeHints(pairs: var seq[Pair]) =
+  for p in pairs.mitems:
+    if not p.typeHint.isSome:
+      p.typeHint = some(TypeHint(raw: inferTypeHint(p.value), kind: thUnknown))
+
+proc applyPythonTypeHintsRec(blocks: var seq[Block]) =
+  for b in blocks.mitems:
+    applyPythonTypeHints(b.pairs)
+    applyPythonTypeHintsRec(b.subBlocks)
+
+proc applyPythonTypeHints*(config: var YumlyConf) =
+  applyPythonTypeHints(config.pairs)
+  applyPythonTypeHintsRec(config.blocks)
