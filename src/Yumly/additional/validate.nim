@@ -17,7 +17,7 @@ proc literalValueKind(node: YumNode): ValueKind =
     literalValueKindError($node.kind)
 
   case node.token.kind
-  of tkString, tkBang:
+  of tkString:
     result = vkString
   of tkLiteral:
     result = classifyLiteral(node.rawValue).kind
@@ -60,8 +60,6 @@ proc nodeTypeName(node: YumNode): string =
   of nkPair:        "pair"
   of nkConfig:      "config"
   of nkInclude:     "include"
-  of nkGlobalRef:   "symbol reference"
-  of nkSymbolDecl: "symbol"
 
 # maps a TypeHintKind to its corresponding ValueKind so we can look up VALUES_DEF.
 proc toValueKind(hk: TypeHintKind): ValueKind =
@@ -212,7 +210,7 @@ proc validateNode(node: YumNode, currentPath: string, errors: var seq[string]) =
         if currentPath.len == 0: child.name
         else: currentPath & "." & child.name
       validateNode(child, newPath, errors)
-    of nkPair, nkSymbolDecl:
+    of nkPair:
       validatePair(child, currentPath, errors)
     else:
       discard

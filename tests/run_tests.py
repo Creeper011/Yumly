@@ -106,10 +106,6 @@ class TestTypes:
         assert data["home"] == "/test/home"
         assert data["home2"] == "/test/home"
 
-    def test_symbol_refs_other_symbol(self):
-        YUMLY.load(BASE / "valid/types/symbol_refs_other_symbol.yumly")
-
-
 # ---------------------------------------------------------------------------
 # Includes
 # ---------------------------------------------------------------------------
@@ -126,28 +122,6 @@ class TestIncludes:
 # ---------------------------------------------------------------------------
 # Full configs
 # ---------------------------------------------------------------------------
-
-
-class TestFullConfigs:
-    def test_service_stack(self):
-        data = YUMLY.load(BASE / "valid/full/service_stack.yumly")
-        assert data["global"]["stack_name"] == "orion-prod"
-        assert data["global"]["maintenance_mode"] is False
-        assert "api_gateway" in data["services"]
-        assert "worker" in data["services"]
-        assert "cron" in data["services"]
-
-    def test_deployment_plan(self):
-        data = YUMLY.load(BASE / "valid/full/deployment_plan.yuy")
-        assert data["common"]["company"] == "Yumly Corp"
-        assert data["common"]["company_string"] == "Yumly Corp"
-        assert "Yumly Corp is a company" in data["common"]["description"]
-        assert data["credentials"]["db_user"] == "app_user"
-        assert data["credentials"]["db_password"] == "secret"
-        assert data["credentials"]["jwt_secret"] == "supersecretjwt"
-        assert data["plan"]["environment"] == "staging"
-        assert "canary" in data["plan"]
-        assert "traffic" in data["plan"]
 
 
 # ---------------------------------------------------------------------------
@@ -167,9 +141,6 @@ class TestFullConfigs:
     ("lists/malformed_list.yumly",             None),
     ("lists/no_comma_list.yumly",              None),
     ("semantic/circular_include.yumly",        "Circular"),
-    ("semantic/duplicate_symbol.yumly",        "duplicated"),
-    ("semantic/unknown_symbol.yumly",          "unknown symbol"),
-    ("semantic/circular_symbol.yumly",         "circular"),
     ("unexpected/unexpected_token.yumly",      None),
     ("unexpected/unexpected_token_root.yumly", None),
 ])

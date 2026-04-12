@@ -31,7 +31,7 @@ proc evaluateValue*(node: YumNode, hint: Option[TypeHint]): Value =
   case node.kind
   of nkLiteral:
     case node.token.kind
-    of tkString, tkBang:
+    of tkString:
       result = decodeString(node.rawValue, node.line, node.col)
     of tkLiteral:
       result = classifyLiteral(node.rawValue)

@@ -1,2 +1,0 @@
-@bar ;string = "test"
-@foo ;string = @bar

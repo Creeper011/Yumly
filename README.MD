@@ -16,7 +16,6 @@ The parser is written in [Nim](https://nim-lang.org/) and exports bindings for [
 - **Fail-fast** — syntax and validation errors are raised immediately with cute cute messages (you can disable this, baka!)
 - **No overwriting** — duplicate keys and bindings are not allowed.
 - **Native env vars** — `$["VAR"]` and `include { ".env" }` are first class ;)
-- **Symbols** — global `@` values, recursively resolved (order doesn't matter), reusable across the file (root-only after includes) :3
 - **Readable** — it's easy to read and understand ^_^
 - **Extensions** `.yumly` and `.yuy` (it's so cute!!)
 
@@ -176,19 +175,6 @@ job = "dev"
 </details>
 
 <details>
-<summary>Symbols</summary>
-Symbols are global values defined at the root level, below includes, prefixed with `@`. They can be used anywhere in the file and are resolved recursively. The order of definition doesn't matter.
-
-```yumly
-@base_url = "https://api.example.com"
-@api_version = "v1"
-@endpoint = !"@base_url/@api_version" ;> the ! prefix indicates that this string needs to be interpolated <;
-
-(api) {
-    baseUrl ;string = @base_url,
-    apiVersion ;string = @api_version,
-    url ;string = @endpoint
-}
 
 ```
 </details>
@@ -198,15 +184,12 @@ Symbols are global values defined at the root level, below includes, prefixed wi
 ```yumly
 include { ".env" }
 
-@projectName ;string = "Cid"
-@version ;string = "6.0.0"
-
 (global) {
-    project ;string = @projectName,
-    version ;string = @version,
-    description ;string = !"""
-    The @projectName project is a revolutionary platform that will change the world!
-    Currently in version @version!
+    project ;string = "Cid",
+    version ;string = "6.0.0",
+    description ;string = """
+    The Cid project is a revolutionary platform that will change the world!
+    Currently in version 6.0.0!
     """,
     production ;bool = true,
     tags ;list[string] = ["cloud", "scalable"]
@@ -402,7 +385,7 @@ nim c -r tests/test_encoder.nim
 ## ✿ Limitations:
 - hahaha, i made sure to leave this down here.
 - The current limitations are:
-    - Yumly is not streamable by my clean/modular dumb architecture and by design, as it needs all context to resolve symbols, includes, blocks and pairs. This means that the entire file needs to be loaded and parsed before any data can be accessed.
+    - Yumly is not streamable by my clean/modular dumb architecture and by design, as it needs all context to resolve includes, blocks and pairs. This means that the entire file needs to be loaded and parsed before any data can be accessed.
 
 ## ★ License ★
 

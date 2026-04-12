@@ -14,8 +14,6 @@ type
     tkDeclaration  # ;
     tkComma # ,
     tkDollar # $
-    tkAt # @
-    tkBang # !
     tkInclude # include
     tkString # "string"
     tkLiteral # values like: int, float, bool etc

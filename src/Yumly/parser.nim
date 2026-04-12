@@ -101,25 +101,7 @@ proc parseValue(parser: var Parser): YumNode =
     return YumNode(kind: nkLiteral, rawValue: envToken.value,
                    token: token, line: token.line, col: token.col)
 
-  of tkAt:
-    let atToken = parser.advance()
-    let refToken = parser.expect(tkIdent, expIdentifier)
-    return YumNode(kind: nkGlobalRef, refName: refToken.value,
-                   token: atToken, line: atToken.line, col: atToken.col)
-
-  of tkBang:
-    let bangToken = parser.advance()
-    let stringToken = parser.expect(tkString, expString)
-    return YumNode(kind: nkLiteral, rawValue: stringToken.value,
-                   token: bangToken, line: bangToken.line, col: bangToken.col)
-
-  of tkString:
-    let tok = parser.advance()
-    return YumNode(kind: nkLiteral, rawValue: tok.value,
-                   token: tok, line: tok.line, col: tok.col)
-
-  of tkLiteral:
-    # Covers integers, floats and booleans (true / false)
+  of tkString, tkLiteral:
     let tok = parser.advance()
     return YumNode(kind: nkLiteral, rawValue: tok.value,
                    token: tok, line: tok.line, col: tok.col)
@@ -142,16 +124,6 @@ proc parsePair(parser: var Parser): YumNode =
                  valNode: valueNode, token: keyToken,
                  line: keyToken.line, col: keyToken.col)
 
-proc parseSymbol(parser: var Parser): YumNode =
-  let atToken = parser.expect(tkAt, expAt)
-  let keyToken = parser.expect(tkIdent, expIdentifier)
-  let typeHint = parseTypeHint(parser)
-  discard parser.expect(tkEquals, expEquals)
-  let valueNode = parser.parseValue()
-  return YumNode(kind: nkSymbolDecl, key: keyToken.value, typeHint: typeHint,
-                 valNode: valueNode, token: atToken,
-                 line: atToken.line, col: atToken.col)
-
 proc parseBlock*(parser: var Parser): YumNode =
   # Syntax: (name) { ... }
   let lpToken = parser.expect(tkLParen, expBlockName)
@@ -165,8 +137,6 @@ proc parseBlock*(parser: var Parser): YumNode =
   while parser.peek().kind notin {tkRBrace, tkEOF}:
     if parser.peek().kind == tkLParen:
       result.children.add(parser.parseBlock())
-    elif parser.peek().kind == tkAt:
-      symbolRootOnlyError(parser.peek())
     else:
       result.children.add(parser.parsePair())
     parser.consumeOrExpectComma()
@@ -190,7 +160,6 @@ proc generateAST*(tokens: seq[Token]): YumNode =
   # defines the orders of the different root-level constructs. this allows a consistent structure/style across Yumly files
   type RootPhase = enum
     rpIncludes,
-    rpSymbols,
     rpRegular
 
   var phase = rpIncludes
@@ -201,14 +170,6 @@ proc generateAST*(tokens: seq[Token]): YumNode =
       if phase != rpIncludes:
         includeOrderError(parser.peek())
       result.children.add(parser.parseInclude())
-
-    of tkAt:
-      if phase == rpRegular:
-        symbolOrderError(parser.peek())
-      phase = rpSymbols
-      let symbolNode = parser.parseSymbol()
-      result.children.add(symbolNode)
-      parser.consumeRootSeparator(symbolNode.line)
 
     of tkLParen:
       phase = rpRegular
