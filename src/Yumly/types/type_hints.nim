@@ -1,5 +1,6 @@
 
 type
+  # NOTE: tkUnknown is for if the type hint is absent
   TypeHintKind* = enum thUnknown, thString, thInt, thFloat, thBool, thEnv, thList, thTuple
 
   TypeHint* = object

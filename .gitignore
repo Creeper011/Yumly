@@ -21,10 +21,21 @@ tasks.yumly
 #binaries
 waifuu
 test_write
-test_encoder
-test_tokenizer
 /Yumly
 change_version
 yumly_cli
 cafe
 markers_finder
+
+# test binaries
+test_tokenizer
+test_validate
+test_values
+test_builders
+test_pipeline
+test_parser
+test_evaluator
+test_resolver
+test_encoder
+test_nim_api
+test_full_flow

@@ -4,8 +4,9 @@
 ##
 
 import options
-import types/nodes, types/token, types/type_hints
-import error_messages
+import ../types/nodes, ../types/token, ../types/type_hints
+import ../utils/recursion
+import ../error_messages
 
 # Returns the current token without advancing
 proc peek(parser: Parser): Token = parser.tokens[parser.pos]
@@ -47,11 +48,16 @@ proc consumeRootSeparator(parser: var Parser, nodeLine: int) =
       parser.consumeComma()
 
 proc parseTypeHint(parser: var Parser): Option[TypeHint] =
+  # expect syntax: ;type, but if the next token is not tkDeclaration, we assume there is no type hint and return none
   if parser.peek().kind != tkDeclaration:
     return none(TypeHint)
+
   discard parser.advance()
+  parser.root.hasTypeHints = some(true)
+  # expect the indentifier for the type hint
   let baseTok = parser.expect(tkIdent, expIdentifier)
 
+  # check if it's a type hint with syntax: ;type[elemType]
   if parser.peek().kind == tkLBracket:
     discard parser.advance()
     let elemTok = parser.expect(tkIdent, expIdentifier)
@@ -72,10 +78,13 @@ proc parseTypeHint(parser: var Parser): Option[TypeHint] =
     col: baseTok.col
   ))
 
+# forward declaration to parseListItems use it
 proc parseValue(parser: var Parser): YumNode
 
 proc parseListItems(parser: var Parser): seq[YumNode] =
   var items: seq[YumNode] = @[]
+  
+  # parse items until we reach the closing bracket or end of file
   while parser.peek().kind != tkRBracket and parser.peek().kind != tkEOF:
     items.add(parser.parseValue())
     let next = parser.peek()
@@ -86,76 +95,79 @@ proc parseListItems(parser: var Parser): seq[YumNode] =
   return items
 
 proc parseValue(parser: var Parser): YumNode =
-  let token = parser.peek()
+  withRecursionGuard(parser.recursionDepth, parser.peek()):
+    let token = parser.peek()
 
-  case token.kind
-  of tkDollar:
-    # Environment variable: $["ENV_NAME"]
-    discard parser.advance()
-    if parser.peek().kind != tkLBracket:
-      expectedEnvBracketError(expEnvVar, token)
-    discard parser.advance()
-    let envToken = parser.expect(tkString, expString)
-    discard parser.expect(tkRBracket, expRBracket)
-    # rawValue holds just the env name so the evaluator can resolve it
-    return YumNode(kind: nkLiteral, rawValue: envToken.value,
-                   token: token, line: token.line, col: token.col)
+    case token.kind
+    of tkDollar:
+      # Expect syntax for environment variable: $["ENV_NAME"]
+      discard parser.advance()
+      if parser.peek().kind != tkLBracket:
+        expectedEnvBracketError(expEnvVar, token)
+      discard parser.advance()
+      let envToken = parser.expect(tkString, expString)
+      discard parser.expect(tkRBracket, expRBracket)
 
-  of tkString, tkLiteral:
-    let tok = parser.advance()
-    return YumNode(kind: nkLiteral, rawValue: tok.value,
-                   token: tok, line: tok.line, col: tok.col)
+      parser.root.hasEnvVars = some(true)
+      # rawValue holds just the env name so the evaluator can resolve it
+      return YumNode(kind: nkLiteral, rawValue: envToken.value, token: token, line: token.line, col: token.col)
 
-  of tkLBracket:
-    let startToken = parser.advance()
-    let items = parser.parseListItems()
-    return YumNode(kind: nkArray, children: items,
-                   token: startToken, line: startToken.line, col: startToken.col)
+    of tkString, tkLiteral:
+      let tok = parser.advance()
+      return YumNode(kind: nkLiteral, rawValue: tok.value, token: tok, line: tok.line, col: tok.col)
 
-  else:
-    expectedError(expValue, parser.peek())
+    of tkLBracket:
+      let startToken = parser.advance()
+      let items = parser.parseListItems()
+      return YumNode(kind: nkArray, children: items, token: startToken, line: startToken.line, col: startToken.col)
+
+    else:
+      expectedError(expValue, parser.peek())
 
 proc parsePair(parser: var Parser): YumNode =
+  # Expect syntax: key ;type = value
   let keyToken = parser.expect(tkIdent, expIdentifier)
   let typeHint = parseTypeHint(parser)
   discard parser.expect(tkEquals, expEquals)
   let valueNode = parser.parseValue()
-  return YumNode(kind: nkPair, key: keyToken.value, typeHint: typeHint,
-                 valNode: valueNode, token: keyToken,
-                 line: keyToken.line, col: keyToken.col)
+
+  YumNode(kind: nkPair, key: keyToken.value, typeHint: typeHint, valNode: valueNode, token: keyToken, line: keyToken.line, col: keyToken.col)
 
 proc parseBlock*(parser: var Parser): YumNode =
-  # Syntax: (name) { ... }
-  let lpToken = parser.expect(tkLParen, expBlockName)
-  let nameToken = parser.expect(tkIdent, expIdentifier)
-  discard parser.expect(tkRParen, expValue)   # no expRParen in enum — expValue is a safe fallback
-  discard parser.expect(tkLBrace, expLBrace)
+  withRecursionGuard(parser.recursionDepth, parser.peek()):
+    # Expect syntax: (name) { ... }
+    let lpToken = parser.expect(tkLParen, expBlockName)
+    let nameToken = parser.expect(tkIdent, expIdentifier)
+    discard parser.expect(tkRParen, expValue)   # no expRParen in enum — expValue is a safe fallback
+    discard parser.expect(tkLBrace, expLBrace)
 
-  result = YumNode(kind: nkBlock, name: nameToken.value, children: @[],
-                   token: lpToken, line: lpToken.line, col: lpToken.col)
+    result = YumNode(kind: nkBlock, name: nameToken.value, children: @[],
+                    token: lpToken, line: lpToken.line, col: lpToken.col)
 
-  while parser.peek().kind notin {tkRBrace, tkEOF}:
-    if parser.peek().kind == tkLParen:
-      result.children.add(parser.parseBlock())
-    else:
-      result.children.add(parser.parsePair())
-    parser.consumeOrExpectComma()
+    while parser.peek().kind notin {tkRBrace, tkEOF}:
+      if parser.peek().kind == tkLParen:
+        result.children.add(parser.parseBlock())
+      else:
+        result.children.add(parser.parsePair())
+      parser.consumeOrExpectComma()
 
-  discard parser.expect(tkRBrace, expRBrace,
-                        nameToken.value, lpToken.line, lpToken.col)
+    # expect the block to be closed properly
+    discard parser.expect(tkRBrace, expRBrace, nameToken.value, lpToken.line, lpToken.col)
 
 proc parseInclude(parser: var Parser): YumNode =
   # Syntax: include { "path" }
   let tok = parser.advance() # consume tkInclude
+
+  # expect the format to be exactly: include { "path" }
   discard parser.expect(tkLBrace, expLBrace)
   let pathToken = parser.expect(tkString, expString)
   discard parser.expect(tkRBrace, expRBrace)
-  return YumNode(kind: nkInclude, includePath: pathToken.value,
-                 token: tok, line: tok.line, col: tok.col)
 
-proc generateAST*(tokens: seq[Token]): YumNode =
-  var parser = Parser(tokens: tokens, pos: 0, recursionDepth: 0)
-  result = YumNode(kind: nkConfig, children: @[])
+  YumNode(kind: nkInclude, includePath: pathToken.value, token: tok, line: tok.line, col: tok.col)
+
+proc createNodes*(tokens: seq[Token]): YumNode =
+  result = YumNode(kind: nkConfig, children: @[], hasIncludes: none(bool), hasTypeHints: none(bool), hasEnvVars: none(bool))
+  var parser = Parser(tokens: tokens, pos: 0, root: result)
 
   # defines the orders of the different root-level constructs. this allows a consistent structure/style across Yumly files
   type RootPhase = enum
@@ -165,8 +177,10 @@ proc generateAST*(tokens: seq[Token]): YumNode =
   var phase = rpIncludes
 
   while parser.peek().kind != tkEOF:
-    case parser.peek().kind
+    let curr = parser.peek()
+    case curr.kind
     of tkInclude:
+      result.hasIncludes = some(true)
       if phase != rpIncludes:
         includeOrderError(parser.peek())
       result.children.add(parser.parseInclude())

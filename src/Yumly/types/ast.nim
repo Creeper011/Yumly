@@ -6,7 +6,7 @@ import options
 import ../types/type_hints
 
 type
-  # filled in by the evaluator
+  # NOTE: filled in by the evaluator
   ValueKind* = enum 
     vkString, vkInt, vkFloat, vkBool, vkList, vkTuple, vkEnv
 
