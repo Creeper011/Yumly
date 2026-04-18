@@ -6,24 +6,25 @@
 
 import os
 import ../yumly_file
-import ../tokenizer
-import ../parser
-import ../resolver
-import ../evaluator
-import ../additional/include_loader
-import ../additional/validate
+import ../phases/tokenizer
+import ../phases/parser
+import ../phases/resolver
+import ../phases/evaluator
+import ../phases/load_include
+import ../phases/validate
 import ../serializers/encoder
 import ../types/ast
 import ../types/nodes
 
 proc parseContentToAST*(content: string): YumNode =
   let tokens = tokenize(content)
-  result = generateAST(tokens)
+  result = createNodes(tokens)
 
 proc parseFileToAST*(path: string): YumNode =
   checkFileExtension(path)
   let content = openFileContent(path)
   result = parseContentToAST(content)
+  result.sourceFile = os.absolutePath(path)
 
 proc resolveYumly*(ast: var YumNode; workingDir: string) =
   loadIncludes(ast, workingDir)

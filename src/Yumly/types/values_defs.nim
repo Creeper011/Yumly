@@ -10,7 +10,7 @@ import ../error_messages
 type 
   EncodingStyle* = enum
     styleYumly,
-    styleYumyumy # yumyumy is a representative format
+    styleYumyumy # NOTE: yumyumy is a representative format
 
   ValueDef* = object
     typeHint*: string

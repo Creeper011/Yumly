@@ -82,6 +82,13 @@ proc failedToLoadFile*(path: string, line: int, column: int, error: string) =
         "  detail: " & error
     )
 
+proc recursionLimitError*(limit: int, line: int, col: int) =
+    raise newException(ValueError,
+        "Kyaa~! My head is spinning! The nesting is way too deep! (x_x)\n" &
+        "  recursion limit: " & $limit & "\n" &
+        loc(line, col) & "\n" &
+        "  hint: try to flatten your configuration, it is way too deep for me to handle!")
+
 proc unknownTypeHintError*(hint: string, line: int, column: int) =
     raise newException(ValueError,
         "Ehhh... unknown type hint '" & hint & "'" & loc(line, column))

@@ -3,8 +3,8 @@
 ##
 
 import strutils, options
-import types/nodes, types/type_hints
-import error_messages
+import ../types/nodes, ../types/type_hints
+import ../error_messages
 
 proc resolveTypeHint(hint: var TypeHint) =
   var resolvedKind = hint.kind
@@ -61,17 +61,24 @@ proc resolveTypeHint(hint: var TypeHint) =
       col: hint.col
     )
 
-proc resolveAst*(node: YumNode) =
-  case node.kind
-  of nkPair:
-    if node.typeHint.isSome:
-      var hint = node.typeHint.get
-      resolveTypeHint(hint)
-      node.typeHint = some(hint)
-    resolveAst(node.valNode)
+import ../utils/recursion
 
-  of nkArray, nkBlock, nkConfig:
-    for child in node.children:
-      resolveAst(child)
-  else:
-    discard
+proc resolveAstInternal(node: YumNode, depth: var int) =
+  withRecursionGuard(depth, node.line, node.col):
+    case node.kind
+    of nkPair:
+      if node.typeHint.isSome:
+        var hint = node.typeHint.get
+        resolveTypeHint(hint)
+        node.typeHint = some(hint)
+      resolveAstInternal(node.valNode, depth)
+
+    of nkArray, nkBlock, nkConfig:
+      for child in node.children:
+        resolveAstInternal(child, depth)
+    else:
+      discard
+
+proc resolveAst*(node: YumNode) =
+  var depth = 0
+  resolveAstInternal(node, depth)

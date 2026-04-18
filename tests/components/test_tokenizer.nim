@@ -1,4 +1,4 @@
-import ../../src/Yumly/tokenizer
+import ../../src/Yumly/phases/tokenizer
 import ../../src/Yumly/types/token
 
 const 
