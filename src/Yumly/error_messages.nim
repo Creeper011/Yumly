@@ -34,7 +34,6 @@ proc getTokenValue(token: Token): string =
   of tkEquals: "="
   of tkComma: ","
   of tkDollar: "$"
-  of tkInclude: "include"
   of tkDeclaration: ";"
 
 # Parser errors
@@ -76,11 +75,18 @@ proc includeOrderError*(token: Token) =
 proc failedToLoadFile*(path: string, line: int, column: int, error: string) =
     raise newException(IOError,
         "Uhh... something went wrong while loading the " & path &
-        "file! (>_<)\n" &
+        " file! (>_<)\n" &
         "  file: '" & path & "'\n" &
         loc(line, column) & "\n" &
         "  detail: " & error
     )
+
+proc recursionLimitError*(limit: int, line: int, col: int) =
+    raise newException(ValueError,
+        "Kyaa~! My head is spinning! The nesting is way too deep! (x_x)\n" &
+        "  recursion limit: " & $limit & "\n" &
+        loc(line, col) & "\n" &
+        "  hint: try to flatten your configuration, it is way too deep for me to handle!")
 
 proc unknownTypeHintError*(hint: string, line: int, column: int) =
     raise newException(ValueError,

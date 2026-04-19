@@ -1,0 +1,75 @@
+(*
+ * Yumly Configuration Language — EBNF Specification
+ *)
+
+(* ===== TERMINALS ===== *)
+
+LETTER  = "A".."Z" | "a".."z" ;
+DIGIT   = "0".."9" ;
+SYMBOL  = "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" |
+          "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" |
+          "=" | ">" | "?" | "@" | "[" | "]" | "^" | "_" | "`" |
+          "{" | "|" | "}" | "~" ;
+WS      = " " | "\t" | "\n" | "\r" ;
+ANY     = LETTER | DIGIT | SYMBOL | WS ;
+
+ident   = LETTER, { LETTER | DIGIT | "_" } ;
+
+(* ===== LEXICAL TOKENS ===== *)
+
+(* Comments: ;> ... <; *)
+comment = ";>", { comment-char }, "<;" ;
+comment-char = (ANY - "<") | ("<", ANY - ";") ;
+
+esc     = "\\", ( "n" | "t" | "\\" | "\"" | "'" ) ;
+
+string-lit = '"', { dchar }, '"'
+           | "'", { schar }, "'" ;
+
+dchar   = esc | (ANY - '"' - "\\") ;
+schar   = esc | (ANY - "'" - "\\") ;
+
+(* Multiline string: lexer should consume until the next """ *)
+mlstring-lit = '"""', { mlchar }, '"""' ;
+mlchar  = esc | (ANY - '"') | ('"', (ANY - '"')) | ('""', (ANY - '"')) ;
+
+integer = ["-"], DIGIT, { DIGIT } ;
+float-lit = ["-"], DIGIT, { DIGIT }, ".", DIGIT, { DIGIT } ;
+
+bool-lit = "true" | "false" ;
+env-var  = "$[", string-lit, "]" ;
+
+(* ===== TYPES ===== *)
+
+primitive-type = "string" | "int" | "float" | "bool" | "env" ;
+type-name      = primitive-type
+               | "list", "[", primitive-type, "]"
+               | "tuple" ;
+
+type-hint = ";", type-name ;
+
+(* ===== VALUES ===== *)
+
+primitive = string-lit | mlstring-lit | integer | float-lit | bool-lit | env-var ;
+
+(* Same syntax for list and tuple; distinction is semantic *)
+array-value = "[", [ value, { ",", value } ], "]" ;
+
+value = primitive | array-value ;
+
+(* ===== STRUCTURES ===== *)
+
+pair = ident, [ type-hint ], "=", value ;
+
+block-name = "(", ident, ")" ;
+block-item = pair | block ;
+block-body = [ block-item, { ",", block-item }, [ "," ] ] ;
+block = block-name, "{", [ block-body ], "}" ;
+
+include-stmt = "include", "{", string-lit, "}" ;
+
+root-item = pair | block ;
+
+(* Includes must come first. Separator rules at root are layout-sensitive
+   and should be handled by the lexer/parser, not by pure EBNF. *)
+yumly-file = { include-stmt }, { root-item } ;

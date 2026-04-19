@@ -26,7 +26,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install build setuptools wheel
 
-      # REMOVIDO o --wheel daqui para não gerar o wheel de linux_x86_64 inválido
       - name: Build sdist
         run: python -m build --sdist
 

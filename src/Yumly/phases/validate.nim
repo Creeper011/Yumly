@@ -193,31 +193,35 @@ proc validatePair(pairNode: YumNode, path: string, errors: var seq[string]) =
         VALUES_DEF[toValueKind(hint.kind)].typeHint
       )
 
+import ../utils/recursion
+
 # ---------------------------------------------------------------------------
 # Tree walk
 # ---------------------------------------------------------------------------
 
-proc validateNode(node: YumNode, currentPath: string, errors: var seq[string]) =
-  if node.kind notin {nkConfig, nkBlock}:
-    return
+proc validateNode(node: YumNode, currentPath: string, errors: var seq[string], depth: var int) =
+  withRecursionGuard(depth, node.line, node.col):
+    if node.kind notin {nkConfig, nkBlock}:
+      return
 
-  checkDuplicates(node.children, currentPath, errors)
+    checkDuplicates(node.children, currentPath, errors)
 
-  for child in node.children:
-    case child.kind
-    of nkBlock:
-      let newPath =
-        if currentPath.len == 0: child.name
-        else: currentPath & "." & child.name
-      validateNode(child, newPath, errors)
-    of nkPair:
-      validatePair(child, currentPath, errors)
-    else:
-      discard
+    for child in node.children:
+      case child.kind
+      of nkBlock:
+        let newPath =
+          if currentPath.len == 0: child.name
+          else: currentPath & "." & child.name
+        validateNode(child, newPath, errors, depth)
+      of nkPair:
+        validatePair(child, currentPath, errors)
+      else:
+        discard
 
 proc validateConfig*(rootNode: YumNode) =
   var errors: seq[string]
-  validateNode(rootNode, currentPath = "", errors = errors)
+  var depth = 0
+  validateNode(rootNode, currentPath = "", errors = errors, depth = depth)
 
   if errors.len > 0:
     configValidationFailedError(errors.len, errors.join("\n\n"))

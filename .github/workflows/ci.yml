@@ -33,8 +33,19 @@ jobs:
     - name: Install Python package
       run: pip install .
 
-    - name: Run tests
+    - name: Run Python integration tests
+      run: pytest --verbose --maxfail=1 tests/integration/run_tests.py
+
+    - name: Run Nim unit tests
       run: |
-        pytest --verbose --maxfail=1 tests/run_tests.py
-        nim c -r tests/components/test_encoder.nim
-        nim c -r tests/components/test_tokenizer.nim
+        nim c -r --path:src tests/components/test_encoder.nim
+        nim c -r --path:src tests/components/test_tokenizer.nim
+        nim c -r --path:src tests/components/test_parser.nim
+        nim c -r --path:src tests/components/test_evaluator.nim
+        nim c -r --path:src tests/components/test_validate.nim
+        nim c -r --path:src tests/components/test_resolver.nim
+        nim c -r --path:src tests/components/test_values.nim
+        nim c -r --path:src tests/core/test_pipeline.nim
+        nim c -r --path:src tests/core/test_builders.nim
+        nim c -r --path:src tests/api/test_nim_api.nim
+        nim c -r --path:src tests/integration/test_full_flow.nim

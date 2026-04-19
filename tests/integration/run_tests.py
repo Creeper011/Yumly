@@ -149,6 +149,48 @@ def test_invalid_files(rel_path: str, contains: Optional[str]):
 
 
 # ---------------------------------------------------------------------------
+# Recursion Limit
+# ---------------------------------------------------------------------------
+
+
+class TestRecursionLimit:
+    def test_recursion_limit_exceeded(self):
+        # Generate deeply nested content at runtime (2000 levels > default 1000 should fail)
+        # Using dict -> dumps -> loads flow
+        nested = {"val": 1}
+        for i in range(2000):
+            nested = {f"l{i}": nested}
+        content = YUMLY.dumps(nested)
+        
+        with pytest.raises(YumlyError) as exc:
+            YUMLY.loads(content)
+        assert "recursion" in str(exc.value).lower()
+
+    def test_recursion_limit_ok(self):
+        # Valid nesting using dict -> dumps -> loads
+        nested = {"val": 1}
+        for i in range(10):
+            nested = {f"level{i}": nested}
+        
+        data = YUMLY.loads(YUMLY.dumps(nested))
+        assert "level9" in data
+
+    def test_recursion_limit_via_file(self, tmp_path):
+        # Generate deeply nested file at runtime and try to load it
+        nested = {"val": 1}
+        for i in range(2000):
+            nested = {f"l{i}": nested}
+        content = YUMLY.dumps(nested)
+        
+        test_file = tmp_path / "deep.yumly"
+        test_file.write_text(content)
+        
+        with pytest.raises(YumlyError) as exc:
+            YUMLY.load(test_file)
+        assert "recursion" in str(exc.value).lower()
+
+
+# ---------------------------------------------------------------------------
 # API surface
 # ---------------------------------------------------------------------------
 

@@ -5,8 +5,8 @@
 ##
 
 import std/strutils
-import types/token
-import error_messages
+import ../types/token
+import ../error_messages
 
 template col(startPos: int): int = startPos - lineStart + 1
 
@@ -203,8 +203,6 @@ proc tokenize*(source: string): seq[Token] =
           i += 1
         let word = source[start..i-1]
         case word:
-          of "include":
-            emit(tkInclude, start)
           of "true", "false":
             emitVal(tkLiteral, word, start)
           else:

@@ -6,7 +6,7 @@ import token, options
 import ../types/type_hints
 
 type
-  # filled in by the parser
+  # NOTE: filled in by the parser
 
   NodeKind* = enum 
     nkLiteral, # can be a: string, int, float, bool and env
@@ -30,8 +30,15 @@ type
     of nkInclude:
       includePath*: string
     line*, col*: int
+    sourceFile*: string
 
+    # flags (only the root (nkConfig) node will have these set, and they are set by the parser)
+    hasIncludes*: Option[bool]
+    hasTypeHints*: Option[bool]
+    hasEnvVars*: Option[bool]
+    
   Parser* = object
     tokens*: seq[Token]
     pos*: int
+    root*: YumNode
     recursionDepth*: int
