@@ -1,13 +1,8 @@
-import std/options
 import ../../src/Yumly/phases/tokenizer
 import ../../src/Yumly/phases/parser
 import ../../src/Yumly/phases/evaluator
-import ../../src/Yumly/types/nodes
 import ../../src/Yumly/types/ast
 import os
-
-const
-  q = "\"\"\""
 
 const stringLitSource = "greeting ;string = \"hello world\""
 const intLitSource = "count ;int = 42"
@@ -18,7 +13,6 @@ const envVarSource = "db_host ;string = $[\"DB_HOST\"]"
 const envVarNotSetSource = "val ;string = $[\"UNDEFINED_VAR\"]"
 const simpleListSource = "items ;list[string] = [\"a\", \"b\", \"c\"]"
 const listOfIntsSource = "numbers ;list[int] = [1, 2, 3]"
-const tupleSource = "coords = [1, \"two\", 3]"  # heterogeneous = tuple
 const emptyListSource = "empty = []"
 const simpleBlockSource = """(database) {
   host ;string = "localhost",

@@ -1,13 +1,7 @@
-import std/[options, sets, os]
 import ../../src/Yumly/phases/tokenizer
 import ../../src/Yumly/phases/parser
 import ../../src/Yumly/phases/validate
 import ../../src/Yumly/phases/resolver
-import ../../src/Yumly/types/nodes
-import ../../src/Yumly/types/type_hints
-import ../../src/Yumly/error_messages
-
-const q = "\"\"\""
 
 proc testValidateString() =
   let source = "name ;string = \"test\""

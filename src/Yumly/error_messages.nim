@@ -34,7 +34,6 @@ proc getTokenValue(token: Token): string =
   of tkEquals: "="
   of tkComma: ","
   of tkDollar: "$"
-  of tkInclude: "include"
   of tkDeclaration: ";"
 
 # Parser errors

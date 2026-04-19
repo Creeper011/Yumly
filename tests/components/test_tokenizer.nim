@@ -35,7 +35,7 @@ proc T(kind: TokenKind, value: string = "", line: int = 0, col: int = 0): Token 
     Token(kind: kind, line: line, col: col)
 
 const expected = @[
-  T(tkInclude, line = 1, col = 1),
+  T(tkIdent, "include", line = 1, col = 1),
   T(tkLBrace, line = 1, col = 9),
   T(tkString, ".env", 1, 11),
   T(tkRBrace, line = 1, col = 18),
