@@ -1,4 +1,4 @@
-import std/[options, os]
+import std/[options]
 import ../../src/Yumly/core/pipeline
 import ../../src/Yumly/types/ast
 import ../../src/Yumly/types/type_hints

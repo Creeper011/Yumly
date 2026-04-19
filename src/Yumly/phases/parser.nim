@@ -179,21 +179,21 @@ proc createNodes*(tokens: seq[Token]): YumNode =
   while parser.peek().kind != tkEOF:
     let curr = parser.peek()
     case curr.kind
-    of tkInclude:
-      result.hasIncludes = some(true)
-      if phase != rpIncludes:
-        includeOrderError(parser.peek())
-      result.children.add(parser.parseInclude())
-
     of tkLParen:
       phase = rpRegular
       result.children.add(parser.parseBlock())
 
     of tkIdent:
-      phase = rpRegular
-      let pairNode = parser.parsePair()
-      result.children.add(pairNode)
-      parser.consumeRootSeparator(pairNode.line)
+      if curr.value == "include":
+        result.hasIncludes = some(true)
+        if phase != rpIncludes:
+          includeOrderError(parser.peek())
+        result.children.add(parser.parseInclude())
+      else:
+        phase = rpRegular
+        let pairNode = parser.parsePair()
+        result.children.add(pairNode)
+        parser.consumeRootSeparator(pairNode.line)
 
     else:
       expectedTopTokenError(expValue, parser.peek())

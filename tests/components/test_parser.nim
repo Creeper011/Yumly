@@ -2,7 +2,6 @@ import std/options
 import ../../src/Yumly/phases/tokenizer
 import ../../src/Yumly/phases/parser
 import ../../src/Yumly/types/nodes
-import ../../src/Yumly/types/token
 import ../../src/Yumly/types/type_hints
 
 const
@@ -48,6 +47,11 @@ const multilineStringSource = "desc ;string = " & q & "This is a\nmultiline stri
 const hasEnvVarsSource = "key ;string = $[\"MY_VAR\"]"
 const noTrailingCommaSource = """(db) {
   host = "localhost"
+}"""
+
+const includeBlockSource = """(include) {
+  host ;string = "localhost",
+  port ;int = 5432
 }"""
 
 proc testParseSimplePair() =
@@ -96,6 +100,17 @@ proc testParseSimpleBlock() =
   assert ast.children[0].children[0].key == "host"
   assert ast.children[0].children[1].key == "port"
   echo "testParseSimpleBlock: PASSED"
+
+proc testParseIncludeNamedBlock() =
+  let tokens = tokenize(includeBlockSource)
+  let ast = createNodes(tokens)
+  assert ast.children.len == 1
+  assert ast.children[0].kind == nkBlock
+  assert ast.children[0].name == "include"
+  assert ast.children[0].children.len == 2
+  assert ast.children[0].children[0].key == "host"
+  assert ast.children[0].children[1].key == "port"
+  echo "testParseIncludeNamedBlock: PASSED"
 
 proc testParseNestedBlock() =
   let tokens = tokenize(nestedBlockSource)
@@ -219,6 +234,7 @@ proc runParserTests() =
   testParseBoolValue()
   testParseEnvVar()
   testParseSimpleBlock()
+  testParseIncludeNamedBlock()
   testParseNestedBlock()
   testParseList()
   testParseTuple()
