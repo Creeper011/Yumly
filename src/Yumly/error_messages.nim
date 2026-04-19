@@ -75,7 +75,7 @@ proc includeOrderError*(token: Token) =
 proc failedToLoadFile*(path: string, line: int, column: int, error: string) =
     raise newException(IOError,
         "Uhh... something went wrong while loading the " & path &
-        "file! (>_<)\n" &
+        " file! (>_<)\n" &
         "  file: '" & path & "'\n" &
         loc(line, column) & "\n" &
         "  detail: " & error
