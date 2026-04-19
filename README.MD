@@ -13,7 +13,7 @@ The parser is written in [Nim](https://nim-lang.org/) and exports bindings for [
 
 - **No indentation** — blocks delimited by `{ }` allowing flexible organization
 - **Optional type hints** — you can declare intent UwU
-- **Fail-fast** — syntax and validation errors are raised immediately with cute cute messages (you can disable this, baka!)
+- **Fail-fast** — syntax and validation errors are raised immediately with cute cute messages
 - **No overwriting** — duplicate keys and bindings are not allowed.
 - **Native env vars** — `$["VAR"]` and `include { ".env" }` are first class ;)
 - **Readable** — it's easy to read and understand ^_^
