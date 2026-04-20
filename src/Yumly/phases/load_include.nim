@@ -2,7 +2,7 @@
 # This module is responsible for loading included resources in Yumly.
 ##
 
-import os, strutils, sets
+import os, strutils, sets, options
 import dotenv
 import ../types/nodes
 import ../phases/tokenizer, ../phases/parser
@@ -25,9 +25,11 @@ import ../utils/recursion
 
 proc processIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[string], depth: var int): seq[YumNode] =
   ## Recursively processes includes and returns a new list of children with includes resolved in-place.
-  withRecursionGuard(depth, rootNode.line, rootNode.col):
-    var newChildren: seq[YumNode] = @[]
+  if not rootNode.hasIncludes.get(false):
+    return rootNode.children
 
+  result = @[]
+  withRecursionGuard(depth, rootNode.line, rootNode.col):
     for child in rootNode.children:
       if child.kind == nkInclude:
         let resolvedPath = getCanonicalPath(child.includePath, baseDir, child)
@@ -72,13 +74,11 @@ proc processIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[st
             visited.excl(resolvedPath)
             
             for includedChild in resolvedChildren:
-              newChildren.add(includedChild)
+              result.add(includedChild)
       else:
         if child.sourceFile == "":
           discard
-        newChildren.add(child)
-        
-  newChildren
+        result.add(child)
 
 proc loadIncludes*(rootNode: YumNode; baseDir: string = ".") =
   ## Public entry point for include resolution.

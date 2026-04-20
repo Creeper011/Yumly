@@ -166,7 +166,7 @@ proc parseInclude(parser: var Parser): YumNode =
   YumNode(kind: nkInclude, includePath: pathToken.value, token: tok, line: tok.line, col: tok.col)
 
 proc createNodes*(tokens: seq[Token]): YumNode =
-  result = YumNode(kind: nkConfig, children: @[], hasIncludes: none(bool), hasTypeHints: none(bool), hasEnvVars: none(bool))
+  result = YumNode(kind: nkConfig, children: @[], hasIncludes: some(false), hasTypeHints: some(false), hasEnvVars: some(false))
   var parser = Parser(tokens: tokens, pos: 0, root: result)
 
   # defines the orders of the different root-level constructs. this allows a consistent structure/style across Yumly files

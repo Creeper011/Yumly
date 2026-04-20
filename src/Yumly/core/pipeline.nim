@@ -4,7 +4,7 @@
 # or: text -> encoder
 ##
 
-import os
+import os, options
 import ../yumly_file
 import ../phases/tokenizer
 import ../phases/parser
@@ -27,8 +27,11 @@ proc parseFileToAST*(path: string): YumNode =
   result.sourceFile = os.absolutePath(path)
 
 proc resolveYumly*(ast: var YumNode; workingDir: string) =
-  loadIncludes(ast, workingDir)
-  resolveAst(ast)
+  if ast.hasIncludes.get(false):
+    loadIncludes(ast, workingDir)
+  
+  if ast.hasTypeHints.get(false):
+    resolveAst(ast)
 
 proc validateYumly*(ast: var YumNode) =
   validateConfig(ast)
