@@ -1,6 +1,5 @@
 # Package
 
-name          = "Yumly"
 version       = "0.8.3"
 author        = "Creeper011"
 description   = "A cute, declarative config language with fail-fast behavior and optional type safety."

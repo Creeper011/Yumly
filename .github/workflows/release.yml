@@ -65,10 +65,6 @@ jobs:
         with:
           nim-version: '2.2.10'
 
-      - name: Install Nim dependencies
-        if: matrix.os != 'ubuntu-latest'
-        run: nimble install -y nimpy dotenv
-
       - name: Set up MSVC
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
@@ -79,6 +75,9 @@ jobs:
         env:
           CIBW_BUILD: "cp310-*"
           CIBW_SKIP: "*-musllinux* *-win32 *-manylinux_i686"
+
+          CIBW_BEFORE_BUILD: >
+            nimble install -y nimpy dotenv
 
           CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
 
@@ -95,8 +94,7 @@ jobs:
           CIBW_BEFORE_ALL_LINUX: >
             NIM_VERSION=2.2.10 &&
             curl -sSfL https://nim-lang.org/download/nim-${NIM_VERSION}-linux_x64.tar.xz -o /tmp/nim.tar.xz &&
-            tar xf /tmp/nim.tar.xz -C /opt &&
-            /opt/nim-${NIM_VERSION}/bin/nimble install -y nimpy dotenv
+            tar xf /tmp/nim.tar.xz -C /opt
 
           CIBW_ENVIRONMENT_LINUX: >
             PATH="/opt/nim-2.2.10/bin:$PATH"

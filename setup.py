@@ -1,3 +1,5 @@
+import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -25,24 +27,33 @@ try:
 except ImportError:
     pass
 
-NIM_SOURCE_PATH = "src/Yumly/libyumly.nim"
+NIM_SOURCE_PATH = Path("src/Yumly/libyumly.nim")
 MODULE_NAME = "libyumly"
+PACKAGE_NAME = "yumly"
 
-def _extension_suffix():
+
+def _extension_suffix() -> str:
     return ".pyd" if sys.platform.startswith("win") else ".so"
-
-SHARED_LIB_PATH = Path("lib/python/yumly") / f"{MODULE_NAME}{_extension_suffix()}"
 
 class BuildNim(build_py):
     """Custom build command to compile Nim code."""
+
     def run(self):
-        
-        output_path = SHARED_LIB_PATH
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_dir = Path(self.build_lib) / PACKAGE_NAME
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        output_path = output_dir / f"{MODULE_NAME}{_extension_suffix()}"
         nimcache_path = Path("build/nimcache")
         nimcache_path.mkdir(parents=True, exist_ok=True)
+
+        nimflags = shlex.split(os.environ.get("NIMFLAGS", ""))
+
+        if sys.platform.startswith("win") and not any(flag.startswith("--cc:") for flag in nimflags):
+            nimflags.insert(0, "--cc:vcc")
+
         command = [
             "nim", "c",
+            *nimflags,
             "-d:release",
             "-d:python",
             "--app:lib",
@@ -50,13 +61,14 @@ class BuildNim(build_py):
             "--debuginfo:off",
             f"--nimcache:{nimcache_path}",
             f"--out:{output_path}",
-            NIM_SOURCE_PATH,
+            str(NIM_SOURCE_PATH),
         ]
+
         try:
             print("=" * 20)
             print("Compiling Nim code...")
             subprocess.check_call(command)
-            print("Nim code compiled successfully.")
+            print(f"Nim code compiled successfully: {output_path}")
             print("=" * 20)
         except subprocess.CalledProcessError as e:
             print(f"Error compiling Nim code: {e}")
@@ -64,7 +76,9 @@ class BuildNim(build_py):
         except FileNotFoundError:
             print("Error: 'nim' not found. Please ensure Nim is installed and in your PATH.")
             raise
+
         super().run()
+
 
 cmdclass = {"build_py": BuildNim}
 if bdist_wheel is not None:
