@@ -15,7 +15,7 @@ sys.path.insert(0, "lib/python")
 
 from yumly import Yumly, YumlyError
 
-BASE  = Path("tests/files")
+BASE = Path("tests/files")
 YUMLY = Yumly()
 
 
@@ -70,7 +70,7 @@ class TestSyntax:
         assert data["variable"] == "Hello World"
         assert data["variable2"] == "Hello World,\nbut's a multiline string"
         assert data["variable3"] == (
-            'Hello world in a multiline string,\n'
+            "Hello world in a multiline string,\n"
             'but with \t scape sequences \t, \n new lines and " quotes'
         )
         assert data["variable4"] == "\tHello"
@@ -106,6 +106,7 @@ class TestTypes:
         assert data["home"] == "/test/home"
         assert data["home2"] == "/test/home"
 
+
 # ---------------------------------------------------------------------------
 # Includes
 # ---------------------------------------------------------------------------
@@ -129,21 +130,24 @@ class TestIncludes:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("rel_path,contains", [
-    ("brace/missing_brace_final.yumly",        None),
-    ("brace/missing_brace_start.yumly",        None),
-    ("unclosed_string.yumly",                  "doesn't close"),
-    ("unclosed_comment.yumly",                 "doesn't close"),
-    ("bad_string_escape.yumly",                "invalid escape"),
-    ("env_only_with_dollar.yumly",             None),
-    ("lists/heterogenius_list.yumly",          "wrong type"),
-    ("lists/list_with_no_type.yumly",          None),
-    ("lists/malformed_list.yumly",             None),
-    ("lists/no_comma_list.yumly",              None),
-    ("semantic/circular_include.yumly",        "Circular"),
-    ("unexpected/unexpected_token.yumly",      None),
-    ("unexpected/unexpected_token_root.yumly", None),
-])
+@pytest.mark.parametrize(
+    "rel_path,contains",
+    [
+        ("brace/missing_brace_final.yumly", None),
+        ("brace/missing_brace_start.yumly", None),
+        ("unclosed_string.yumly", "doesn't close"),
+        ("unclosed_comment.yumly", "doesn't close"),
+        ("bad_string_escape.yumly", "invalid escape"),
+        ("env_only_with_dollar.yumly", None),
+        ("lists/heterogenius_list.yumly", "wrong type"),
+        ("lists/list_with_no_type.yumly", None),
+        ("lists/malformed_list.yumly", None),
+        ("lists/no_comma_list.yumly", None),
+        ("semantic/circular_include.yumly", "Circular"),
+        ("unexpected/unexpected_token.yumly", None),
+        ("unexpected/unexpected_token_root.yumly", None),
+    ],
+)
 def test_invalid_files(rel_path: str, contains: Optional[str]):
     assert_fails(BASE / "invalid" / rel_path, contains)
 
@@ -161,7 +165,7 @@ class TestRecursionLimit:
         for i in range(2000):
             nested = {f"l{i}": nested}
         content = YUMLY.dumps(nested)
-        
+
         with pytest.raises(YumlyError) as exc:
             YUMLY.loads(content)
         assert "recursion" in str(exc.value).lower()
@@ -171,7 +175,7 @@ class TestRecursionLimit:
         nested = {"val": 1}
         for i in range(10):
             nested = {f"level{i}": nested}
-        
+
         data = YUMLY.loads(YUMLY.dumps(nested))
         assert "level9" in data
 
@@ -181,10 +185,10 @@ class TestRecursionLimit:
         for i in range(2000):
             nested = {f"l{i}": nested}
         content = YUMLY.dumps(nested)
-        
+
         test_file = tmp_path / "deep.yumly"
         test_file.write_text(content)
-        
+
         with pytest.raises(YumlyError) as exc:
             YUMLY.load(test_file)
         assert "recursion" in str(exc.value).lower()

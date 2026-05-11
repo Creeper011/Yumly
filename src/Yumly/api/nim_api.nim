@@ -15,7 +15,7 @@ proc `%`*(i: int): Value = newIntValue(i)
 proc `%`*(f: float): Value = newFloatValue(f)
 proc `%`*(b: bool): Value = newBoolValue(b)
 proc `%`*(elems: seq[Value]): Value = newListValue(elems)
-proc `%`*(t: tuple): Value = 
+proc `%`*(t: tuple): Value =
   var elems: seq[Value] = @[]
   for k, v in t.fieldPairs:
     elems.add(%v)
@@ -48,7 +48,7 @@ macro `%*`*(x: untyped): untyped =
       result = newCall(bindSym"newTupleValue", newTree(nnkBracket, elems))
     of nnkTableConstr:
       result = newCall(bindSym"newYumly")
-      let pairs = node.mapIt(newTree(nnkExprColonExpr, 
+      let pairs = node.mapIt(newTree(nnkExprColonExpr,
         newStrLitNode(it[0].strVal),
         `%Recurse`(it[1])))
       result.add(newTree(nnkBracket, pairs))

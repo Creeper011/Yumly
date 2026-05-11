@@ -1,214 +1,192 @@
 ##
 #  This module defines the tokenizer for the Yumly configuration language.
-#  It converts a raw source string into a sequence of tokens that can be
-#  easily parsed by the parser.
+#  It converts a Stream into tokens on-demand using a closure iterator.
 ##
 
-import std/strutils
+import std/strutils, streams
 import ../types/token
 import ../error_messages
 
-template col(startPos: int): int = startPos - lineStart + 1
+type Cursor = object
+  stream: Stream
+  buf: string
+  pos: int
+  len: int
+  basePos: int
+  eof: bool
+  line: int
+  lineStart: int
 
-template emit(k: TokenKind, startPos: int) =
-  tokens.add(Token(kind: k, line: line, col: col(startPos)))
+proc initCursor(stream: Stream, bufferSize: int = 4096): Cursor =
+  result.stream = stream
+  result.buf = newString(max(1, bufferSize))
+  result.pos = 0
+  result.len = 0
+  result.basePos = 0
+  result.eof = false
+  result.line = 1
+  result.lineStart = 0
 
-template emitVal(k: TokenKind, val: string, startPos: int) =
-  tokens.add(Token(kind: k, line: line, col: col(startPos), value: val))
+proc absPos(cursor: Cursor): int =
+  cursor.basePos + cursor.pos
 
-template emitValFull(k: TokenKind, l: int, column: int, val: string) =
-  tokens.add(Token(kind: k, line: l, col: column, value: val))
+proc refill(cursor: var Cursor) =
 
-proc tokenize*(source: string): seq[Token] =
-  # Tokenize the source, we will iterate through each character and build tokens based on the rules of the Yumly language.
-  var tokens: seq[Token]
-  tokens = newSeqOfCap[Token](source.len div 4) 
-  var i         = 0
-  var line      = 1
-  var lineStart = 0
+  # skips refill if the buffer next token is an eof
+  if cursor.eof: return
 
-  while i < source.len:
-    # skip whitespace
-    if source[i] in {' ', '\t', '\r'}:
-      i += 1
-      continue
-    
-    # count lines and advances
-    if source[i] == '\n':
-      line += 1
-      lineStart = i + 1
-      i += 1
-      continue
-    
-    # handle comments with an lookahead for ";> ... <;"
-    if i + 1 < source.len and source[i..i+1] == ";>":
-      let closePos = source.find("<;", start = i + 2)
-      if closePos >= 0:
-        var j = i + 2
-        while j < closePos:
-          if source[j] == '\n':
-            line += 1
-            lineStart = j + 1
-          j += 1
-        i = closePos + 2
-        continue
-      else:
-        commentNotClosedError(line, col(i))
+  let remaining = cursor.len - cursor.pos
 
-    # handle literals (int, float)
-    # emit an tkLiteral token
-    if source[i] in {'0'..'9'} or (source[i] in {'+', '-'} and i + 1 < source.len and source[i + 1] in {'0'..'9'}):
-      # consume first digit or sign
-      let start = i
-      i += 1
-
-      # consume the other digits
-      while i < source.len and source[i] in {'0'..'9'}:
-        i += 1
-
-      # consume float part
-      if i < source.len and source[i] == '.':
-        i += 1
-        while i < source.len and source[i] in {'0'..'9'}:
-          i += 1
-
-      # consume exponent part
-      if i < source.len and source[i] in {'e', 'E'}:
-        i += 1
-        if i < source.len and source[i] in {'+', '-'}:
-          i += 1
-        if i >= source.len or source[i] notin {'0'..'9'}:
-          invalidExponentError(line, col(start))
-        while i < source.len and source[i] in {'0'..'9'}:
-          i += 1
-
-      emitVal(tkLiteral, source[start ..< i], start)
-      continue
-
-    case source[i]
-    of '(': emit(tkLParen, i);      i += 1
-    of ')': emit(tkRParen, i);      i += 1
-    of '{': emit(tkLBrace, i);      i += 1
-    of '}': emit(tkRBrace, i);      i += 1
-    of '[': emit(tkLBracket, i);    i += 1
-    of ']': emit(tkRBracket, i);    i += 1
-    of '=': emit(tkEquals, i);      i += 1
-    of ';': emit(tkDeclaration, i); i += 1
-    of ',': emit(tkComma, i);       i += 1
-    of '$': emit(tkDollar, i);      i += 1
-    # if string
-    of '"', '\'':
-      let quoteChar = source[i]
-      let startLine = line
-      let startCol  = col(i)
-      var stringContent = ""
-      
-      # multiline string logic
-      if quoteChar == '"' and i + 2 < source.len and source[i+1] == '"' and source[i+2] == '"':
-        i += 3 # skip opening """
-        
-        # skip leading formatting on the first line with buffering
-        var buffer = ""
-        while i < source.len:
-          if i + 1 < source.len and source[i] == '\\':
-            buffer.add(source[i .. i+1])
-            i += 2
-          elif source[i] == '\n':
-            # hit newline: skip all whitespace and \n escapes in the buffer
-            # but keep other escapes (like \t) as they are likely content
-            var j = 0
-            while j < buffer.len:
-              if buffer[j] == '\\' and j + 1 < buffer.len:
-                if buffer[j+1] != 'n':
-                  stringContent.add(buffer[j .. j+1])
-                j += 2
-              else: # discard whitespace
-                j += 1
-            
-            # skip the newline itself
-            i += 1
-            line += 1
-            lineStart = i
-            break
-          elif source[i] in {' ', '\t', '\r'}:
-            buffer.add(source[i])
-            i += 1
-          else:
-            # hit actual content: keep the full buffer
-            stringContent.add(buffer)
-            break
-
-        # main loop of the multiline string
-        while i < source.len:
-          # handle escaped triple quote
-          if i + 3 < source.len and source[i..i+3] == "\\\"\"\"":
-            stringContent.add("\\\"")
-            i += 4
-            continue
-          
-          # handle real closing delimiter
-          if i + 2 < source.len and source[i..i+2] == "\"\"\"":
-            i += 3
-            break
-          
-          # handle regular escapes
-          if source[i] == '\\' and i + 1 < source.len:
-            stringContent.add(source[i])
-            stringContent.add(source[i+1])
-            if source[i+1] == '\n': 
-              line += 1
-              lineStart = i + 2
-            i += 2
-            continue
-
-          # handle regular character & line tracking
-          if source[i] == '\n':
-            line += 1
-            lineStart = i + 1
-          
-          stringContent.add(source[i])
-          i += 1
-        
-        # strip trailing newline before the closing delimiter
-        if stringContent.len > 0 and stringContent[^1] == '\n':
-          stringContent.setLen(stringContent.len - 1)
-          
-        emitValFull(tkString, startLine, startCol, stringContent)
-        
-      # single line logic
-      else:
-        i += 1 # skip opening quote
-        while i < source.len and source[i] != quoteChar:
-          if source[i] == '\\' and i + 1 < source.len:
-            # pass escape sequence through raw for the parser
-            stringContent.add(source[i .. i+1])
-            i += 2
-          elif source[i] == '\n':
-            unclosedStringError(line, startCol)
-          else:
-            stringContent.add(source[i])
-            i += 1
-        
-        if i >= source.len:
-          unclosedStringAtEofError()
-        
-        emitValFull(tkString, startLine, startCol, stringContent)
-        i += 1 # skip closing quote
-
+  # if theres something in buffer
+  if remaining > 0:
+    if remaining == cursor.buf.len:
+      let newSize = max(1, cursor.buf.len * 2)
+      var grown = newString(newSize)
+      for i in 0..<remaining: grown[i] = cursor.buf[cursor.pos + i]
+      cursor.buf = grown
     else:
-      # handle identifiers and keywords
-      if source[i] in IdentStartChars:
-        let start = i
-        while i < source.len and source[i] in IdentChars + {'/', '.', '-', '/'}:
-          i += 1
-        let word = source[start..i-1]
-        case word:
-          of "true", "false":
-            emitVal(tkLiteral, word, start)
-          else:
-            emitVal(tkIdent, word, start)
-      else:
-        unexpectedCharError($source[i], line, col(i))
+      #
+      for i in 0..<remaining: cursor.buf[i] = cursor.buf[cursor.pos + i]
 
-  emit(tkEOF, source.len)
-  return tokens
+  cursor.basePos += cursor.pos
+  cursor.pos = 0
+  cursor.len = remaining
+  let free = cursor.buf.len - cursor.len
+  if free <= 0:
+    cursor.eof = true
+    return
+  let n = cursor.stream.readData(addr cursor.buf[cursor.len], free)
+  if n <= 0: cursor.eof = true
+  else: cursor.len += n
+
+proc peekChar(cursor: var Cursor, offset: int = 0): char =
+  var idx = cursor.pos + offset
+  while idx >= cursor.len and not cursor.eof:
+    cursor.refill()
+    idx = cursor.pos + offset
+  if idx < cursor.len: result = cursor.buf[idx]
+  else: result = '\0'
+
+proc advanceChar(cursor: var Cursor): char =
+  result = cursor.peekChar()
+  if result == '\0': return
+  inc cursor.pos
+  if result == '\n':
+    inc cursor.line
+    cursor.lineStart = cursor.basePos + cursor.pos
+
+proc matchStr(cursor: var Cursor, s: string): bool =
+  for i, character in s:
+    if cursor.peekChar(i) != character: return false
+  for _ in 0..<s.len: discard cursor.advanceChar()
+  return true
+
+proc isIdentContinue(character: char): bool =
+  character in IdentChars or character in {'/', '.', '-'}
+
+proc tokenize*(stream: Stream, bufferSize: int = 4096): proc(): Token {.closure.} =
+  var cursor = initCursor(stream, bufferSize)
+
+  return proc(): Token {.closure.} =
+    while true:
+      let ch = cursor.peekChar()
+      if ch == '\0':
+        return Token(kind: tkEOF, line: cursor.line, col: cursor.absPos() - cursor.lineStart + 1)
+
+      if ch in {' ', '\t', '\r', '\n'}:
+        discard cursor.advanceChar()
+        continue
+
+      let startPos = cursor.absPos()
+      let line = cursor.line
+      let col = startPos - cursor.lineStart + 1
+
+      # Comments: ;> ... <;
+      if cursor.matchStr(";>"):
+        while true:
+          if cursor.peekChar() == '\0': commentNotClosedError(line, col)
+          if cursor.matchStr("<;"): break
+          discard cursor.advanceChar()
+        continue
+
+      # Numbers (with Exponent support)
+      if ch in {'0'..'9'} or (ch in {'+', '-'} and cursor.peekChar(1) in {'0'..'9'}):
+        var value = ""
+        value.add(cursor.advanceChar())
+        while cursor.peekChar() in {'0'..'9'}: value.add(cursor.advanceChar())
+
+        if cursor.peekChar() == '.':
+          value.add(cursor.advanceChar())
+          while cursor.peekChar() in {'0'..'9'}: value.add(cursor.advanceChar())
+
+        if cursor.peekChar() in {'e', 'E'}:
+          value.add(cursor.advanceChar())
+          if cursor.peekChar() in {'+', '-'}: value.add(cursor.advanceChar())
+          if cursor.peekChar() notin {'0'..'9'}: invalidExponentError(line, col)
+          while cursor.peekChar() in {'0'..'9'}: value.add(cursor.advanceChar())
+
+        return Token(kind: tkLiteral, line: line, col: col, value: value)
+
+      case ch
+      of '(': discard cursor.advanceChar(); return Token(kind: tkLParen, line: line, col: col)
+      of ')': discard cursor.advanceChar(); return Token(kind: tkRParen, line: line, col: col)
+      of '{': discard cursor.advanceChar(); return Token(kind: tkLBrace, line: line, col: col)
+      of '}': discard cursor.advanceChar(); return Token(kind: tkRBrace, line: line, col: col)
+      of '[': discard cursor.advanceChar(); return Token(kind: tkLBracket, line: line, col: col)
+      of ']': discard cursor.advanceChar(); return Token(kind: tkRBracket, line: line, col: col)
+      of '=': discard cursor.advanceChar(); return Token(kind: tkEquals, line: line, col: col)
+      of ';': discard cursor.advanceChar(); return Token(kind: tkDeclaration, line: line, col: col)
+      of ',': discard cursor.advanceChar(); return Token(kind: tkComma, line: line, col: col)
+      of '$': discard cursor.advanceChar(); return Token(kind: tkDollar, line: line, col: col)
+
+      of '"', '\'':
+        let quoteChar = cursor.peekChar()
+        var stringContent = ""
+
+        # Multiline String: """
+        if quoteChar == '"' and cursor.matchStr("\"\"\""):
+          while true:
+            let nextCh = cursor.peekChar()
+            if nextCh == '\0': unclosedStringAtEofError()
+
+            # Escaped triple quote
+            if cursor.matchStr("\\\"\"\""):
+              stringContent.add("\"\"\"")
+              continue
+
+            # End of multiline
+            if cursor.matchStr("\"\"\""): break
+
+            stringContent.add(cursor.advanceChar())
+
+          return Token(kind: tkString, line: line, col: col, value: stringContent)
+
+        # Single-line String
+        else:
+          discard cursor.advanceChar() # skip opening quote
+          while true:
+            let nextCh = cursor.peekChar()
+            if nextCh == '\0': unclosedStringAtEofError()
+            if nextCh == quoteChar: discard cursor.advanceChar(); break
+            if nextCh == '\n': unclosedStringError(line, col)
+
+            if nextCh == '\\':
+              stringContent.add(cursor.advanceChar()) # \
+              stringContent.add(cursor.advanceChar()) # char
+            else:
+              stringContent.add(cursor.advanceChar())
+
+          return Token(kind: tkString, line: line, col: col, value: stringContent)
+
+      else:
+        if ch in IdentStartChars:
+          var word = ""
+          while isIdentContinue(cursor.peekChar()): word.add(cursor.advanceChar())
+
+          if word == "true" or word == "false":
+            return Token(kind: tkLiteral, line: line, col: col, value: word)
+
+          return Token(kind: tkIdent, line: line, col: col, value: word)
+
+        unexpectedCharError($ch, line, col)
+        discard cursor.advanceChar()

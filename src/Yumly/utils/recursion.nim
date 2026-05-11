@@ -5,7 +5,7 @@ import ../types/token
 template withRecursionGuard*(depth: var int, line, col: int, body: untyped) =
   if depth >= MaxRecursionDepth:
     recursionLimitError(MaxRecursionDepth, line, col)
-  
+
   depth += 1
   body
   depth -= 1

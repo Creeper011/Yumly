@@ -2,8 +2,9 @@
 # This module is responsible for loading included resources in Yumly.
 ##
 
-import os, strutils, sets
+import os, strutils, sets, options, streams
 import dotenv
+import ../yumly_file
 import ../types/nodes
 import ../phases/tokenizer, ../phases/parser
 import ../error_messages
@@ -15,7 +16,7 @@ proc getCanonicalPath(rawPath: string, baseDir: string, node: YumNode): string =
   let absoluteBase = if isAbsolute(baseDir): baseDir else: absolutePath(baseDir)
   let combined = if isAbsolute(rawPath): rawPath
                  else: normalizedPath(absoluteBase / rawPath)
-  
+
   try:
     result = os.expandFilename(combined)
   except OSError:
@@ -23,20 +24,23 @@ proc getCanonicalPath(rawPath: string, baseDir: string, node: YumNode): string =
 
 import ../utils/recursion
 
-proc processIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[string], depth: var int): seq[YumNode] =
+proc processIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[string],
+    depth: var int): seq[YumNode] =
   ## Recursively processes includes and returns a new list of children with includes resolved in-place.
-  withRecursionGuard(depth, rootNode.line, rootNode.col):
-    var newChildren: seq[YumNode] = @[]
+  if not rootNode.hasIncludes.get(false):
+    return rootNode.children
 
+  result = @[]
+  withRecursionGuard(depth, rootNode.line, rootNode.col):
     for child in rootNode.children:
       if child.kind == nkInclude:
         let resolvedPath = getCanonicalPath(child.includePath, baseDir, child)
-        
+
         let sf = os.splitFile(resolvedPath)
         var ext = sf.ext.toLowerAscii()
         if ext.len == 0 and sf.name.toLowerAscii() == ".env":
           ext = ".env"
-          
+
         if ext notin allowedIncludeExts:
           includeUnsupportedExtError(resolvedPath, ext, child.line, child.col)
 
@@ -47,7 +51,7 @@ proc processIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[st
           of ".env":
             visited.incl(resolvedPath)
             try:
-              let sfEnv  = os.splitFile(resolvedPath)
+              let sfEnv = os.splitFile(resolvedPath)
               let envDir = if sfEnv.dir.len == 0: "." else: sfEnv.dir
               let envFile = sfEnv.name & sfEnv.ext
               load(envDir, envFile)
@@ -58,9 +62,11 @@ proc processIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[st
           of ".yumly", ".yuy":
             var includedAST: YumNode
             try:
-              let content = readFile(resolvedPath)
-              let tokens = tokenize(content)
-              includedAST = createNodes(tokens)
+              let stream = newYumlyStream(resolvedPath)
+              let puller = tokenize(stream)
+              var parser = newParser(puller)
+              includedAST = parser.parse()
+              stream.close()
               includedAST.sourceFile = resolvedPath
               for n in includedAST.children:
                 n.sourceFile = resolvedPath
@@ -70,21 +76,19 @@ proc processIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[st
             visited.incl(resolvedPath)
             let resolvedChildren = processIncludes(includedAST, parentDir(resolvedPath), visited, depth)
             visited.excl(resolvedPath)
-            
+
             for includedChild in resolvedChildren:
-              newChildren.add(includedChild)
+              result.add(includedChild)
       else:
         if child.sourceFile == "":
           discard
-        newChildren.add(child)
-        
-  newChildren
+        result.add(child)
 
 proc loadIncludes*(rootNode: YumNode; baseDir: string = ".") =
   ## Public entry point for include resolution.
   var visited = initHashSet[string]()
   var depth = 0
-  
+
   var actualBaseDir = baseDir
   try:
     if rootNode.sourceFile != "":

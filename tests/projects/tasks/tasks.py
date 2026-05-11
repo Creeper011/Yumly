@@ -7,11 +7,13 @@ from typing import Optional
 
 CONFIG_PATH = "tasks.yumly"
 
+
 @dataclass
 class Task:
     name: str
     description: str
     completed: bool = False
+
 
 class TaskManager:
     def __init__(self):
@@ -26,7 +28,7 @@ class TaskManager:
     def load_index(self) -> dict[str, Task]:
         if not os.path.exists(CONFIG_PATH):
             return {}
-        
+
         raw: dict[str, dict] = self.yumly.load(CONFIG_PATH)
         return {name: Task(**task_data) for name, task_data in raw.items()}
 
@@ -58,6 +60,7 @@ class TaskManager:
 
     def get_task(self, name: str) -> Optional[Task]:
         return self.tasks.get(name)
+
 
 class TaskManagerCLI:
     def __init__(self):
@@ -110,6 +113,7 @@ class TaskManagerCLI:
 
             elif choice == "5":
                 break
+
 
 if __name__ == "__main__":
     TaskManagerCLI().run()

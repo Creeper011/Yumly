@@ -8,7 +8,7 @@ import ../types/type_hints
 type
   # NOTE: filled in by the parser
 
-  NodeKind* = enum 
+  NodeKind* = enum
     nkLiteral, # can be a: string, int, float, bool and env
     nkArray,
     nkBlock,
@@ -17,12 +17,18 @@ type
 
   YumNode* = ref object
     token*: Token
+    children*: seq[YumNode]
+    name*: string
+
     case kind*: NodeKind
     of nkLiteral:
       rawValue*: string
-    of nkArray, nkConfig, nkBlock:
-      children*: seq[YumNode]
-      name*: string
+    of nkArray, nkBlock:
+      discard           # use children and name field
+    of nkConfig:
+      hasIncludes*: Option[bool]
+      hasTypeHints*: Option[bool]
+      hasEnvVars*: Option[bool]
     of nkPair:
       key*: string
       typeHint*: Option[TypeHint]
@@ -32,13 +38,11 @@ type
     line*, col*: int
     sourceFile*: string
 
-    # flags (only the root (nkConfig) node will have these set, and they are set by the parser)
-    hasIncludes*: Option[bool]
-    hasTypeHints*: Option[bool]
-    hasEnvVars*: Option[bool]
-    
+type
+  TokenPuller* = proc(): Token {.closure.}
+
   Parser* = object
-    tokens*: seq[Token]
-    pos*: int
+    puller*: TokenPuller
+    currentToken*: Token
     root*: YumNode
     recursionDepth*: int

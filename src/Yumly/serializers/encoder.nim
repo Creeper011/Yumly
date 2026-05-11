@@ -32,31 +32,31 @@ proc renderPairs(ctx: var EncoderCtx, pairs: seq[Pair], isRoot: bool, hasBlocksA
     # no commas if is in root
     let needsComma = not isRoot and (not isLastPair or hasBlocksAfter)
     let comma = if needsComma: "," else: ""
-    
+
     ctx.emit(formatPair(pair) & comma)
 
 proc renderBlock(ctx: var EncoderCtx, blk: Block, isRoot: bool, isLastInScope: bool) =
   ctx.emit("(" & blk.name & ") {")
   inc ctx.indent
-  
+
   let hasPairs = blk.pairs.len > 0
   let hasSubBlocks = blk.subBlocks.len > 0
 
   if hasPairs:
     renderPairs(ctx, blk.pairs, isRoot = false, hasBlocksAfter = hasSubBlocks)
-  
+
   if hasPairs and hasSubBlocks:
     ctx.emitRaw("")
-    
+
   if hasSubBlocks:
     for i, sub in blk.subBlocks:
       let isLastSub = (i == blk.subBlocks.len - 1)
       renderBlock(ctx, sub, isRoot = false, isLastInScope = isLastSub)
       if not isLastSub:
         ctx.emitRaw("")
-    
+
   dec ctx.indent
-  
+
   # blocks at root level never have trailing commas.
   # inside blocks, commas separate siblings.
   let needsComma = not isRoot and not isLastInScope

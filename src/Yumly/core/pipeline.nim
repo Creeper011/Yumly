@@ -1,10 +1,9 @@
 ##
 # This module defines the pipeline process to build an yumly config
-# the steps in pipeline are: tokenizer (lexer) [Tokens]-> parser (ast) [YumNodes]-> include loader -> [YumNodes] resolver (resolve type hints) -> validator [value defs] -> evaluator (evaluate variables like env) [value defs]
-# or: text -> encoder
+# steps: tokenizer (pull) -> parser (recursive descent) -> includes -> resolver -> validator -> evaluator
 ##
 
-import os
+import os, options, streams
 import ../yumly_file
 import ../phases/tokenizer
 import ../phases/parser
@@ -17,18 +16,25 @@ import ../types/ast
 import ../types/nodes
 
 proc parseContentToAST*(content: string): YumNode =
-  let tokens = tokenize(content)
-  result = createNodes(tokens)
+  let stream = newStringStream(content)
+  let puller = tokenize(stream)
+  var parser = newParser(puller)
+  result = parser.parse()
 
 proc parseFileToAST*(path: string): YumNode =
-  checkFileExtension(path)
-  let content = openFileContent(path)
-  result = parseContentToAST(content)
+  let stream = newYumlyStream(path)
+  let puller = tokenize(stream)
+  var parser = newParser(puller)
+  result = parser.parse()
   result.sourceFile = os.absolutePath(path)
+  stream.close()
 
 proc resolveYumly*(ast: var YumNode; workingDir: string) =
-  loadIncludes(ast, workingDir)
-  resolveAst(ast)
+  if ast.hasIncludes.get(false):
+    loadIncludes(ast, workingDir)
+
+  if ast.hasTypeHints.get(false):
+    resolveAst(ast)
 
 proc validateYumly*(ast: var YumNode) =
   validateConfig(ast)
@@ -39,7 +45,7 @@ proc evaluateYumly*(ast: YumNode): YumlyConf =
 proc dumpYumly*(config: YumlyConf): string =
   result = encoder.dumpYumly(config)
 
-proc writeYumly*(config: YumlyConf, path: string) =
+proc writeYumly*(config: YumlyConf; path: string) =
   writeFile(path, encoder.dumpYumly(config))
 
 proc loadYumly*(path: string = "config.yumly"): YumlyConf =
@@ -48,19 +54,27 @@ proc loadYumly*(path: string = "config.yumly"): YumlyConf =
   validateYumly(ast)
   result = evaluateYumly(ast)
 
-proc loadYumlyContent*(content: string, workingDir: string = "."): YumlyConf =
+proc loadYumlyContent*(content: string; workingDir: string = "."): YumlyConf =
   var ast = parseContentToAST(content)
   resolveYumly(ast, workingDir)
   validateYumly(ast)
   result = evaluateYumly(ast)
 
-proc validateContent*(content: string, workingDir: string = "."): bool =
+proc loadYumlyFast*(path: string): YumlyConf =
+  let ast = parseFileToAST(path)
+  result = evaluateYumly(ast)
+
+proc loadYumlyContentFast*(content: string; workingDir: string = "."): YumlyConf =
+  let ast = parseContentToAST(content)
+  result = evaluateYumly(ast)
+
+proc validateContent*(content: string; workingDir: string = "."): bool =
   try:
     var ast = parseContentToAST(content)
     resolveYumly(ast, workingDir)
     validateYumly(ast)
     return true
-  except ValueError, IOError:
+  except CatchableError:
     return false
 
 proc validateFile*(path: string): bool =
@@ -69,5 +83,5 @@ proc validateFile*(path: string): bool =
     resolveYumly(ast, parentDir(path))
     validateYumly(ast)
     return true
-  except ValueError, IOError:
+  except CatchableError:
     return false

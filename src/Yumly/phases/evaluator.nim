@@ -57,11 +57,11 @@ proc evaluateValue*(node: YumNode, hint: Option[TypeHint], depth: var int): Valu
 
 proc evaluatePair*(node: YumNode, depth: var int): Pair =
   Pair(
-    key:      node.key,
+    key: node.key,
     typeHint: node.typeHint,
-    value:    evaluateValue(node.valNode, node.typeHint, depth),
-    line:     node.line,
-    col:      node.col
+    value: evaluateValue(node.valNode, node.typeHint, depth),
+    line: node.line,
+    col: node.col
   )
 
 proc evaluateBlock*(node: YumNode, depth: var int): Block =
@@ -74,7 +74,7 @@ proc evaluateBlock*(node: YumNode, depth: var int): Block =
     result.subBlocks = @[]
     for child in node.children:
       case child.kind
-      of nkPair:  result.pairs.add(evaluatePair(child, depth))
+      of nkPair: result.pairs.add(evaluatePair(child, depth))
       of nkBlock: result.subBlocks.add(evaluateBlock(child, depth))
       else: discard
 
@@ -86,7 +86,7 @@ proc evaluateConfig*(rootNode: YumNode): YumlyConf =
   result.includes = @[]
   for child in rootNode.children:
     case child.kind
-    of nkBlock:   result.blocks.add(evaluateBlock(child, depth))
-    of nkPair:    result.pairs.add(evaluatePair(child, depth))
+    of nkBlock: result.blocks.add(evaluateBlock(child, depth))
+    of nkPair: result.pairs.add(evaluatePair(child, depth))
     of nkInclude: result.includes.add(Include(includePath: child.includePath))
     else: discard

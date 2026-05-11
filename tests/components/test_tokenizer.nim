@@ -1,3 +1,4 @@
+import std/streams
 import ../../src/Yumly/phases/tokenizer
 import ../../src/Yumly/types/token
 
@@ -153,7 +154,11 @@ const expected = @[
 ]
 
 proc runTokenizerTest() =
-  let tokens = tokenize(source)
+  let s = newStringStream(source)
+  var tokens: seq[Token] = @[]
+  for token in tokenize(s):
+    tokens.add(token)
+
   echo "--- TOKENIZER OUTPUT ---"
   for token in tokens:
     echo token
@@ -162,19 +167,31 @@ proc runTokenizerTest() =
   for token in expected:
     echo token
   echo "------------------------"
-  assert tokens.len == expected.len
+  
+  if tokens.len != expected.len:
+    echo "FAILED: length mismatch. Got ", tokens.len, " expected ", expected.len
+    assert tokens.len == expected.len
 
   for i in 0 ..< tokens.len:
-    assert tokens[i].kind == expected[i].kind
+    if tokens[i].kind != expected[i].kind:
+      echo "FAILED at token ", i, ": kind mismatch. Got ", tokens[i].kind, " expected ", expected[i].kind
+      assert tokens[i].kind == expected[i].kind
 
     if tokens[i].kind in {tkIdent, tkString, tkLiteral}:
-      assert tokens[i].value == expected[i].value
+      if tokens[i].value != expected[i].value:
+        echo "FAILED at token ", i, ": value mismatch. Got [", tokens[i].value, "] expected [", expected[i].value, "]"
+        assert tokens[i].value == expected[i].value
 
     assert tokens[i].line > 0
     assert tokens[i].col > 0
 
-    assert tokens[i].line == expected[i].line
-    assert tokens[i].col == expected[i].col
+    if tokens[i].line != expected[i].line:
+      echo "FAILED at token ", i, ": line mismatch. Got ", tokens[i].line, " expected ", expected[i].line
+      assert tokens[i].line == expected[i].line
+      
+    if tokens[i].col != expected[i].col:
+      echo "FAILED at token ", i, ": col mismatch. Got ", tokens[i].col, " expected ", expected[i].col
+      assert tokens[i].col == expected[i].col
 
     echo "Token " & $i & " is correct"
 

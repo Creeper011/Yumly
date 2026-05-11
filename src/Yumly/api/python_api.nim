@@ -57,7 +57,8 @@ proc loadYumlyContentPy*(content: string, workingDir: string = "."): PyObject {.
   return config.toPython()
 
 
-proc parseValue(value: PyObject, pyTypes: tuple[bool, int, float, str, list, `tuple`, dict: PyObject], pyBuiltins: PyObject): Value =
+proc parseValue(value: PyObject, pyTypes: tuple[bool, int, float, str, list, `tuple`,
+    dict: PyObject], pyBuiltins: PyObject): Value =
   if pyBuiltins.callMethod("isinstance", value, pyTypes.bool).to(bool):
     return newBoolValue(value.to(bool))
 
@@ -70,7 +71,8 @@ proc parseValue(value: PyObject, pyTypes: tuple[bool, int, float, str, list, `tu
   if pyBuiltins.callMethod("isinstance", value, pyTypes.str).to(bool):
     return newStringValue(value.to(string))
 
-  if pyBuiltins.callMethod("isinstance", value, pyTypes.list).to(bool) or pyBuiltins.callMethod("isinstance", value, pyTypes.`tuple`).to(bool):
+  if pyBuiltins.callMethod("isinstance", value, pyTypes.list).to(bool) or pyBuiltins.callMethod(
+      "isinstance", value, pyTypes.`tuple`).to(bool):
     var elems: seq[Value] = @[]
     for item in value:
       elems.add(parseValue(item, pyTypes, pyBuiltins))
@@ -78,7 +80,8 @@ proc parseValue(value: PyObject, pyTypes: tuple[bool, int, float, str, list, `tu
 
   raise newException(ValueError, "Oh no.. failed to parse Python value, it's an unsupported Python type: " & $value)
 
-proc parseBlock(name: string, data: PyObject, pyTypes: tuple[bool, int, float, str, list, `tuple`, dict: PyObject], pyBuiltins: PyObject): Block =
+proc parseBlock(name: string, data: PyObject, pyTypes: tuple[bool, int, float, str, list, `tuple`,
+    dict: PyObject], pyBuiltins: PyObject): Block =
   result = newBlock(name)
   let items = data.callMethod("items")
   for item in items:

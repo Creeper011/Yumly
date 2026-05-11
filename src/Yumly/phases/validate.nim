@@ -54,30 +54,30 @@ proc nodeTypeName(node: YumNode): string =
   if isEnvNode(node):
     return VALUES_DEF[vkEnv].typeHint
   case node.kind
-  of nkLiteral:     literalTypeName(node)
-  of nkArray:       VALUES_DEF[vkList].typeHint
-  of nkBlock:       "block"
-  of nkPair:        "pair"
-  of nkConfig:      "config"
-  of nkInclude:     "include"
+  of nkLiteral: literalTypeName(node)
+  of nkArray: VALUES_DEF[vkList].typeHint
+  of nkBlock: "block"
+  of nkPair: "pair"
+  of nkConfig: "config"
+  of nkInclude: "include"
 
 # maps a TypeHintKind to its corresponding ValueKind so we can look up VALUES_DEF.
 proc toValueKind(hk: TypeHintKind): ValueKind =
   case hk
   of thString: result = vkString
-  of thInt:    result = vkInt
-  of thFloat:  result = vkFloat
-  of thBool:   result = vkBool
-  of thEnv:    result = vkEnv
-  of thList:   result = vkList
-  of thTuple:  result = vkTuple
-  else: 
+  of thInt: result = vkInt
+  of thFloat: result = vkFloat
+  of thBool: result = vkBool
+  of thEnv: result = vkEnv
+  of thList: result = vkList
+  of thTuple: result = vkTuple
+  else:
     invalidTypeHintKindError()
 
 proc matchNodeToHint(node: YumNode, hintKind: TypeHintKind): bool =
   case hintKind
-  of thUnknown:       true
-  of thEnv:           isEnvNode(node)
+  of thUnknown: true
+  of thEnv: isEnvNode(node)
   of thList, thTuple: node.kind == nkArray
   else:
     if node.kind != nkLiteral or isEnvNode(node):
@@ -86,7 +86,7 @@ proc matchNodeToHint(node: YumNode, hintKind: TypeHintKind): bool =
 
 proc checkDuplicates(nodes: seq[YumNode], path: string, errors: var seq[string]) =
   var seenBlocks = initHashSet[string]()
-  var seenPairs  = initHashSet[string]()
+  var seenPairs = initHashSet[string]()
   let where = if path.len == 0: "root" else: "'" & path & "'"
 
   for child in nodes:
@@ -117,7 +117,7 @@ proc validateArrayElements(node: YumNode, hint: TypeHint, pairKey: string, error
     return
   for i, child in node.children:
     if isEnvNode(child):
-      continue  # env references are resolved at runtime
+      continue # env references are resolved at runtime
     if not matchNodeToHint(child, hint.elementKind):
       errors.add(
         "Mmm, element " & $i & " in list '" & pairKey & "' has the wrong type! >_<" &
@@ -136,7 +136,7 @@ proc validateEnvExistence(node: YumNode, errors: var seq[string]) =
 
 proc validatePair(pairNode: YumNode, path: string, errors: var seq[string]) =
   let position = loc(pairNode.line, pairNode.col)
-  let valNode  = pairNode.valNode
+  let valNode = pairNode.valNode
 
   # --- env existence (IO) ---
   if isEnvNode(valNode):
