@@ -1,0 +1,9 @@
+;> Test file metadata template for unit tests <;
+
+name ;string = "Test Name"
+valid ;bool = false, number ;int = 0000
+phase ;string = "T" ;> if is a full case, this pair doesn't exist <;
+
+;> set environment variables for the test case <;
+envs ;list[string] = ["VAR1", "VAR2", "VAR3", "VAR4"]
+cases ;list[string] = ["case1.yumly", "case2.yumly"] ;> for multiples levels of test<;

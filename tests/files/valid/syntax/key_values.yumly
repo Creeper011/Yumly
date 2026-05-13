@@ -1,7 +1,0 @@
-;> creates an variable on root <;
-variable ;string = "Hello World!"
-
-(block) {
-    ;> type hints are optional <;
-    variable = "Hello Yumly!"
-}

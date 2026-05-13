@@ -1,0 +1,27 @@
+TEMPORARY FILE
+This document the test identifier convention.
+the test have an id on his folder: [IDENTIFIER][PHASE][NUMBER]-[NAME]
+
+number: XXXX
+examples:
+   0001
+   0050
+   0125
+   1245
+
+identifier:
+   y -> valid
+   x -> invalid
+
+phase abbreviation:
+   T  -> tokenizer
+   E  -> evaluator
+   LI -> load_include
+   P  -> parser
+   V  -> validator
+   R  -> resolver
+
+if it's a full case, skip the phase abbreviation
+
+examples:
+   xV0001-duplicated-key

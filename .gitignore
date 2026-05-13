@@ -27,15 +27,11 @@ yumly_cli
 cafe
 markers_finder
 
-# test binaries
+# playground binaries
 test_tokenizer
-test_validate
-test_values
-test_builders
-test_pipeline
 test_parser
-test_evaluator
-test_resolver
 test_encoder
-test_nim_api
-test_full_flow
+
+# test binaries
+nim_runner
+create_new_test

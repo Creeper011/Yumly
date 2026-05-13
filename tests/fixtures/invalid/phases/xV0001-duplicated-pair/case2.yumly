@@ -1,0 +1,6 @@
+;> Duplicate key inside a block <;
+
+(my_block) {
+    key = "v1",
+    key = "v2"
+}
