@@ -6,14 +6,14 @@ I'll guide you through Yumly's features, syntax, and project structure — and h
 
 ---
 
-### Start here to learn the Yumly basics ‧₊˚ :
+### ✿ Start here to learn the Yumly basics ‧₊˚ :
 
 - [docs/gramatic/overview](gramatic/overview.md) -> Syntax, structural rules, and writing style.
 - [docs/yumyumy](yumyumy.md) -> Overview of the Yumyumy format and Yumly AST representation. 
 
 ---
 
-### Start here to use Yumly in your projects ‧₊˚ :
+### ✿ Start here to use Yumly in your projects ‧₊˚ :
 
 - [docs/usage/python_usage](usage/python_usage.md) -> Python installation and API usage.
 - [docs/usage/nim_usage](usage/nim_usage.md) -> Nim installation and API usage.
@@ -24,7 +24,7 @@ I'll guide you through Yumly's features, syntax, and project structure — and h
 
 ---
 
-### Start here to understand the Yumly project architecture ‧₊˚ :
+### ✿ Start here to understand the Yumly project architecture ‧₊˚ :
 
 - [docs/tests](tests.md) -> Test structure, architecture, and expected output system.
 

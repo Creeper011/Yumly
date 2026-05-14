@@ -1,10 +1,13 @@
-# Python Usage
+# ⋆˚.♪ Python Usage ♪.˚⋆
+⊹˚. ♡.𖥔 ݁ ˖
 
-Helloo — Yumly's Python API documentation heree!
+Helloo!! (˵ •̀ ᴗ •́˵ ) — Welcome to Yumly's ♡ Python usage documentation! :3 
 
-You also can use [the yumly playground notebook](playground/Yumly.ipynb) to test as a demo
+- — this was tuff?
 
-## Installation
+Oh — before i forget, you also can use [the yumly playground notebook](playground/Yumly.ipynb) to test as a demo ദ്ദി •⩊• )
+
+## ✿ Installation
 
 ```bash
 pip install yumly
@@ -20,7 +23,7 @@ pip install .
 
 ---
 
-## Quick Start
+## ✿ Quick Start
 
 ```python
 from yumly import Yumly
@@ -32,11 +35,13 @@ print(data["app"]["name"])
 
 ---
 
-## The Yumly Class
+ok, now — lock in guys. ᗜ ⩊ ᗜ
+
+## ⟡ The Yumly Class
 
 The `Yumly` class is your main entry point for all operations.
 
-### Loading Files
+### ✿ Loading Files
 
 ```python
 from yumly import Yumly
@@ -45,7 +50,7 @@ yumly = Yumly()
 data = yumly.load("config.yumly")
 ```
 
-### Loading from String
+### ✿ Loading from String
 
 ```python
 content = '''
@@ -58,9 +63,8 @@ data = yumly.loads(content)
 print(data["app"]["name"])  # "Yumly"
 ```
 
----
 
-## Validation
+## ✿ Validation
 
 Validate content or files without loading them:
 
@@ -76,7 +80,7 @@ print(f"File valid: {is_valid}")
 
 ---
 
-## Serialization
+## ✿ Serialization
 
 Convert Python dictionaries to Yumly format:
 
@@ -98,10 +102,10 @@ with open("config.yumly", "w") as file:
     yumly.dump(data, file)
 ```
 
-### To Yumyumy
+### ✿ To Yumyumy ♡ (Serialization 2.0)
 
 Convert a dictionary to the internal Yumyumy string representation (useful for tests or visualization):
-> ♡ If you don't know what is Yumyumy, check [docs/yumyumy.md](docs/yumyumy.md)
+> ⟡ If you don't know what is Yumyumy ♡, check [docs/yumyumy.md](docs/yumyumy.md)
 
 ```python
 yumyumy_str = yumly.to_yumyumy(data)
@@ -110,7 +114,7 @@ print(yumyumy_str)
 
 ---
 
-## Error Handling
+## ✿ Error Handling
 
 All errors are raised as `YumlyError`:
 
@@ -126,9 +130,9 @@ except YumlyError as e:
 
 ---
 
-## Real-World Example: Task Manager
+## ✿ Real-World Example: Task Manager
 
-Here's a complete example using `dataclasses`:
+A complete example using `dataclasses` with Yumly to manage tasks:
 
 ```python
 from yumly import Yumly, YumlyError
@@ -172,9 +176,11 @@ class TaskManager():
         return True
 ```
 
+> ⟡ — now, i'll never forgot to feed my fish! (˶>⩊<˶)
+
 ---
 
-## Partial Parsing (Pipeline Stages)
+## ✿ Partial Parsing (Pipeline Stages)
 
 Yumly allows you to stop the parsing process at different stages. This is useful for debugging or if you only need tokens/AST.
 
@@ -197,7 +203,7 @@ ast = yumly.load_until("config.yumly", PipelineStage.Parser)
 # PipelineStage.Evaluator (default used by load())
 ```
 
-## API Reference
+## ✿ API Reference (for you never forget ;3)
 
 | Method | Description |
 |--------|-------------|
@@ -211,3 +217,24 @@ ast = yumly.load_until("config.yumly", PipelineStage.Parser)
 | `validate_content(content)` | Check if content is valid Yumly |
 | `validate_file(path)` | Check if file is valid Yumly |
 
+
+---
+
+#### Oh! — you reached at the end!! congratulations!! here's an gift for you: ⸜( ˶' ᵕ '˶ )⸝
+```text
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣤⡤⠤⠤⠤⣤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡤⠞⠋⠁⠀⠀⠀⠀⠀⠀⠀⠉⠛⢦⣤⠶⠦⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⢀⣴⠞⢋⡽⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠃⠀⠀⠙⢶⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣰⠟⠁⠀⠘⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⡀⠀⠀⠉⠓⠦⣤⣤⣤⣤⣤⣤⣄⣀⠀⠀⠀
+⠀⠀⠀⠀⣠⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣷⡄⠀⠀⢻⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣆⠀
+⠀⠀⣠⠞⠁⠀⠀⣀⣠⣏⡀⠀⢠⣶⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠿⡃⠀⠀⠀⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⡆
+⢀⡞⠁⠀⣠⠶⠛⠉⠉⠉⠙⢦⡸⣿⡿⠀⠀⠀⡄⢀⣀⣀⡶⠀⠀⠀⢀⡄⣀⠀⣢⠟⢦⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⠃
+⡞⠀⠀⠸⠁⠀⠀⠀⠀⠀⠀⠀⢳⢀⣠⠀⠀⠀⠉⠉⠀⠀⣀⠀⠀⠀⢀⣠⡴⠞⠁⠀⠀⠈⠓⠦⣄⣀⠀⠀⠀⠀⣀⣤⠞⠁⠀
+⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⠀⠁⠀⢀⣀⣀⡴⠋⢻⡉⠙⠾⡟⢿⣅⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠙⠛⠉⠉⠀⠀⠀⠀
+⠘⣦⡀⠀⠀⠀⠀⠀⠀⣀⣤⠞⢉⣹⣯⣍⣿⠉⠟⠀⠀⣸⠳⣄⡀⠀⠀⠙⢧⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠈⠙⠒⠒⠒⠒⠚⠋⠁⠀⡴⠋⢀⡀⢠⡇⠀⠀⠀⠀⠃⠀⠀⠀⠀⠀⢀⡾⠋⢻⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡇⠀⢸⡀⠸⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⠀⢠⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣇⠀⠀⠉⠋⠻⣄⠀⠀⠀⠀⠀⣀⣠⣴⠞⠋⠳⠶⠞⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠳⠦⢤⠤⠶⠋⠙⠳⣆⣀⣈⡿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+```

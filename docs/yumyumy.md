@@ -20,7 +20,7 @@ As an internal representation of Yumly, Yumyumy has a few structural distinction
 | List | `[a, b, c]` | `[a, b, c]` |
 | Tuple | `(a, b, c)` | `(a, b, c)` |
 
-NOTE: comments are not preserved in yumyumy format
+> NOTE: comments are not preserved in yumyumy format
 
 ---
 
@@ -57,11 +57,11 @@ An example from [examples/example2.yumly](example2.yumly):
 
 ---
 
-[!IMPORTANT]
-TODO: currently the enconder of yumyumy doesn't support `(list, type)`, only the `(list)`
+> [!IMPORTANT]
+> TODO: currently the enconder of yumyumy doesn't support `(list, type)`, only the `(list)` - i'll fix that soon — don't worry :3
 
-### oh, you reached the end? congrats! here's an gift ✧･ﾟ:
-```yumly
+#### oh, you reached the end? congrats! here's an gift ✧･ﾟ:
+```text
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣎⠱⣲⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡠⠤⠒⠒⠒⠒⠤⢄⣈⠈⠁⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⢀⡤⠒⠝⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠲⢄⡀⠀⠀⠀⠀⠀
