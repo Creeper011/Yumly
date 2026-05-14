@@ -1,0 +1,4 @@
+tkIdent "a"
+tkEquals
+tkLiteral "1.5e+3"
+tkEOF

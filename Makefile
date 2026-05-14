@@ -43,20 +43,10 @@ deps:
 	$(NIMBLE) install -y nimpy dotenv
 
 tests: build-py
-	@echo "--- Running Python Integration Tests ---"
-	.venv/bin/pytest tests/integration/run_tests.py
-	@echo "--- Running Nim Unit Tests ---"
-	$(NIM) c -r --path:src tests/components/test_encoder.nim
-	$(NIM) c -r --path:src tests/components/test_tokenizer.nim
-	$(NIM) c -r --path:src tests/components/test_parser.nim
-	$(NIM) c -r --path:src tests/components/test_evaluator.nim
-	$(NIM) c -r --path:src tests/components/test_validate.nim
-	$(NIM) c -r --path:src tests/components/test_resolver.nim
-	$(NIM) c -r --path:src tests/components/test_values.nim
-	$(NIM) c -r --path:src tests/core/test_pipeline.nim
-	$(NIM) c -r --path:src tests/core/test_builders.nim
-	$(NIM) c -r --path:src tests/api/test_nim_api.nim
-	$(NIM) c -r --path:src tests/integration/test_full_flow.nim
+	@echo "--- Running Python Runner ---"
+	$(PYTHON) -m pytest tests/runners/python_runner.py
+	@echo "--- Running Nim Runner ---"
+	nim c -r tests/runners/nim_runner.nim
 
 clean:
 	rm -rf $(OUT_DIR)/$(MODULE_NAME).so $(OUT_DIR)/$(MODULE_NAME).pyd

@@ -1,0 +1,4 @@
+tkIdent "a"
+tkEquals
+tkLiteral "3.14"
+tkEOF

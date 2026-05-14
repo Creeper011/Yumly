@@ -1,0 +1,7 @@
+;> Test file metadata for include order <;
+
+name ;string = "Include Order"
+valid ;bool = false, number ;int = 0018
+phase ;string = "P"
+
+cases ;list[string] = ["case1.yumly", "case2.yumly"]

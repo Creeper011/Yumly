@@ -1,0 +1,4 @@
+tkIdent "config.key"
+tkEquals
+tkLiteral "1"
+tkEOF

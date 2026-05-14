@@ -93,10 +93,51 @@ let content = """
 """
 let config = loadYumlyContent(content)
 ```
+---
+
+## Partial Loading (Pipeline Stages)
+
+Yumly's pipeline can be interrupted at specific stages. This is useful for inspection or custom processing.
+
+```nim
+import Yumly
+
+# Load up to Parser stage
+let res = loadYumly("config.yumly", psParser)
+echo res.ast.repr
+
+# Valid stages:
+# psTokenizer
+# psParser
+# psResolver
+# psValidator
+# psEvaluator (default)
+```
+
+The `PipelineResult` object contains either the AST or the final `YumlyConf`:
+
+```nim
+case res.stage
+of psTokenizer:
+    discard # Tokens are processed internally
+of psParser, psResolver, psValidator:
+    let ast = res.ast
+of psEvaluator:
+    let config = res.config
+```
+
+Both `loadYumly` and `loadYumlyContent` accept an optional `PipelineStage`:
+
+```nim
+let astResult = loadYumly("config.yumly", psParser)
+let validatorResult = loadYumlyContent(content, psValidator)
+```
+
+---
 
 ### Low-Level Pipeline
 
-For advanced usage, you can access each phase:
+For manual control, you can call each phase separately:
 
 ```nim
 # Tokenize + Parse → AST

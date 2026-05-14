@@ -1,18 +1,35 @@
-import std/[os, strutils, terminal, osproc]
+import std/[os, strutils, terminal, osproc, algorithm, sequtils]
 
-proc getNextNumber(baseDir: string, idPrefix: string): string =
+proc extractNumber(folderName: string): int =
+  ## Extracts the 4-digit number from a folder name like "yT0003-pairs" or "xV0001-duplicated-pair"
+  ## The number always starts after the identifier prefix (1-2 chars) and phase prefix (0-2 chars).
+  var numStr = ""
+  var foundDigitStart = false
+  for i in 1..<folderName.len:
+    let ch = folderName[i]
+    if ch in {'0'..'9'}:
+      numStr.add(ch)
+      foundDigitStart = true
+    elif foundDigitStart:
+      break  # stop at first non-digit after digits started
+  if numStr.len >= 4:
+    try:
+      return parseInt(numStr[0..3])
+    except ValueError:
+      return 0
+  return 0
+
+proc getNextNumber(): string =
   var maxNum = 0
-  if dirExists(baseDir):
-    for kind, path in walkDir(baseDir):
-      if kind == pcDir:
-        let folderName = extractFilename(path)
-        if folderName.startsWith(idPrefix):
-          let numStr = folderName[idPrefix.len .. idPrefix.len + 3]
-          try:
-            let num = parseInt(numStr)
-            if num > maxNum: maxNum = num
-          except ValueError:
-            discard
+  let fixturesDir = "tests" / "fixtures"
+  for kind in ["valid", "invalid"]:
+    let kindPath = fixturesDir / kind
+    if not dirExists(kindPath): continue
+    for entry in walkDir(kindPath):
+      if entry.kind == pcDir:
+        let folderName = lastPathPart(entry.path)
+        let num = extractNumber(folderName)
+        if num > maxNum: maxNum = num
   maxNum += 1
   return maxNum.intToStr().align(4, '0')
 
@@ -35,18 +52,17 @@ proc main() =
   let validStr = if isValid: "valid" else: "invalid"
   let idChar = if isValid: "y" else: "x"
   
-  styledEcho fgYellow, "Available phases: T (Tokenizer), P (Parser), R (Resolver), V (Validator), E (Evaluator), LI (Load Include)"
+  styledEcho fgYellow, "Available phases: T (Tokenizer), P (Parser), LI (Load Include), R (Resolver), V (Validator), E (Evaluator)"
   let phaseAns = prompt("Which phase? (Leave empty for full case)").toUpperAscii()
   
   let isFullCase = phaseAns == ""
   let phaseChar = if isFullCase: "" else: phaseAns
-  let typeDir = if isFullCase: "full" else: "phases"
   
-  let baseDir = "tests" / "fixtures" / validStr / typeDir
+  let baseDir = "tests" / "fixtures" / validStr
   createDir(baseDir)
   
+  let numStr = getNextNumber()
   let idPrefix = idChar & phaseChar
-  let numStr = getNextNumber(baseDir, idPrefix)
   
   let folderName = idPrefix & numStr & "-" & testName.replace(" ", "_").toLowerAscii()
   let targetDir = baseDir / folderName
@@ -81,11 +97,11 @@ proc main() =
   let validBoolStr = if isValid: "true" else: "false"
   let phaseLine = if isFullCase: "" else: "phase ;string = \"" & phaseAns & "\"\n"
   
-  let metadataContent = ";> Test file metadata template for unit tests <;\n\n" &
+  let metadataContent = ";> Test file metadata for " & testName & " <;\n\n" &
                         "name ;string = \"" & testName & "\"\n" &
-                        "valid ;bool = " & validBoolStr & ", number ;int = " & numStr & "\n\n" &
+                        "valid ;bool = " & validBoolStr & ", number ;int = " & numStr & "\n" &
                         phaseLine &
-                        "cases ;list[string] = " & casesFormatted & "\n"
+                        "\ncases ;list[string] = " & casesFormatted & "\n"
                         
   let metadataPath = targetDir / "metadata.yumly"
   writeFile(metadataPath, metadataContent)

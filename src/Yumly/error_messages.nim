@@ -61,7 +61,7 @@ proc expectedTopTokenError*(expected: Expected, token: Token) =
   raise newException(ValueError,
       "Ehhh.. found an unexpected token at root: '" & getTokenValue(token) &
       "'" & loc(token.line, token.col) & ".\n" &
-      "Valid root tokens: include, @global, block, ident.\n" &
+      "Valid root tokens: include, block, ident.\n" &
       "Tip: make sure you're using commas correctly >,<")
 
 proc includeOrderError*(token: Token) =

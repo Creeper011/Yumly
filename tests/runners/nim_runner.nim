@@ -1,6 +1,9 @@
-import std/[os, strutils, terminal, options, sugar]
+import std/[os, strutils, terminal, options, streams]
 import ../../src/Yumly/core/pipeline
 import ../../src/Yumly/api/nim_api
+import ../../src/Yumly/serializers/parser_yumyumy
+import ../../src/Yumly/types/token
+import ../../src/Yumly/phases/tokenizer
 
 type
   Phase = enum
@@ -24,30 +27,51 @@ proc toPipelineStage(p: Phase): PipelineStage =
   of pResolver, pLoadInclude: psResolver
   of pValidator: psValidator
   of pEvaluator: psEvaluator
+
+proc serializeTokens(puller: proc(): Token {.closure.}): string =
+  var lines: seq[string] = @[]
+  while true:
+    let t = puller()
+    var line = $t.kind
+    if t.kind in {tkString, tkIdent, tkLiteral}:
+      line.add " \"" & t.value & "\""
+    lines.add line
+    if t.kind == tkEOF: break
+  return lines.join("\n")
+
 proc runTest(dir: string, id: string): seq[TestResult] =
   let metadataPath = dir / "metadata.yumly"
   if not fileExists(metadataPath): return @[]
 
-  let meta = loadYumly(metadataPath)
+  let meta = try: loadYumly(metadataPath)
+             except CatchableError as e:
+               return @[TestResult(name: "Metadata Error", id: id, passed: false, 
+                        error: "Kyaa! Failed to load metadata: " & e.msg)]
+
   let nameVal = meta.safeGet("name")
   let validVal = meta.safeGet("valid")
   let phaseVal = meta.safeGet("phase")
   let casesVal = meta.safeGet("cases")
 
-  if nameVal.isNone or validVal.isNone or phaseVal.isNone or casesVal.isNone:
+  if nameVal.isNone or validVal.isNone or casesVal.isNone:
     var missing: seq[string]
     if nameVal.isNone: missing.add("'name'")
     if validVal.isNone: missing.add("'valid'")
-    if phaseVal.isNone: missing.add("'phase'")
     if casesVal.isNone: missing.add("'cases'")
     return @[TestResult(name: "Metadata Error", id: id, passed: false, 
              error: "Ehhh... missing mandatory fields in metadata.yumly: " & missing.join(", "))]
 
   let testName = nameVal.get().getStr()
   let isValidExpected = validVal.get().getBool()
-  let phaseStr = phaseVal.get().getStr()
+  let phaseStr = if phaseVal.isSome: phaseVal.get().getStr() else: "E"
   let cases = casesVal.get().getElems()
-  let envs = meta.safeGet("envs").map(it => it.getElems()).get(@[]) # envs are optional
+
+  let envsBlock = meta.findBlock("envs")
+  var envKeys: seq[string] = @[]
+  if envsBlock.isSome:
+    for pair in envsBlock.get().pairs:
+      putEnv(pair.key, pair.value.getStr())
+      envKeys.add(pair.key)
 
   let phase = try: parseEnum[Phase](phaseStr) 
               except ValueError: 
@@ -56,25 +80,62 @@ proc runTest(dir: string, id: string): seq[TestResult] =
 
   let targetStage = phase.toPipelineStage()
 
-  for e in envs:
-    putEnv(e.getStr(), "true") # TODO: remove envs after ran test ;-;
-
   for caseVal in cases:
     let caseFile = caseVal.getStr()
     let fullPath = dir / caseFile
     var res = TestResult(name: testName & " (" & caseFile & ")", id: id, passed: false)
 
     try:
-      discard loadYumly(fullPath, targetStage)
-      res.passed = isValidExpected
-      if not res.passed:
+      if phase == pTokenizer:
+        let stream = newFileStream(fullPath, fmRead)
+        if stream == nil: raise newException(IOError, "Could not open file: " & fullPath)
+        let puller = tokenize(stream)
+        let actual = serializeTokens(puller)
+        stream.close()
+        
+        let expectedFile = fullPath.changeFileExt("expected.tokens")
+        if fileExists(expectedFile):
+          let expected = readFile(expectedFile).strip()
+          if actual.strip() == expected:
+            res.passed = isValidExpected
+          else:
+            res.passed = false
+            res.error = "assertion failed\nexpected:\n" & expected & "\ngot:\n" & actual
+        else:
+          res.passed = isValidExpected
+      
+      elif phase == pEvaluator:
+        let config = loadYumly(fullPath)
+        let actual = config.toYumyumy()
+        
+        let expectedFile = fullPath.changeFileExt("expected.yumyumy")
+        if fileExists(expectedFile):
+          let expected = readFile(expectedFile).strip()
+          if actual.strip() == expected:
+            res.passed = isValidExpected
+          else:
+            res.passed = false
+            res.error = "assertion failed\nexpected:\n" & expected & "\ngot:\n" & actual
+        else:
+          res.passed = isValidExpected
+      
+      else:
+        discard loadYumly(fullPath, targetStage)
+        res.passed = isValidExpected
+      
+      if res.passed and not isValidExpected:
+        res.passed = false
         res.error = "Kyaa~! Expected failure, but it passed! (o_O)"
+        
     except CatchableError as e:
       res.passed = not isValidExpected
       if not res.passed:
         res.error = e.msg
 
     result.add(res)
+
+  for key in envKeys:
+    delEnv(key)
 
 proc main() =
   let fixturesDir = "tests" / "fixtures"
@@ -84,7 +145,7 @@ proc main() =
   styledEcho fgMagenta, styleBright, "\n=== Yumly Test Runner (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ ===\n"
 
   for kind in ["valid", "invalid"]:
-    let kindPath = fixturesDir / kind / "phases"
+    let kindPath = fixturesDir / kind
     if not dirExists(kindPath): continue
 
     for folder in walkDir(kindPath):
@@ -111,3 +172,4 @@ proc main() =
     quit(1)
 
 main()
+

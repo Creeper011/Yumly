@@ -6,11 +6,16 @@ when not defined(python):
 ##
 # Python API to create Yumly files (this modules only create data, not serialize. serializer is in serializers/parser_python)
 ##
-import nimpy, os, strutils
+import nimpy, os, strutils, streams
+import ../yumly_file
 import ../types/ast
+import ../types/token
+import ../types/nodes
+import ../phases/tokenizer
 import ../core/pipeline
 import ../core/builders
 import ../serializers/parser_python
+import ../serializers/parser_yumyumy
 
 proc validateContent*(content: string): bool {.exportpy.} =
   try:
@@ -48,92 +53,57 @@ proc validateFileMsg*(path: string): string {.exportpy: "validateFileMsg".} =
   except ValueError, IOError:
     return getCurrentException().msg
 
-proc loadYumlyPy*(path: string): PyObject {.exportpy.} =
-  let config = pipeline.loadYumly(path)
-  return config.toPython()
-
-proc loadYumlyContentPy*(content: string, workingDir: string = "."): PyObject {.exportpy.} =
-  let config = pipeline.loadYumlyContent(content, workingDir)
-  return config.toPython()
-
-
-proc parseValue(value: PyObject, pyTypes: tuple[bool, int, float, str, list, `tuple`,
-    dict: PyObject], pyBuiltins: PyObject): Value =
-  if pyBuiltins.callMethod("isinstance", value, pyTypes.bool).to(bool):
-    return newBoolValue(value.to(bool))
-
-  if pyBuiltins.callMethod("isinstance", value, pyTypes.int).to(bool):
-    return newIntValue(value.to(int))
-
-  if pyBuiltins.callMethod("isinstance", value, pyTypes.float).to(bool):
-    return newFloatValue(value.to(float))
-
-  if pyBuiltins.callMethod("isinstance", value, pyTypes.str).to(bool):
-    return newStringValue(value.to(string))
-
-  if pyBuiltins.callMethod("isinstance", value, pyTypes.list).to(bool) or pyBuiltins.callMethod(
-      "isinstance", value, pyTypes.`tuple`).to(bool):
-    var elems: seq[Value] = @[]
-    for item in value:
-      elems.add(parseValue(item, pyTypes, pyBuiltins))
-    return newListValue(elems)
-
-  raise newException(ValueError, "Oh no.. failed to parse Python value, it's an unsupported Python type: " & $value)
-
-proc parseBlock(name: string, data: PyObject, pyTypes: tuple[bool, int, float, str, list, `tuple`,
-    dict: PyObject], pyBuiltins: PyObject): Block =
-  result = newBlock(name)
-  let items = data.callMethod("items")
-  for item in items:
-    let keyStr = item[0].to(string)
-    let val = item[1]
-    let safeKey = keyStr.replace(" ", "_")
-    if pyBuiltins.callMethod("isinstance", val, pyTypes.dict).to(bool):
-      result.addSubBlock(parseBlock(safeKey, val, pyTypes, pyBuiltins))
-    else:
-      result.addPair(safeKey, parseValue(val, pyTypes, pyBuiltins))
-
-proc dictToYumlyConf*(data: PyObject): YumlyConf =
+proc loadYumlyPy*(path: string, until: int = 4): PyObject {.exportpy.} =
+  let stage = PipelineStage(until)
   let pyBuiltins = nimpy.pyBuiltinsModule()
-  if pyBuiltins.isNil:
-    raise newException(ValueError, "pyBuiltins is nil")
+  
+  if stage == psTokenizer:
+    let stream = newYumlyStream(path)
+    let puller = tokenize(stream)
+    let tokensPy = pyBuiltins.list()
+    while true:
+      let tokenizer = puller()
+      discard tokensPy.append(tokenToPy(tokenizer, pyBuiltins))
+      if tokenizer.kind == tkEOF: break
+    stream.close()
+    return tokensPy
 
-  let pyDictType = pyBuiltins.getAttr("dict")
-  if pyDictType.isNil:
-    raise newException(ValueError, "pyDictType is nil")
+  let res = pipeline.loadYumly(path, stage)
+  case res.stage:
+  of psTokenizer: return pyBuiltins.None
+  of psParser, psResolver, psValidator:
+    return astToPy(res.ast, pyBuiltins)
+  of psEvaluator:
+    return res.config.toPython()
 
-  let pyTypes = (
-    bool: pyBuiltins.getAttr("bool"),
-    int: pyBuiltins.getAttr("int"),
-    float: pyBuiltins.getAttr("float"),
-    str: pyBuiltins.getAttr("str"),
-    list: pyBuiltins.getAttr("list"),
-    `tuple`: pyBuiltins.getAttr("tuple"),
-    dict: pyDictType
-  )
+proc loadYumlyContentPy*(content: string, workingDir: string = ".", until: int = 4): PyObject {.exportpy.} =
+  let stage = PipelineStage(until)
+  let pyBuiltins = nimpy.pyBuiltinsModule()
 
-  result = newYumly()
+  if stage == psTokenizer:
+    let stream = newStringStream(content)
+    let puller = tokenize(stream)
+    let tokensPy = pyBuiltins.list()
+    while true:
+      let tokenizer = puller()
+      discard tokensPy.append(tokenToPy(tokenizer, pyBuiltins))
+      if tokenizer.kind == tkEOF: break
+    return tokensPy
 
-  let items = data.callMethod("items")
-  for item in items:
-    let k = item[0]
-    let keyStr = k.to(string)
-    let val = item[1]
-    let safeKey = keyStr.replace(" ", "_")
-
-    if val.isNil:
-      continue
-
-    # NOTE: for some reason pyBuiltins.isInstance are causing SIGSEGV Error
-    if pyBuiltins.callMethod("isinstance", val, pyTypes.dict).to(bool):
-      result.addBlock(parseBlock(safeKey, val, pyTypes, pyBuiltins))
-    else:
-      result.addPair(safeKey, parseValue(val, pyTypes, pyBuiltins))
-
-  applyPythonTypeHints(result)
+  let res = pipeline.loadYumlyContent(content, stage, workingDir)
+  case res.stage:
+  of psTokenizer: return pyBuiltins.None
+  of psParser, psResolver, psValidator:
+    return astToPy(res.ast, pyBuiltins)
+  of psEvaluator:
+    return res.config.toPython()
 
 proc dumpPy*(data: PyObject): string {.exportpy.} =
   if data.isNil:
     raise newException(ValueError, "HEYY! data is nil")
   let config = dictToYumlyConf(data)
   result = dumpYumly(config)
+
+proc dictToYumyumyPy*(data: PyObject): string {.exportpy.} =
+  let config = dictToYumlyConf(data)
+  return config.toYumyumy()

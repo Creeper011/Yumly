@@ -98,6 +98,16 @@ with open("config.yumly", "w") as file:
     yumly.dump(data, file)
 ```
 
+### To Yumyumy
+
+Convert a dictionary to the internal Yumyumy string representation (useful for tests or visualization):
+> ♡ If you don't know what is Yumyumy, check [docs/yumyumy.md](docs/yumyumy.md)
+
+```python
+yumyumy_str = yumly.to_yumyumy(data)
+print(yumyumy_str)
+```
+
 ---
 
 ## Error Handling
@@ -164,12 +174,38 @@ class TaskManager():
 
 ---
 
+## Partial Parsing (Pipeline Stages)
+
+Yumly allows you to stop the parsing process at different stages. This is useful for debugging or if you only need tokens/AST.
+
+```python
+from yumly import Yumly, PipelineStage
+
+yumly = Yumly()
+
+# Stop at Tokenizer (returns list of Tokens)
+tokens = yumly.load_until("config.yumly", PipelineStage.Tokenizer)
+
+# Stop at Parser (returns YumNode AST)
+ast = yumly.load_until("config.yumly", PipelineStage.Parser)
+
+# Valid stages:
+# PipelineStage.Tokenizer
+# PipelineStage.Parser
+# PipelineStage.Resolver
+# PipelineStage.Validator
+# PipelineStage.Evaluator (default used by load())
+```
+
 ## API Reference
 
 | Method | Description |
 |--------|-------------|
 | `load(path)` | Load and parse a `.yumly` or `.yuy` file |
+| `load_until(path, stage)` | Load up to a specific pipeline stage |
 | `loads(content)` | Parse Yumly content from a string |
+| `loads_until(content, stage)` | Parse up to a specific pipeline stage |
+| `to_yumyumy(data)` | Convert dict to Yumyumy string |
 | `dump(data, stream)` | Serialize dict to a file-like stream |
 | `dumps(data)` | Serialize dict to a Yumly string |
 | `validate_content(content)` | Check if content is valid Yumly |

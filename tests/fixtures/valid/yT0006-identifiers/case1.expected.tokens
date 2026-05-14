@@ -1,0 +1,4 @@
+tkIdent "my_var"
+tkEquals
+tkLiteral "1"
+tkEOF

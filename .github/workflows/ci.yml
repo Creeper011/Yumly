@@ -33,6 +33,10 @@ jobs:
     - name: Install Python package
       run: pip install .
 
-    - name: Run nim test runner
+    - name: Run test -> Nim runner
       run: |
         nim c -r tests/runners/nim_runner.nim
+
+    - name: Run tests -> Python runner
+      run: |
+        pytest tests/runners/python_runner.py

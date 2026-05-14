@@ -1,0 +1,13 @@
+tkIdent "items"
+tkDeclaration
+tkIdent "list"
+tkLBracket
+tkIdent "int"
+tkRBracket
+tkEquals
+tkLBracket
+tkLiteral "1"
+tkComma
+tkLiteral "2"
+tkRBracket
+tkEOF

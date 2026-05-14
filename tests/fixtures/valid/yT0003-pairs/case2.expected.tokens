@@ -1,0 +1,6 @@
+tkIdent "name"
+tkDeclaration
+tkIdent "string"
+tkEquals
+tkString "Yumly"
+tkEOF

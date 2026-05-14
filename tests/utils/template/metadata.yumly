@@ -4,6 +4,13 @@ name ;string = "Test Name"
 valid ;bool = false, number ;int = 0000
 phase ;string = "T" ;> if is a full case, this pair doesn't exist <;
 
+;> for multiples levels of test<;
+cases ;list[string] = ["case1.yumly", "case2.yumly"]
+
 ;> set environment variables for the test case <;
-envs ;list[string] = ["VAR1", "VAR2", "VAR3", "VAR4"]
-cases ;list[string] = ["case1.yumly", "case2.yumly"] ;> for multiples levels of test<;
+(envs) {
+    VAR1 ;string = "Value",
+    VAR2 ;string = "Value",
+    VAR3 ;string = "Value",
+    VAR4 ;string = "Value"
+}

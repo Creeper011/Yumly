@@ -1,0 +1,7 @@
+;> Test file metadata for tokenizer failures <;
+
+name ;string = "Tokenizer Failures"
+valid ;bool = false, number ;int = 0010
+phase ;string = "T"
+
+cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly"]

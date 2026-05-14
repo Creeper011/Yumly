@@ -3,9 +3,8 @@
 > ⚠️ Warning — subject to changes. 
 
 Yumly is a cute, declarative configuration language with fail-fast behavior and optional type safety, blending elements from many configuration formats and some ideas from my head.
-The goal is a simple, secure, and personal configuration format that I can use in my projects, meaning the project's focus is on a configuration format tailored to my needs without any external compromises.
 
-The parser is written in [Nim](https://nim-lang.org/) and exports bindings for [Python](https://www.python.org/) via [NimPy](https://github.com/yglukhov/nimpy). There's also a native Nim API for direct usage.
+⟡ **Hey! New here? Check our [Documentation Home](docs/home.md) for a starter guide!**
 
 ---
 
@@ -19,7 +18,6 @@ The parser is written in [Nim](https://nim-lang.org/) and exports bindings for [
 - **Readable** — it's easy to read and understand ^_^
 - **Extensions** `.yumly` and `.yuy` (it's so cute!!)
 
-
 <details>
 <summary>Why i created Yumly</summary>
 
@@ -30,89 +28,50 @@ The parser is written in [Nim](https://nim-lang.org/) and exports bindings for [
 
 </details>
 
-## ✿ Syntax & Types
+## ✿ Syntax & Features
 
 For the complete syntax, see:
-- [docs/gramatic/overview.md](docs/gramatic/overview.md) — detailed guide
-- [docs/ebnf/grammar.ebnf](docs/ebnf/grammar.ebnf) — formal specification
+- [Grammar Overview](docs/gramatic/overview.md) — detailed guide
+- [EBNF Grammar](docs/ebnf/grammar.ebnf) — formal specification
+- [Yumyumy ♡ Format](docs/yumyumy.md) — internal AST representation
 
----
+## ✿ Quick Start
 
-## ✿ Python
-
-For complete documentation, see [docs/usage/python_usage.md](docs/usage/python_usage.md).
-
-### ✦ Installation
+### Python
 
 ```bash
 pip install yumly
 ```
 
-<details>
-<summary>Install from source (unstable/git version)</summary>
+```python
+from yumly import Yumly
+data = Yumly().load("config.yumly")
+```
+> Hey!, look the [Python Usage Guide](docs/usage/python_usage.md) for more.
+
+### Nim
 
 ```bash
-git clone https://github.com/Creeper011/Yumly
-cd Yumly/
-make deps   # install Nim dependencies
-pip install .
+nimble install yumly
 ```
 
-</details>
+```nim
+import Yumly
+let config = loadYumly("config.yumly")
+```
+> Hey!, look the [Nim Usage Guide](docs/usage/nim_usage.md) for more.
 
 ---
 
-## ✿ Nim
+## ✿ Development & Tools
 
-For complete documentation, see [docs/usage/nim_usage.md](docs/usage/nim_usage.md).
-
-### ✦ Installation (source)
-
-```bash
-git clone https://github.com/Creeper011/Yumly
-cd Yumly/
-nimble install --path:.
-```
-
----
-
-## ✿ CLI
-
-```bash
-yumly_cli check config.yumly
-yumly_cli load config.yumly
-```
-
----
-
-## ✿ VSCode Extension
-
-```bash
-cd yumly-vscode
-npx --yes @vscode/vsce package
-code --install-extension yumly.vsix
-```
-
----
-
-## ✿ Tests
-
-```bash
-python tests/run_tests.py
-nim c -r tests/test_encoder.nim
-```
-
----
-
-## ✿ About Projects (Tests)
-
-- Yumly has a set of PoC (Proof of Concepts) projects that aim to test yumly implementations in a more integrated real-world scenario; they can be found in [tests/projects](./tests/projects/).
-
+- **CLI:** `yumly_cli check config.yumly`
+- **VSCode:** Check the [extension folder](yumly-vscode/) for installation.
+- **Tests:** Detailed in [Test System](docs/tests.md).
 
 ## ✿ Limitations:
-- hahaha, i made sure to leave this down here.
 - The current limitations are:
-    - Yumly is not streamable by my clean/modular dumb architecture and by design, as it needs all context to resolve includes, blocks and pairs. This means that the entire file needs to be loaded and parsed before any data can be accessed.
+    - Yumly is not fully streamable by design, as it needs all context to resolve includes, blocks and pairs. Only the parser and the tokenizer (lexer) are streamable for now.
 
 ## ★ License ★
 

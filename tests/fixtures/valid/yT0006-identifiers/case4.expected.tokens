@@ -1,0 +1,4 @@
+tkIdent "path/to"
+tkEquals
+tkLiteral "1"
+tkEOF
