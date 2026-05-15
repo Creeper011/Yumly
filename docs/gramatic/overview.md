@@ -40,6 +40,8 @@ that can have multiple lines
 and ends here <;
 ```
 
+> you can use comments anywhere! pairs, blocks, includes, etc. in parser, they are not "counted" at all :3
+
 ## ✿ Phase 2: Available Types
 
 The language supports several value types. Type hints are optional — if you don't specify one, the type is inferred automatically (use type hints pls 🥀).
@@ -90,12 +92,16 @@ include { ".env" }
 The `include` command allows you to import content from other files. Includes must come at the top of the file! >:3
 
 ```yumly
-include { ".env" }           ;> loads environment variables <;
-include { "base.yumly" }     ;> imports blocks from another file <;
-include { "shared.yuy" }     ;> accepts .yuy or .yumly <;
+;> Example of valid includes <;
+include { ".env" }           ;> Loads environment variables, this will populate the $[] variable values <;
+include { "base.yumly" }     ;> Imports blocks and pairs from another file <;
+include { "shared.yuy" }     ;> Accepts .yuy or .yumly <;
 ```
 
-> ⟡ Oh, an important thing — includes count for the no duplication rule! if an file with `(blockA)` imports other file with `(blockA)` — it's a duplication! (i'm talking seriously >:3)
+Oh, an important thing — includes count for the **no duplication** rule! if an file with `(blockA)` imports other file with `(blockA)` — it's a duplication! (i'm talking seriously >:3)
+
+Includes "merges" into the parent file! so, if a file that you're importing has the same block as another file, it will be counted as a duplication! >:3
+Make sure if you don't include an file A that includes an file B that includes an file A, this is a circular import >_<
 
 ## ✿ Phase 5: Strings and Escapes
 
@@ -117,6 +123,13 @@ newline = "Line 1\nLine 2"
 tab = "Column 1\tColumn 2"
 backslash = "X:\\Path\\Windows\\Microslop"
 ```
+
+The escapes available are:
+- `\n` (newline)
+- `\t` (tab)
+- `\\` (backslash)
+- `\"` (double quote)
+- `\'` (single quote)
 
 ## ✿ Phase 6: Lists and Tuples
 
@@ -157,7 +170,7 @@ Commas separate pairs and sub-blocks. The last item **does not** need a comma:
 (block) {
     a = "x",
     b = "y",
-    c = "z"    ;> last, no comma <;
+    c = "z"    ;> last, optional comma <;
 }
 ```
 
@@ -222,31 +235,4 @@ include { ".env" }
 Now you can finally use yumly! :3
 
 #### Oh! — you reached at the end!! congratulations!! here's an gift for you: ⸜( ˶' ᵕ '˶ )⸝
-```text
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠤⠂⠉⠀⠀⠀⢀⠀⠁⡀⠂⠀⠈⠁⠒⠄⡀⠀⠀⢀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⢶⠋⣰⡦⠠⠊⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⢀⠐⠀⠄⠀⠀⠀⠀⠑⢞⢝⢫⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⢾⠇⣹⠫⠈⠀⠀⠀⠀⠀⠀⢀⠀⠂⠁⠀⠄⠀⡀⠄⠀⠠⠀⠂⢀⠀⠀⠙⡶⣹⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠚⣾⣿⠔⠃⠀⠀⠀⠀⠀⢠⡄⢀⠀⡀⠄⠐⠈⠀⠄⢀⠀⣾⣄⠐⠀⡀⠀⢀⠀⠸⣱⣿⣿⡢⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⢂⠏⠀⢻⡿⢀⠀⠀⠀⠀⠀⢀⡾⠹⡀⠀⠀⠄⠂⠈⠀⠄⠀⢸⠂⠘⢧⡀⠀⠄⠀⠀⠀⢹⣿⣿⣷⠘⡔⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⢀⠔⢁⠃⢸⠀⢨⣷⡾⠀⠀⠀⠀⠀⢸⠧⠄⢣⠀⠂⠀⡀⠁⠀⠂⠈⢸⠀⠠⠬⢷⡄⠀⠈⠀⠀⠈⣿⣯⢼⡇⠘⠌⠢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⢀⠆⡠⠁⠔⠀⠀⣼⣿⡟⠀⠀⠀⠀⠀⡏⠀⠀⠸⣆⠀⢀⠀⠀⠁⡀⠂⢸⠀⠀⠀⠀⠹⣦⠀⠂⠀⢠⣿⣿⣾⣷⠀⢨⡀⠑⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⢀⡢⠚⠀⠐⠠⠈⠀⣿⣿⡇⠀⠀⠀⠀⢸⠃⠀⠀⠀⠙⣆⠀⠀⠌⠀⠀⠄⢸⠃⠀⠀⠀⠀⠘⢿⣄⡀⢸⣿⣿⣿⣿⠀⠂⡵⡀⠈⠄⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⢀⠌⠔⠀⠄⠁⢂⠐⠀⣻⣿⣧⠀⠀⠀⠀⡞⠀⠁⣶⡆⠀⠘⢵⡀⠀⡈⠀⠀⡿⠀⢰⣦⠀⠀⠀⢈⡿⣧⠸⣿⣿⣿⣾⠀⢂⠤⠄⠣⠈⢆⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⢌⠎⠀⠌⠀⠌⠄⠂⡀⢿⣿⣷⡀⠀⠀⣼⠃⠀⢰⣿⡇⠀⠀⠀⠙⠶⣄⡀⣱⠃⠀⣿⣿⠀⠀⠀⢸⠁⣿⣀⣿⣿⣿⣾⠌⢄⡹⣀⠐⠐⠀⢂⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⢀⡜⠂⠠⠈⠀⠌⠐⣈⠐⡀⣿⣿⣿⣿⡄⢸⢻⡀⠀⠄⠙⠣⠀⠀⠀⠀⠀⠀⠉⠁⠀⠀⠸⠋⠀⠀⣠⣿⠀⣿⠟⢹⣻⣯⣿⣍⠒⣍⠲⠀⡁⠂⡀⢣⠀⠀⠀⠀⠀⠀
-⠀⠀⠎⠆⠈⠁⢀⠁⠀⢇⣀⠶⣉⣿⣿⣿⡇⢱⢸⢸⣷⡀⠀⠀⠀⠀⠀⢶⣶⡶⢶⣶⡆⡀⠀⠀⠀⠀⢰⣿⢿⠀⡇⠀⠀⣿⣿⢿⡎⢶⠈⡏⢁⠀⠰⠀⠀⢁⠀⠀⠀⠀⠀
-⠀⠀⠀⡐⠈⢂⠀⠄⢁⠰⢄⡳⣜⡿⣿⣿⡇⠀⢛⠂⡝⠳⣄⠀⠀⠀⠀⠈⠪⠽⠧⠞⠁⠀⠀⠀⣀⠤⠛⠁⢸⢸⠀⠀⠀⣿⣿⢯⡟⣄⢋⡔⢃⠈⠄⢈⠐⠀⡡⠀⠀⠀⠀
-⠀⠀⠐⡀⠌⠀⠠⠈⠤⠱⢋⡲⣽⣻⣽⣷⠇⠀⠈⠄⢡⠀⢀⠨⢭⣖⡤⣤⣄⢤⣄⣢⣤⠶⣶⣿⡦⢀⡀⠀⠀⡌⠀⠀⠀⣿⣻⣯⣟⡬⠔⣎⢅⠊⠐⠢⢀⠁⠘⢡⠀⠀⠀
-⠀⠀⡁⠠⠐⢈⠀⡌⢒⢩⡑⡞⡵⣯⣿⣿⠃⠀⠀⡨⢼⠈⠀⠀⡇⠛⡿⣿⡏⠉⢉⢩⣿⣟⡮⢽⡀⠀⠈⣖⡤⡇⠀⠀⠀⣿⣯⣿⢮⠵⡩⢔⠪⡈⠜⡀⠢⠈⢀⠛⡄⠀⠀
-⠀⢂⠠⠐⢀⢂⡐⡐⣊⠴⣨⢟⣽⣷⣿⡏⣠⣴⡉⠰⣄⠀⢠⣼⣰⢋⠁⢠⣧⣤⢦⣸⣯⢑⡈⠺⣶⣄⠀⢀⡜⠈⣵⣄⡀⢸⣿⣾⣧⢏⠳⣌⠡⠐⡡⢀⠡⠐⡀⠀⠻⡀⠀
-⠀⡀⠄⠂⠂⠥⠐⡑⢢⠸⣵⣿⣿⣿⣿⣿⣿⣿⣷⣤⣜⡷⣻⠛⠁⠁⢠⡞⠀⢀⠀⡁⠹⡆⡐⠠⢙⡇⠱⣟⣤⣾⣿⣿⣿⣦⣿⣿⣾⣎⠡⠆⢂⡉⢐⠂⠄⠂⢀⠁⠆⢃⠀
-⢠⡐⠤⠉⠌⣂⠕⣂⢧⣿⣿⠟⠹⣿⣿⣿⣿⣿⣿⣿⠋⣠⡟⠃⠀⢀⡾⠀⠐⡀⠌⠠⠀⢧⣁⠀⠂⢱⣄⠙⢿⣿⣿⣿⣿⣿⣿⠏⡻⣿⣗⠨⢄⡐⠀⡐⠀⢂⠠⠈⠄⢘⠀
-⣂⢌⡒⡁⡒⢤⡩⣾⣿⣿⣿⡟⢄⠘⢿⣿⣿⣿⠟⠁⡰⡋⠀⠀⡀⣴⠁⠠⠁⠠⢈⠀⡁⠘⡟⠻⠶⠶⣭⣧⠈⢿⣿⣿⣿⡟⠁⡴⠁⢿⣿⣿⣦⣄⠡⡀⠂⠠⢐⠈⡐⠊⠀
-⠀⠦⠔⠒⣙⢢⣷⣿⣿⣿⠟⠑⠄⣳⢤⣿⡿⠃⢀⡾⠿⠮⣕⣤⡐⠧⣀⠂⡁⠐⠠⠀⠄⠁⣱⢤⢂⣽⣶⣿⠀⠀⠙⢿⣧⠔⠯⠤⠊⠀⠙⠛⠿⢾⣷⣵⣊⡖⡡⠁⡔⠂⠀
-⠐⠤⠾⠧⠯⠿⠟⠛⠋⠀⠀⠀⠀⠀⠀⣠⠶⠶⢶⣶⣷⣦⣄⢹⣮⠃⢌⣱⣢⠁⣀⣥⡶⠿⣣⣷⣯⣶⣶⠾⠷⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠙⠻⠿⠿⠦⠤⠴
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠈⠀⡀⠈⠪⣿⣿⣿⡷⢟⢛⠿⠿⠿⠿⠿⣿⣷⠿⠻⣿⣿⠏⠀⢀⠀⠠⢸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢆⠐⠀⡁⠄⣸⣿⠟⠀⠀⠉⠒⠒⠒⠒⠒⠉⠀⠀⠀⠘⢿⣀⢐⡀⢃⠡⡼⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⠤⢴⣘⡼⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠦⠵⠧⠛⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-```
 mikuu dayoo!

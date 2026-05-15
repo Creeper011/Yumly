@@ -4,7 +4,7 @@
 It's timeeeee
 Ok, formal introduction — The Yumyumy ♡ format is the internal representation from the AST (Abstract Syntax Tree) of a yumly file. It's **not a file format**, but rather a data structure that is used to represent the structure of a yumly file.
 
-## ✿ Why? ⸝> . <⸝
+## ✿ Why?
 - It's a way to represent the yumly file without using any bindings or language, in a readable and explicit way.
 
 ## ✿ Syntax and Examples ദ്ദി◝ ⩊ ◜)
