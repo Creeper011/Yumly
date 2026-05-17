@@ -1,7 +1,7 @@
 ;> Test file metadata for includes parsing <;
 
 name ;string = "Includes Parsing"
-valid ;bool = true, number ;int = 0013
+valid ;bool = true, number ;int = 0011
 phase ;string = "P"
 
 cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly"]

@@ -20,6 +20,7 @@ type
   PipelineStage* = enum
     psTokenizer
     psParser
+    psIncludes
     psResolver
     psValidator
     psEvaluator
@@ -28,7 +29,7 @@ type
     case stage*: PipelineStage
     of psTokenizer:
       discard
-    of psParser, psResolver, psValidator:
+    of psParser, psIncludes, psResolver, psValidator:
       ast*: YumNode
     of psEvaluator:
       config*: YumlyConf
@@ -51,6 +52,11 @@ proc runPipeline*(stream: Stream, until: PipelineStage = psEvaluator, workingDir
 
   if ast.hasIncludes.get(false):
     loadIncludes(ast, workingDir)
+    
+  if until == psIncludes:
+    result.ast = ast
+    return
+
   if ast.hasTypeHints.get(false):
     resolveAst(ast)
   
@@ -85,7 +91,7 @@ proc loadYumlyContent*(content: string, workingDir: string = "."): YumlyConf =
 proc loadYumly*(path: string, until: PipelineStage): PipelineResult =
   let stream = newYumlyStream(path)
   result = runPipeline(stream, until, parentDir(path))
-  if result.stage in {psParser, psResolver, psValidator}:
+  if result.stage in {psParser, psIncludes, psResolver, psValidator}:
     result.ast.sourceFile = os.absolutePath(path)
   stream.close()
 

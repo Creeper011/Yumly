@@ -53,6 +53,7 @@ let config = loadYumly("config.yumly")
   all the language features.
 - [Yumyumy ♡ Format](yumyumy.md) — The internal AST representation, useful 
   for tests and debugging.
+- [Ylwa (wa wa wa) Format](ylwa.md) — The internal format for benchmarks and logs.
 
 ---
 

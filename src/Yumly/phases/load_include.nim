@@ -36,10 +36,11 @@ proc processIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[st
       if child.kind == nkInclude:
         let resolvedPath = getCanonicalPath(child.includePath, baseDir, child)
 
-        let sf = os.splitFile(resolvedPath)
-        var ext = sf.ext.toLowerAscii()
-        if ext.len == 0 and sf.name.toLowerAscii() == ".env":
-          ext = ".env"
+        let fileExt = os.splitFile(resolvedPath).ext.toLowerAscii()
+        let ext = if fileExt.len == 0 and os.splitFile(resolvedPath).name.toLowerAscii() == ".env":
+          ".env"
+        else:
+          fileExt
 
         if ext notin allowedIncludeExts:
           includeUnsupportedExtError(resolvedPath, ext, child.line, child.col)
@@ -68,8 +69,8 @@ proc processIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[st
               includedAST = parser.parse()
               stream.close()
               includedAST.sourceFile = resolvedPath
-              for n in includedAST.children:
-                n.sourceFile = resolvedPath
+              for node in includedAST.children:
+                node.sourceFile = resolvedPath
             except CatchableError as error:
               failedToLoadFile(resolvedPath, child.line, child.col, error.msg)
 

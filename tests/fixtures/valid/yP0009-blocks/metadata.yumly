@@ -1,7 +1,7 @@
-;> Test file metadata for missing tokens <;
+;> Test file metadata for blocks parsing <;
 
-name ;string = "Missing Tokens"
-valid ;bool = false, number ;int = 0017
+name ;string = "Blocks Parsing"
+valid ;bool = true, number ;int = 0009
 phase ;string = "P"
 
 cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly", "case5.yumly"]

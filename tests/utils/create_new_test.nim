@@ -19,12 +19,11 @@ proc extractNumber(folderName: string): int =
       return 0
   return 0
 
-proc getNextNumber(): string =
+proc getNextNumber(kind: string): string =
   var maxNum = 0
   let fixturesDir = "tests" / "fixtures"
-  for kind in ["valid", "invalid"]:
-    let kindPath = fixturesDir / kind
-    if not dirExists(kindPath): continue
+  let kindPath = fixturesDir / kind
+  if dirExists(kindPath):
     for entry in walkDir(kindPath):
       if entry.kind == pcDir:
         let folderName = lastPathPart(entry.path)
@@ -47,10 +46,13 @@ proc main() =
     styledEcho fgRed, "Kyaa~! The test name cannot be empty! (x_x)"
     quit(1)
     
-  let validAns = prompt("Is this test valid? (y/n)", "y").toLowerAscii()
-  let isValid = validAns == "y" or validAns == "yes"
-  let validStr = if isValid: "valid" else: "invalid"
-  let idChar = if isValid: "y" else: "x"
+  let typeAns = prompt("Is this test valid (y), invalid (x), or stress (s)?", "y").toLowerAscii()
+  let isValid = typeAns == "y" or typeAns == "yes"
+  let isStress = typeAns == "s" or typeAns == "stress"
+  let isInvalid = typeAns == "x" or typeAns == "no" or typeAns == "n"
+  
+  let validStr = if isStress: "stress" elif isValid: "valid" else: "invalid"
+  let idChar = if isStress: "s" elif isValid: "y" else: "x"
   
   styledEcho fgYellow, "Available phases: T (Tokenizer), P (Parser), LI (Load Include), R (Resolver), V (Validator), E (Evaluator)"
   let phaseAns = prompt("Which phase? (Leave empty for full case)").toUpperAscii()
@@ -61,7 +63,7 @@ proc main() =
   let baseDir = "tests" / "fixtures" / validStr
   createDir(baseDir)
   
-  let numStr = getNextNumber()
+  let numStr = getNextNumber(validStr)
   let idPrefix = idChar & phaseChar
   
   let folderName = idPrefix & numStr & "-" & testName.replace(" ", "_").toLowerAscii()

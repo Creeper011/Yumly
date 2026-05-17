@@ -19,6 +19,10 @@ tests/
         metadata.yumly
         case1.yumly
         case2.yumly
+    stress/                        ← stress/performance tests
+      sV0017-deep-nesting/
+        metadata.yumly
+        test.yumly
   runners/
     nim_runner.nim
   utils/
@@ -33,12 +37,12 @@ tests/
 
 | Field        | Description                                          |
 |--------------|------------------------------------------------------|
-| `identifier` | `y` = valid, `x` = invalid                           |
+| `identifier` | `y` = valid, `x` = invalid, `s` = stress             |
 | `phase`      | Pipeline stage to run up to (optional)               |
 | `number`     | Global 4-digit counter, e.g. `0001`                  |
 | `name`       | Lowercase with underscores, e.g. `multiline_string`  |
 
-The number is **global** — it increments across all tests regardless of valid/invalid or phase. IDs are stable and unique forever.
+The number is **global per identifier** — it increments across all tests regardless of phase.
 
 ---
 

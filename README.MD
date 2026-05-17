@@ -34,6 +34,7 @@ For the complete syntax, see:
 - [Grammar Overview](docs/gramatic/overview.md) — detailed guide
 - [EBNF Grammar](docs/ebnf/grammar.ebnf) — formal specification
 - [Yumyumy ♡ Format](docs/yumyumy.md) — internal AST representation
+- [Ylwa Format](docs/ylwa.md) — benchmark and log format
 
 ## ✿ Quick Start
 

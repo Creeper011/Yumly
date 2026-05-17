@@ -71,7 +71,7 @@ proc loadYumlyPy*(path: string, until: int = 4): PyObject {.exportpy.} =
   let res = pipeline.loadYumly(path, stage)
   case res.stage:
   of psTokenizer: return pyBuiltins.None
-  of psParser, psResolver, psValidator:
+  of psParser, psIncludes, psResolver, psValidator:
     return astToPy(res.ast, pyBuiltins)
   of psEvaluator:
     return res.config.toPython()
@@ -93,7 +93,7 @@ proc loadYumlyContentPy*(content: string, workingDir: string = ".", until: int =
   let res = pipeline.loadYumlyContent(content, stage, workingDir)
   case res.stage:
   of psTokenizer: return pyBuiltins.None
-  of psParser, psResolver, psValidator:
+  of psParser, psIncludes, psResolver, psValidator:
     return astToPy(res.ast, pyBuiltins)
   of psEvaluator:
     return res.config.toPython()

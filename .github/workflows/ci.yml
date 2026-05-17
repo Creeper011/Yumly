@@ -33,10 +33,14 @@ jobs:
     - name: Install Python package
       run: pip install .
 
-    - name: Run test -> Nim runner
+    - name: Run tests with Benchmarks
       run: |
-        nim c -r tests/runners/nim_runner.nim
+        make tests-bench
 
-    - name: Run tests -> Python runner
-      run: |
-        pytest tests/runners/python_runner.py
+    - name: Upload Benchmark Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: yumly-benchmarks
+        path: |
+          benchmark.ylwa
+          benchmark_python.ylwa

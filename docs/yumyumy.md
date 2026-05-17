@@ -8,6 +8,8 @@ Ok, formal introduction — The Yumyumy ♡ format is the internal representatio
 - It's a way to represent the yumly file without using any bindings or language, in a readable and explicit way.
 
 ## ✿ Syntax and Examples ദ്ദി◝ ⩊ ◜)
+For the formal specification, see the [Yumyumy EBNF Grammar](ebnf/yumyumy.ebnf).
+
 As an internal representation of Yumly, Yumyumy has a few structural distinctions:
 
 | Element | Yumly | Yumyumy |

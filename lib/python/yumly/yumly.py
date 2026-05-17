@@ -21,9 +21,10 @@ FALLBACK_VALUE_MESSAGE = (
 class PipelineStage(Enum):
     Tokenizer = 0
     Parser = 1
-    Resolver = 2
-    Validator = 3
-    Evaluator = 4
+    Load_Includes = 2
+    Resolver = 3
+    Validator = 4
+    Evaluator = 5
 
 PipelineResult = Union[list[Token], YumNode, dict[str, Any]]
 
@@ -42,7 +43,7 @@ class Yumly:
     def load_until(self, path: Union[str, Path], until: Literal[PipelineStage.Tokenizer]) -> list[Token]: ...
     
     @overload
-    def load_until(self, path: Union[str, Path], until: Literal[PipelineStage.Parser, PipelineStage.Resolver, PipelineStage.Validator]) -> YumNode: ...
+    def load_until(self, path: Union[str, Path], until: Literal[PipelineStage.Parser, PipelineStage.Load_Includes, PipelineStage.Resolver, PipelineStage.Validator]) -> YumNode: ...
     
     @overload
     def load_until(self, path: Union[str, Path], until: Literal[PipelineStage.Evaluator]) -> dict[str, Any]: ...
@@ -63,7 +64,7 @@ class Yumly:
     def loads_until(self, yumly_data: str, until: Literal[PipelineStage.Tokenizer], working_dir: str = ".") -> list[Token]: ...
 
     @overload
-    def loads_until(self, yumly_data: str, until: Literal[PipelineStage.Parser, PipelineStage.Resolver, PipelineStage.Validator], working_dir: str = ".") -> YumNode: ...
+    def loads_until(self, yumly_data: str, until: Literal[PipelineStage.Parser, PipelineStage.Load_Includes, PipelineStage.Resolver, PipelineStage.Validator], working_dir: str = ".") -> YumNode: ...
 
     @overload
     def loads_until(self, yumly_data: str, until: Literal[PipelineStage.Evaluator], working_dir: str = ".") -> dict[str, Any]: ...
@@ -127,7 +128,7 @@ class Yumly:
 
         if until == PipelineStage.Tokenizer:
             return [map_token(t) for t in value]
-        elif until in (PipelineStage.Parser, PipelineStage.Resolver, PipelineStage.Validator):
+        elif until in (PipelineStage.Parser, PipelineStage.Load_Includes, PipelineStage.Resolver, PipelineStage.Validator):
             return map_node(value)  # type: ignore
         return value
 
@@ -142,7 +143,7 @@ class Yumly:
 
         if until == PipelineStage.Tokenizer:
             return [map_token(t) for t in value]
-        elif until in (PipelineStage.Parser, PipelineStage.Resolver, PipelineStage.Validator):
+        elif until in (PipelineStage.Parser, PipelineStage.Load_Includes, PipelineStage.Resolver, PipelineStage.Validator):
             return map_node(value)  # type: ignore
         return value
 

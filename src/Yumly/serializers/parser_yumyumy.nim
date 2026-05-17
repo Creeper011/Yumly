@@ -1,3 +1,8 @@
+##
+# This module converts the AST into the YumYumy syntax
+# For more information check: docs/yumyumy.md
+##
+
 import strutils, options
 import ../types/ast, ../types/type_hints, ../types/values_defs
 

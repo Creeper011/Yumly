@@ -48,6 +48,13 @@ tests: build-py
 	@echo "--- Running Nim Runner ---"
 	nim c -r tests/runners/nim_runner.nim
 
+
+tests-bench: build-py
+	@echo "--- Running Python Benchmark Runner ---"
+	$(PYTHON) -m pytest tests/runners/python_runner.py --benchmark
+	@echo "--- Running Nim Benchmark Runner ---"
+	nim c -r tests/runners/nim_runner.nim --benchmark
+
 clean:
 	rm -rf $(OUT_DIR)/$(MODULE_NAME).so $(OUT_DIR)/$(MODULE_NAME).pyd
 	rm -rf build/ dist/ *.egg-info
