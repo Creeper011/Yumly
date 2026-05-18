@@ -78,6 +78,13 @@ proc processIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[st
             let resolvedChildren = processIncludes(includedAST, parentDir(resolvedPath), visited, depth)
             visited.excl(resolvedPath)
 
+            # propagate flags from the included file up to the root node.
+            if includedAST.hasTypeHints.get(false):
+              rootNode.hasTypeHints = some(true)
+
+            if includedAST.hasEnvVars.get(false):
+              rootNode.hasEnvVars = some(true)
+
             for includedChild in resolvedChildren:
               result.add(includedChild)
       else:

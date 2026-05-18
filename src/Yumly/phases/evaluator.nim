@@ -22,7 +22,7 @@ proc evaluateListElements(nodes: seq[YumNode], hint: Option[TypeHint], depth: va
   for child in nodes:
     result.add(evaluateValue(child, elemHint, depth))
 
-proc isHeterogeneous(elements: seq[Value]): bool =
+func isHeterogeneous(elements: seq[Value]): bool =
   if elements.len == 0: return false
   let first = elements[0].kind
   for el in elements:

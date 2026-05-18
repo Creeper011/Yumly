@@ -27,7 +27,7 @@ proc initCursor(stream: Stream, bufferSize: int = 4096): Cursor =
   result.line = 1
   result.lineStart = 0
 
-proc absPos(cursor: Cursor): int =
+func absPos(cursor: Cursor): int =
   cursor.basePos + cursor.pos
 
 proc refill(cursor: var Cursor) =
@@ -81,7 +81,7 @@ proc matchStr(cursor: var Cursor, s: string): bool =
   for _ in 0..<s.len: discard cursor.advanceChar()
   return true
 
-proc isIdentContinue(character: char): bool =
+func isIdentContinue(character: char): bool =
   character in IdentChars or character in {'/', '.', '-'}
 
 proc tokenize*(stream: Stream, bufferSize: int = 4096): proc(): Token {.closure.} =

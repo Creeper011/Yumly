@@ -9,7 +9,7 @@ import ../types/values_defs
 import ../utils/loc
 import ../error_messages
 
-proc isEnvLiteralNode(node: YumNode): bool =
+func isEnvLiteralNode(node: YumNode): bool =
   node.kind == nkLiteral and node.token.kind == tkDollar
 
 proc literalValueKind(node: YumNode): ValueKind =
@@ -47,7 +47,7 @@ proc literalMatchesHint(node: YumNode, hintKind: TypeHintKind): bool =
 proc literalTypeName(node: YumNode): string =
   VALUES_DEF[literalValueKind(node)].typeHint
 
-proc isEnvNode(node: YumNode): bool =
+func isEnvNode(node: YumNode): bool =
   isEnvLiteralNode(node)
 
 proc nodeTypeName(node: YumNode): string =

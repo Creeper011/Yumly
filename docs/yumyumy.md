@@ -59,9 +59,6 @@ An example from [examples/example2.yumly](example2.yumly):
 
 ---
 
-> [!IMPORTANT]
-> TODO: currently the enconder of yumyumy doesn't support `(list, type)`, only the `(list)` - i'll fix that soon — don't worry :3
-
 #### oh, you reached the end? congrats! here's an gift ✧･ﾟ:
 ```text
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣎⠱⣲⠀⠀⠀⠀⠀⠀⠀

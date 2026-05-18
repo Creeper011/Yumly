@@ -19,7 +19,12 @@ proc emit(ctx: var RenderCtx, line: string) =
 
 proc formatTypeHint(hint: Option[TypeHint], kind: ValueKind): string =
   if hint.isSome:
-    return hint.get.raw
+    let hintValue = hint.get
+    if hintValue.kind == thList:
+      if hintValue.elementKind != thUnknown:
+        return "list, " & hintValue.elementRaw
+      raise newException(ValueError, "Hey!, invalid list type hint!! this shouldn't happen :(") # NOTE: or use Defect exception?
+    return hintValue.raw
   return VALUES_DEF[kind].typeHint
 
 proc renderPair(ctx: var RenderCtx, pair: Pair) =

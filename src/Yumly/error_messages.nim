@@ -21,7 +21,7 @@ type Expected* = enum
   expComma = "','"
   expEOF = "end of file"
 
-proc getTokenValue(token: Token): string =
+func getTokenValue(token: Token): string =
   case token.kind
   of tkString, tkIdent, tkLiteral: token.value
   of tkEOF: "EOF"
@@ -37,12 +37,6 @@ proc getTokenValue(token: Token): string =
   of tkDeclaration: ";"
 
 # Parser errors
-
-proc expectedEnvBracketError*(expected: Expected, token: Token) =
-  raise newException(ValueError,
-      "Heeeh... env variables must look like $[\"NAME\"], but I found " & getTokenValue(token) &
-      loc(token.line, token.col) & ".\n" &
-      "  hint: wrap the env name inside $[\"MY_ENV\"]")
 
 proc expectedError*(expected: Expected, token: Token) =
   raise newException(ValueError,

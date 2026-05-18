@@ -2,6 +2,8 @@ import os
 import ../core/pipeline
 import ../serializers/parser_yumyumy
 
+var lastFFIError {.threadvar.}: string
+
 proc validateContentMsgFFI*(content: cstring, workingDir: cstring = "."): cstring {.exportc: "validateContentMsg", dynlib.} =
   try:
     let sContent = $content
@@ -10,7 +12,8 @@ proc validateContentMsgFFI*(content: cstring, workingDir: cstring = "."): cstrin
     validateYumly(ast)
     return ""
   except ValueError, IOError:
-    return getCurrentException().msg.cstring
+    lastFFIError = getCurrentException().msg
+    return lastFFIError.cstring
 
 proc validateFileMsgFFI*(path: cstring): cstring {.exportc: "validateFileMsg", dynlib.} =
   try:
@@ -20,21 +23,24 @@ proc validateFileMsgFFI*(path: cstring): cstring {.exportc: "validateFileMsg", d
     validateYumly(ast)
     return ""
   except ValueError, IOError:
-    return getCurrentException().msg.cstring
+    lastFFIError = getCurrentException().msg
+    return lastFFIError.cstring
 
 proc loadYumyumyFFI*(path: cstring): cstring {.exportc: "loadYumyumy", dynlib.} =
   try:
     let config = loadYumly($path)
     return config.toYumyumy().cstring
   except ValueError, IOError:
-    return ("Error: " & getCurrentException().msg).cstring
+    lastFFIError = getCurrentException().msg
+    return lastFFIError.cstring
 
 proc loadYumyumyFastFFI*(path: cstring): cstring {.exportc: "loadYumyumyFast", dynlib.} =
   try:
     let config = loadYumlyFast($path)
     return config.toYumyumy().cstring
   except ValueError, IOError:
-    return ("Error: " & getCurrentException().msg).cstring
+    lastFFIError = getCurrentException().msg
+    return lastFFIError.cstring
 
 proc loadYumyumy*(path: string): string =
   let config = loadYumly(path)

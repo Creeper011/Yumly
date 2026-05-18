@@ -90,9 +90,9 @@ def yumly() -> Yumly:
 
 def _collect_benchmark(yumly: Yumly, full_path: Path, stage: PipelineStage, collector) -> None:
     stages_to_bench = []
-    for stage in ALL_STAGES:
-        stages_to_bench.append(stage)
-        if stage == stage:
+    for stg in ALL_STAGES:
+        stages_to_bench.append(stg)
+        if stg == stage:
             break
 
     for stage in stages_to_bench:

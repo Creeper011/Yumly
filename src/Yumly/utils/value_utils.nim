@@ -1,6 +1,6 @@
 import ../types/ast
 
-proc inferTypeHint*(val: Value): string =
+func inferTypeHint*(val: Value): string =
   case val.kind
   of vkString: return "string"
   of vkInt: return "int"

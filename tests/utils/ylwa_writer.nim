@@ -9,7 +9,7 @@ type
   YlwaWriter* = object
     output: string
 
-proc newYlwaWriter*(): YlwaWriter =
+func newYlwaWriter*(): YlwaWriter =
   ## Creates a new YlwaWriter instance.
   YlwaWriter(output: "")
 
@@ -34,6 +34,6 @@ proc endBlock*(w: var YlwaWriter) =
   ## Ends the current block (:)
   w.output.add(":\n\n")
 
-proc toString*(w: YlwaWriter): string =
+func toString*(w: YlwaWriter): string =
   ## Returns the generated Ylwa string.
   w.output

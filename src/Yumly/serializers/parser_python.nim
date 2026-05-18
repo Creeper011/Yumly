@@ -165,7 +165,7 @@ proc astToPy*(node: YumNode, pyBuiltins: PyObject): PyObject =
   of nkPair:
     dict["key"] = pyBuiltins.str(node.key)
     if node.typeHint.isSome:
-      dict["typeHint"] = pyBuiltins.str($node.typeHint.get().kind)
+      dict["typeHint"] = pyBuiltins.str(node.typeHint.get().raw)
     dict["valNode"] = astToPy(node.valNode, pyBuiltins)
   of nkInclude:
     dict["includePath"] = pyBuiltins.str(node.includePath)
