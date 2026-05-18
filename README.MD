@@ -4,7 +4,7 @@
 
 Yumly is a cute, declarative configuration language with fail-fast behavior and optional type safety, blending elements from many configuration formats and some ideas from my head.
 
-⟡ **Hey! New here? Check our [Documentation Home](docs/home.md) for a starter guide!**
+⟡ **Hey! New here? Check my [Documentation Home](docs/home.md) for a starter guide!**
 
 ---
 

@@ -4,10 +4,11 @@ import pytest
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
 from yumly import Yumly, YumlyError, PipelineStage, PipelineResult
+# pyrefly: ignore [missing-import]
 from utils_python.memory import get_rss
 
 class CaseDefinition(TypedDict):
-    id: str
+    case_id: str
     folder_path: Path
     case_file: str
     test_name: str
@@ -34,34 +35,55 @@ PHASE_MAP: Dict[str, PipelineStage] = {
     "E": PipelineStage.Evaluator,
 }
 
+KINDS: tuple[str, ...] = ("valid", "invalid", "stress")
 
 def get_test_cases() -> List[CaseDefinition]:
+    """
+    Scan the tests/fixtures directory and return a list of test cases.
+    
+    scans metadata.yumly files to populate the test cases.
+    if a metadata.yumly file is not found, the folder is skipped.
+    """
     cases: List[CaseDefinition] = []
     fixtures_dir = Path("tests/fixtures")
 
     if not fixtures_dir.is_dir():
         return cases
 
-    for kind in ("valid", "invalid", "stress"):
+    for kind in KINDS: # go to the kinds directory
         kind_path: Path = fixtures_dir / kind
         if not kind_path.is_dir():
             continue
 
-        for folder_name in os.listdir(kind_path):
+        for folder_name in os.listdir(kind_path): # go to test folders inside kind directory
             folder_path: Path = kind_path / folder_name
             if not folder_path.is_dir():
                 continue
 
-            metadata_path: Path = folder_path / "metadata.yumly"
+            metadata_path: Path = folder_path / "metadata.yumly" # go to metadata.yumly file
             if not metadata_path.exists():
                 continue
 
             yumly_tmp: Yumly = Yumly()
             try:
-                # metadata.yumly must be a valid yumly file that evaluates to a dict
                 meta: Dict[str, Any] = yumly_tmp.load(metadata_path)
-            except YumlyError:
-                continue
+            except YumlyError as error:
+                cases.append(pytest.param({
+                    "case_id": f"BROKEN;{folder_name}",
+                    "folder_path": folder_path,
+                    "case_file": "metadata.yumly",
+                    "test_name": folder_name,
+                    "is_valid_expected": True,
+                    "phase_str": "E",
+                    "envs": {},
+                },
+                marks=pytest.mark.xfail(
+                    reason=f"metadata.yumly file is brooken: {error}",
+                    strict=True,
+                ),
+                ))
+
+                continue # go to next test folder
 
             test_name = str(meta.get("name", folder_name))
             is_valid_expected = bool(meta.get("valid", True))
@@ -71,7 +93,7 @@ def get_test_cases() -> List[CaseDefinition]:
 
             for case_file in test_cases:
                 cases.append({
-                    "id": f"{folder_name} - {case_file}",
+                    "case_id": f"{folder_name} - {case_file}",
                     "folder_path": folder_path,
                     "case_file": case_file,
                     "test_name": test_name,
@@ -82,7 +104,7 @@ def get_test_cases() -> List[CaseDefinition]:
 
     return cases
 
-
+# fixture to create an global yumly instance
 @pytest.fixture(scope="module")
 def yumly() -> Yumly:
     return Yumly()
@@ -154,13 +176,14 @@ def _assert_tokenizer_output(full_path: Path, data: PipelineResult) -> None:
     )
 
 
-@pytest.mark.parametrize("test_def", get_test_cases(), ids=lambda t: t["id"])
+@pytest.mark.parametrize("test_def", get_test_cases(), ids=lambda test_def: test_def["case_id"])
 def test_yumly_phases(yumly: Yumly, test_def: CaseDefinition, benchmark_collector) -> None:
     env_keys = []
+    # set env vars for the test
     if isinstance(test_def["envs"], dict):
-        for k, v in test_def["envs"].items():
-            os.environ[k] = str(v)
-            env_keys.append(k)
+        for key, value in test_def["envs"].items():
+            os.environ[key] = str(value)
+            env_keys.append(key)
 
     full_path = test_def["folder_path"] / test_def["case_file"]
     stage = PHASE_MAP.get(test_def["phase_str"], PipelineStage.Evaluator)
