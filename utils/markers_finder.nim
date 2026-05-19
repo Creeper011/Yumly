@@ -32,7 +32,7 @@ proc walkOnSearchDir(directory: string, markers: seq[string]) =
       try:
         var i = 0
         for line in lines(path):
-          i += 1
+          inc i
           parseLine(markers, line, i, path)
       except:
         echo fmt"{RED}Error reading file: {path}{RESET}"
@@ -67,7 +67,7 @@ proc parseArgs(): ArgsResponse =
       else:
         if dirExists(args[i]):
           result.directory = args[i]
-      i += 1
+      inc i
   result
               
 when isMainModule:

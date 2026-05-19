@@ -17,6 +17,7 @@ libyumly.so
 # Personal
 waifus
 tasks.yumly
+examples/.env
 
 #binaries
 waifuu

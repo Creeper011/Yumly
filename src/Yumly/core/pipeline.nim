@@ -135,11 +135,3 @@ proc resolveYumly*(ast: YumNode, workingDir: string = ".") =
 
 proc validateYumly*(ast: YumNode) =
   validateConfig(ast)
-
-proc loadYumlyFast*(path: string): YumlyConf =
-  let ast = parseFileToAST(path)
-  result = evaluateConfig(ast)
-
-proc loadYumlyContentFast*(content: string; workingDir: string = "."): YumlyConf =
-  let ast = parseContentToAST(content)
-  result = evaluateConfig(ast)

@@ -34,14 +34,6 @@ proc loadYumyumyFFI*(path: cstring): cstring {.exportc: "loadYumyumy", dynlib.} 
     lastFFIError = getCurrentException().msg
     return lastFFIError.cstring
 
-proc loadYumyumyFastFFI*(path: cstring): cstring {.exportc: "loadYumyumyFast", dynlib.} =
-  try:
-    let config = loadYumlyFast($path)
-    return config.toYumyumy().cstring
-  except ValueError, IOError:
-    lastFFIError = getCurrentException().msg
-    return lastFFIError.cstring
-
 proc loadYumyumy*(path: string): string =
   let config = loadYumly(path)
   return config.toYumyumy()

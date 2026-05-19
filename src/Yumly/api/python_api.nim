@@ -59,13 +59,15 @@ proc loadYumlyPy*(path: string, until: int = 4): PyObject {.exportpy.} =
   
   if stage == psTokenizer:
     let stream = newYumlyStream(path)
-    let puller = tokenize(stream)
     let tokensPy = pyBuiltins.list()
-    while true:
-      let tokenizer = puller()
-      discard tokensPy.append(tokenToPy(tokenizer, pyBuiltins))
-      if tokenizer.kind == tkEOF: break
-    stream.close()
+    try:
+      let puller = tokenize(stream)
+      while true:
+        let tokenizer = puller()
+        discard tokensPy.append(tokenToPy(tokenizer, pyBuiltins))
+        if tokenizer.kind == tkEOF: break
+    finally:
+      stream.close()
     return tokensPy
 
   let res = pipeline.loadYumly(path, stage)
@@ -82,12 +84,15 @@ proc loadYumlyContentPy*(content: string, workingDir: string = ".", until: int =
 
   if stage == psTokenizer:
     let stream = newStringStream(content)
-    let puller = tokenize(stream)
     let tokensPy = pyBuiltins.list()
-    while true:
-      let tokenizer = puller()
-      discard tokensPy.append(tokenToPy(tokenizer, pyBuiltins))
-      if tokenizer.kind == tkEOF: break
+    try:
+      let puller = tokenize(stream)
+      while true:
+        let tokenizer = puller()
+        discard tokensPy.append(tokenToPy(tokenizer, pyBuiltins))
+        if tokenizer.kind == tkEOF: break
+    finally:
+      stream.close()
     return tokensPy
 
   let res = pipeline.loadYumlyContent(content, stage, workingDir)
