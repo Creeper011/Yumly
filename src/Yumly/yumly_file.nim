@@ -19,11 +19,9 @@ proc newYumlyStream*(path: string): Stream =
 
   let fileSize = getFileSize(path)
   if fileSize > defaultMaxBytes:
-    raise newException(ValueError,
-      "Heeeh?! the file '" & path & "' is too large to parse! (" &
-      $fileSize & " bytes, limit is " & $defaultMaxBytes & " bytes) (>_<)")
+    fileTooLargeError(path, fileSize, defaultMaxBytes)
 
   result = newFileStream(path, fmRead)
   if result == nil:
     # This shouldn't happen if fileExists is true, but good to be safe
-    raise newException(IOError, "AHHH, Could not open file: " & path)
+    couldNotOpenFileError(path)

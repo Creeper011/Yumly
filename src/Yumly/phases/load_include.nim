@@ -10,6 +10,7 @@ import ../phases/tokenizer, ../phases/parser
 import ../error_messages
 
 const allowedIncludeExts = [".env", ".yumly", ".yuy"]
+const YumlySandboxDir* {.strdefine.} = "~"
 
 proc getCanonicalPath(rawPath: string, baseDir: string, node: YumNode): string =
   ## Resolves symlinks and returns an absolute, normalized path.
@@ -35,6 +36,11 @@ proc processIncludes(rootNode: YumNode; baseDir: string; visited: var HashSet[st
     for child in rootNode.children:
       if child.kind == nkInclude:
         let resolvedPath = getCanonicalPath(child.includePath, baseDir, child)
+
+        when YumlySandboxDir != "":
+          let canonSandbox = expandFilename(expandTilde(YumlySandboxDir))
+          if not resolvedPath.isRelativeTo(canonSandbox):
+            sandboxDirViolationError(resolvedPath, canonSandbox, child.line, child.col)
 
         let fileExt = os.splitFile(resolvedPath).ext.toLowerAscii()
         let ext = if fileExt.len == 0 and os.splitFile(resolvedPath).name.toLowerAscii() == ".env":

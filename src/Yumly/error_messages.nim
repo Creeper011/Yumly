@@ -126,6 +126,14 @@ proc fileNotFoundError*(filePath: string) =
       "Heeeh?! I can't find the file anywhere... (T_T)\nI searched for: " & filePath &
       "\nHave you tried checking if the file path is correct?")
 
+proc fileTooLargeError*(path: string, fileSize: int64, limit: int) =
+  raise newException(ValueError,
+      "Heeeh?! the file '" & path & "' is too large to parse! (" &
+      $fileSize & " bytes, limit is " & $limit & " bytes) (>_<)")
+
+proc couldNotOpenFileError*(path: string) =
+  raise newException(IOError, "AHHH, Could not open file: " & path)
+
 # Include loader errors
 
 proc circularIncludeError*(path: string, line: int, col: int) =
@@ -147,6 +155,14 @@ proc includeUnsupportedExtError*(filePath: string, ext: string, line: int, col: 
       "  got type: '" & ext & "'\n" &
       loc(line, col) & "\n" &
       "  hint: only .env, .yumly, .yuy files are supported for now")
+
+proc sandboxDirViolationError*(path: string, sandboxDir: string, line: int, col: int) =
+  raise newException(IOError,
+      "Heeeh?! Security violation! Access to '" & path & "' is denied!\n" &
+      "  sandbox dir: " & sandboxDir & "\n" &
+      loc(line, col) & "\n" &
+      "  hint: includes must be within the sandbox directory")
+
 
 # Values defs errors
 
