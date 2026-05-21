@@ -13,7 +13,10 @@ SYMBOL  = "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" |
 WS      = " " | "\t" | "\n" | "\r" ;
 ANY     = LETTER | DIGIT | SYMBOL | WS ;
 
-ident   = LETTER, { LETTER | DIGIT | "_" } ;
+IDENT_START = LETTER | "_" ;
+IDENT_CONT  = LETTER | DIGIT | "_" | "/" | "." | "-" ;
+
+ident = IDENT_START, { IDENT_CONT } ;
 
 (* ===== LEXICAL TOKENS ===== *)
 

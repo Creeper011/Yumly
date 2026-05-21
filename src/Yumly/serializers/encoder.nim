@@ -20,13 +20,13 @@ func formatTypeHint(hint: Option[TypeHint]): string =
     return " ;" & hint.get.raw
   return ""
 
-proc formatPair(pair: Pair): string =
+func formatPair(pair: Pair): string =
   ## formats a single pair: key ;type = value
   let typeHintStr = formatTypeHint(pair.typeHint)
   let valueStr = encodeValue(pair.value)
   result = pair.key & typeHintStr & " = " & valueStr
 
-proc renderPairs(ctx: var EncoderCtx, pairs: seq[Pair], isRoot: bool, hasBlocksAfter: bool) =
+func renderPairs(ctx: var EncoderCtx, pairs: seq[Pair], isRoot: bool, hasBlocksAfter: bool) =
   for i, pair in pairs:
     let isLastPair = (i == pairs.len - 1)
     # no commas if is in root
@@ -35,7 +35,7 @@ proc renderPairs(ctx: var EncoderCtx, pairs: seq[Pair], isRoot: bool, hasBlocksA
 
     ctx.emit(formatPair(pair) & comma)
 
-proc renderBlock(ctx: var EncoderCtx, blk: Block, isRoot: bool, isLastInScope: bool) =
+func renderBlock(ctx: var EncoderCtx, blk: Block, isRoot: bool, isLastInScope: bool) =
   ctx.emit("(" & blk.name & ") {")
   inc ctx.indent
 
@@ -63,7 +63,7 @@ proc renderBlock(ctx: var EncoderCtx, blk: Block, isRoot: bool, isLastInScope: b
   let comma = if needsComma: "," else: ""
   ctx.emit("}" & comma)
 
-proc dumpYumly*(config: YumlyConf): string =
+func dumpYumly*(config: YumlyConf): string =
   var ctx = EncoderCtx(indent: 0)
 
   # include always on top with no commas

@@ -26,9 +26,15 @@ proc toMenu(yumly: YumlyConf): Menu =
         let itemType = item["type"].getStr()
         case itemType
         of "drink":
-            menu.drinks.add(item.to(Drink))
+            menu.drinks.add(Drink(
+                name: item["name"].getStr(),
+                price: item["price"].getFloat()
+            ))
         of "food":
-            menu.foods.add(item.to(Food))
+            menu.foods.add(Food(
+                name: item["name"].getStr(),
+                price: item["price"].getFloat()
+            ))
         else:
             echo "Unknown item type: " & itemType
     menu

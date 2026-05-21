@@ -1,4 +1,4 @@
-import Yumly except `%*`, `%` # yumly adds %* and % operators that clash with json module
+import Yumly
 import httpclient, os, json, strutils
 
 const

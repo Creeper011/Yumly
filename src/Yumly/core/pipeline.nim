@@ -101,7 +101,7 @@ proc loadYumly*(path: string = "config.yumly"): YumlyConf =
   stream.close()
   result = res.config
 
-proc dumpYumly*(config: YumlyConf): string =
+func dumpYumly*(config: YumlyConf): string =
   result = encoder.dumpYumly(config)
 
 proc writeYumly*(config: YumlyConf; path: string) =

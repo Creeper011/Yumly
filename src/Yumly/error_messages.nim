@@ -38,12 +38,12 @@ func getTokenValue(token: Token): string =
 
 # Parser errors
 
-proc expectedError*(expected: Expected, token: Token) =
+func expectedError*(expected: Expected, token: Token) =
   raise newException(ValueError,
     "Heyy, I expected " & $expected & ", but found " & getTokenValue(token) &
     loc(token.line, token.col) & ".")
 
-proc expectedBlockError*(expected: Expected, blkName: string, blkLine,
+func expectedBlockError*(expected: Expected, blkName: string, blkLine,
         blkCol: int, token: Token) =
   raise newException(ValueError,
     "Heyy i expected " & $expected & " for block '(" & blkName &
@@ -51,14 +51,14 @@ proc expectedBlockError*(expected: Expected, blkName: string, blkLine,
     $blkLine & ", column " & $blkCol & ", but found " & getTokenValue(token) &
     loc(token.line, token.col) & ".")
 
-proc expectedTopTokenError*(expected: Expected, token: Token) =
+func expectedTopTokenError*(expected: Expected, token: Token) =
   raise newException(ValueError,
       "Ehhh.. found an unexpected token at root: '" & getTokenValue(token) &
       "'" & loc(token.line, token.col) & ".\n" &
       "Valid root tokens: include, block, ident.\n" &
       "Tip: make sure you're using commas correctly >,<")
 
-proc includeOrderError*(token: Token) =
+func includeOrderError*(token: Token) =
   raise newException(ValueError,
       "Ehhh... include statements must stay at the very top of the file! >_<\n" &
       loc(token.line, token.col) & "\n" &
@@ -66,7 +66,7 @@ proc includeOrderError*(token: Token) =
 
 # IO errors
 
-proc failedToLoadFile*(path: string, line: int, column: int, error: string) =
+func failedToLoadFile*(path: string, line: int, column: int, error: string) =
   raise newException(IOError,
       "Uhh... something went wrong while loading the " & path &
       " file! (>_<)\n" &
@@ -75,23 +75,23 @@ proc failedToLoadFile*(path: string, line: int, column: int, error: string) =
       "  detail: " & error
   )
 
-proc recursionLimitError*(limit: int, line: int, col: int) =
+func recursionLimitError*(limit: int, line: int, col: int) =
   raise newException(ValueError,
       "Kyaa~! My head is spinning! The nesting is way too deep! (x_x)\n" &
       "  recursion limit: " & $limit & "\n" &
       loc(line, col) & "\n" &
       "  hint: try to flatten your configuration, it is way too deep for me to handle!")
 
-proc unknownTypeHintError*(hint: string, line: int, column: int) =
+func unknownTypeHintError*(hint: string, line: int, column: int) =
   raise newException(ValueError,
       "Ehhh... unknown type hint '" & hint & "'" & loc(line, column))
 
-proc missingListTypeError*(line: int, column: int) =
+func missingListTypeError*(line: int, column: int) =
   raise newException(ValueError,
       "Ehhh... the type hint 'list' must specify its element type, e.g. ';list[string]'" & loc(line, column))
 
 
-proc missingEnvError*(envName: string, line: int, column: int) =
+func missingEnvError*(envName: string, line: int, column: int) =
   raise newException(ValueError,
       "Kyaa~! the env variable '" & envName & "' does not exist! (；ω；)" &
       loc(line, column) & "\n" &
@@ -99,56 +99,56 @@ proc missingEnvError*(envName: string, line: int, column: int) =
 
 # Tokenizer errors
 
-proc commentNotClosedError*(line, col: int) =
+func commentNotClosedError*(line, col: int) =
   raise newException(ValueError, "Heyy, the comment doesn't close! Expected '<;'" & loc(line, col))
 
-proc invalidExponentError*(line, col: int) =
+func invalidExponentError*(line, col: int) =
   raise newException(ValueError, "Heyy, invalid exponent" & loc(line, col))
 
-proc unclosedStringError*(line, col: int) =
+func unclosedStringError*(line, col: int) =
   raise newException(ValueError, "Heyy, the string doesn't close" & loc(line, col))
 
-proc unclosedStringAtEofError*() =
+func unclosedStringAtEofError*() =
   raise newException(ValueError, "Heyy the string doesn't close at the end of the file")
 
-proc unexpectedCharError*(char: string, line, col: int) =
+func unexpectedCharError*(char: string, line, col: int) =
   raise newException(ValueError, "Wow, an unexpected character '" & char & "'" & loc(line, col))
 
 # File errors
 
-proc invalidFileExtensionError*(path: string) =
+func invalidFileExtensionError*(path: string) =
   raise newException(ValueError,
       "Mmm, that file isn't mine! :< You named it as: '" & path &
       "'. I can only read files with .yumly or .yuy extension")
 
-proc fileNotFoundError*(filePath: string) =
+func fileNotFoundError*(filePath: string) =
   raise newException(ValueError,
       "Heeeh?! I can't find the file anywhere... (T_T)\nI searched for: " & filePath &
       "\nHave you tried checking if the file path is correct?")
 
-proc fileTooLargeError*(path: string, fileSize: int64, limit: int) =
+func fileTooLargeError*(path: string, fileSize: int64, limit: int) =
   raise newException(ValueError,
       "Heeeh?! the file '" & path & "' is too large to parse! (" &
       $fileSize & " bytes, limit is " & $limit & " bytes) (>_<)")
 
-proc couldNotOpenFileError*(path: string) =
+func couldNotOpenFileError*(path: string) =
   raise newException(IOError, "AHHH, Could not open file: " & path)
 
 # Include loader errors
 
-proc circularIncludeError*(path: string, line: int, col: int) =
+func circularIncludeError*(path: string, line: int, col: int) =
   raise newException(IOError,
       "Circular include detected! '" & path & "' is already being loaded\n" &
       loc(line, col))
 
-proc includeFileNotFoundError*(rawPath: string, absPath: string, line: int, col: int) =
+func includeFileNotFoundError*(rawPath: string, absPath: string, line: int, col: int) =
   raise newException(IOError,
       "Heeeh?! i can't find '" & rawPath & "' anywhere... (T_T)\n" &
       "  searched at: " & absPath & "\n" &
       loc(line, col) & "\n" &
       "  hint: check if the path is correct and the file actually exists")
 
-proc includeUnsupportedExtError*(filePath: string, ext: string, line: int, col: int) =
+func includeUnsupportedExtError*(filePath: string, ext: string, line: int, col: int) =
   raise newException(ValueError,
       "Mmm, this file type isn't supported in include { \"\" } ;-; \n" &
       "  file: '" & filePath & "'\n" &
@@ -156,7 +156,7 @@ proc includeUnsupportedExtError*(filePath: string, ext: string, line: int, col: 
       loc(line, col) & "\n" &
       "  hint: only .env, .yumly, .yuy files are supported for now")
 
-proc sandboxDirViolationError*(path: string, sandboxDir: string, line: int, col: int) =
+func sandboxDirViolationError*(path: string, sandboxDir: string, line: int, col: int) =
   raise newException(IOError,
       "Heeeh?! Security violation! Access to '" & path & "' is denied!\n" &
       "  sandbox dir: " & sandboxDir & "\n" &
@@ -166,31 +166,57 @@ proc sandboxDirViolationError*(path: string, sandboxDir: string, line: int, col:
 
 # Values defs errors
 
-proc invalidEscapeError*(c: char, line: int, col: int) =
+func invalidEscapeError*(c: char, line: int, col: int) =
   raise newException(ValueError, "Heyy, invalid escape: \\" & $c & " ;-;" & loc(line, col))
 
-proc invalidBooleanError*(raw: string) =
+func invalidBooleanError*(raw: string) =
   raise newException(ValueError, "Invalid boolean value: " & raw)
 
-proc couldNotDecodeLiteralError*(raw: string) =
+func couldNotDecodeLiteralError*(raw: string) =
   raise newException(Defect, "RAHHH >_<, could not decode the literal: '" & raw & "'")
 
 # Evaluator errors
 
-proc invalidLiteralTokenError*(tokenKind: string) =
+func invalidLiteralTokenError*(tokenKind: string) =
   raise newException(Defect, "RAHHH >_<, invalid literal token: " & tokenKind)
 
-proc invalidNodeKindInEvaluateError*(nodeKind: string) =
+func invalidNodeKindInEvaluateError*(nodeKind: string) =
   raise newException(Defect, "RAHHH >_<, invalid YumNode kind in evaluateValue: " & nodeKind)
 
 # Validate errors
 
-proc literalValueKindError*(nodeKind: string) =
+func literalValueKindError*(nodeKind: string) =
   raise newException(Defect, "RAHHH >_<, literalValueKind expected nkLiteral, got " & nodeKind)
 
-proc invalidTypeHintKindError*() =
+func invalidTypeHintKindError*() =
   raise newException(ValueError, "RAHHH >_<, invalid, i can't convert TypeHintKind to ValueKind")
 
-proc configValidationFailedError*(errorCount: int, errors: string) =
+func configValidationFailedError*(errorCount: int, errors: string) =
   raise newException(ValueError,
       "Yooo! config validation failed with " & $errorCount & " error(s):\n\n" & errors)
+
+# Nim API/Value/Block/Conf errors
+
+func iteratorNonListTupleError*() =
+  raise newException(ValueError, "Cannot iterate over non-list/tuple value")
+
+func blockNotFoundError*(name: string) =
+  raise newException(KeyError, "Block not found: " & name)
+
+func subBlockNotFoundError*(name: string) =
+  raise newException(KeyError, "Sub-block not found: " & name)
+
+func cannotAddToNonListTupleError*() =
+  raise newException(IndexDefect, "Cannot add to a non-list/tuple value")
+
+func expectedTypeError*(expected: string, got: string) =
+  raise newException(ValueError, "I expected " & expected & ", got " & got)
+
+func notListTupleError*() =
+  raise newException(IndexDefect, "This value isn't a list or tuple")
+
+func keyNotFoundError*(key: string) =
+  raise newException(KeyError, "I can't find '" & key & "' in the YumlyConf")
+
+func keyNotFoundInBlockError*(key: string, blkName: string) =
+  raise newException(KeyError, "I can't find '" & key & "' in the block '" & blkName & "'")

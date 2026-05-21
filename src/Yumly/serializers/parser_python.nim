@@ -23,7 +23,7 @@ proc valueToPy(value: Value, pyBuiltins: PyObject): PyObject =
     result = pyList
 
   of vkTuple:
-    # im yumly, tuple is not an tuple object like python
+    # NOTE: in yumly, tuple is not an tuple object like python
     let pyList = pyBuiltins.list()
     for it in value.elements:
       discard pyList.append(valueToPy(it, pyBuiltins))

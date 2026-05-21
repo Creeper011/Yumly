@@ -50,10 +50,10 @@ proc runTest(dir: string, id: string, benchmarkEnabled: bool, benchmarkWriter: v
                return @[TestResult(name: "Metadata Error", id: id, passed: false, 
                         error: "Kyaa! Failed to load metadata: " & e.msg)]
 
-  let nameVal = meta.safeGet("name")
-  let validVal = meta.safeGet("valid")
-  let phaseVal = meta.safeGet("phase")
-  let casesVal = meta.safeGet("cases")
+  let nameVal = meta.findPair("name")
+  let validVal = meta.findPair("valid")
+  let phaseVal = meta.findPair("phase")
+  let casesVal = meta.findPair("cases")
 
   if nameVal.isNone or validVal.isNone or casesVal.isNone:
     var missing: seq[string]
@@ -66,7 +66,7 @@ proc runTest(dir: string, id: string, benchmarkEnabled: bool, benchmarkWriter: v
   let testName = nameVal.get().getStr()
   let isValidExpected = validVal.get().getBool()
   let phaseStr = if phaseVal.isSome: phaseVal.get().getStr() else: "E"
-  let cases = casesVal.get().getElems()
+  let cases = casesVal.get().getList()
 
   let envsBlock = meta.findBlock("envs")
   var envKeys: seq[string] = @[]
