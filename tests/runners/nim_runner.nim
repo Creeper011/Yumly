@@ -19,6 +19,7 @@ type
     name: string
     id: string
     passed: bool
+    hasAssertion: bool
     error: string
 
 proc toPipelineStage(p: Phase): PipelineStage =
@@ -154,6 +155,7 @@ proc runTest(dir: string, id: string, benchmarkEnabled: bool, benchmarkWriter: v
         
         let expectedFile = fullPath.changeFileExt("expected.tokens")
         if fileExists(expectedFile):
+          res.hasAssertion = true
           let expected = readFile(expectedFile).strip()
           if actual.strip() == expected:
             res.passed = isValidExpected
@@ -169,6 +171,7 @@ proc runTest(dir: string, id: string, benchmarkEnabled: bool, benchmarkWriter: v
         
         let expectedFile = fullPath.changeFileExt("expected.yumyumy")
         if fileExists(expectedFile):
+          res.hasAssertion = true
           let expected = readFile(expectedFile).strip()
           if actual.strip() == expected:
             res.passed = isValidExpected
@@ -224,11 +227,12 @@ proc main() =
       let dirName = lastPathPart(folder.path)
       for result in runTest(folder.path, dirName, benchmarkEnabled, benchmarkWriter):
         inc total
+        let assertionMsg = if result.hasAssertion: " [with assertion]" else: ""
         if result.passed:
           inc passedCount
-          styledEcho fgGreen, "  [YAY!] ", fgWhite, result.id, " - ", result.name
+          styledEcho fgGreen, "  [YAY!] ", fgWhite, result.id, " - ", result.name, fgCyan, assertionMsg
         else:
-          styledEcho fgRed, "  [KYAA] ", fgWhite, result.id, " - ", result.name
+          styledEcho fgRed, "  [KYAA] ", fgWhite, result.id, " - ", result.name, fgCyan, assertionMsg
           failures.add(result)
 
   styledEcho fgBlue, styleBright, "\n✨ Summary: ", 
