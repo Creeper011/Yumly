@@ -28,6 +28,21 @@ class PipelineStage(Enum):
 
 PipelineResult = Union[list[Token], YumNode, dict[str, Any]]
 
+class YumlyData(dict[str, Any]):
+    __slots__ = ("_snapshot", "_yumyumy")
+
+    def __init__(self, data: dict[str, Any], yumyumy: str | None = None):
+        super().__init__(data)
+        self._yumyumy = yumyumy
+        self._snapshot = repr(dict(self))
+
+    def original_yumyumy(self) -> str | None:
+        if self._yumyumy is None:
+            return None
+        if repr(dict(self)) != self._snapshot:
+            return None
+        return self._yumyumy
+
 class Yumly:
     """
     Yumly is a cute, declarative config language with fail-fast behavior and optional type safety.
@@ -78,6 +93,11 @@ class Yumly:
 
     def to_yumyumy(self, data: dict[str, Any]) -> str:
         """Convert a Yumly dictionary into its internal yumyumy representation"""
+        if isinstance(data, YumlyData):
+            original = data.original_yumyumy()
+            if original is not None:
+                return original
+
         try:
             return libyumly.dictToYumyumyPy(data)
         except Exception as exc:
@@ -119,6 +139,10 @@ class Yumly:
     def _parse_file(self, path: Path, until: PipelineStage) -> PipelineResult:
         path_str = str(Path(path).resolve())
         try:
+            if until == PipelineStage.Evaluator:
+                bundle = libyumly.loadYumlyEvaluatorPy(path_str)
+                return YumlyData(bundle["data"], bundle["yumyumy"])
+
             value = libyumly.loadYumlyPy(path_str, until.value)
         except Exception as exc:
             raise self._wrap_error(exc) from exc
@@ -134,6 +158,10 @@ class Yumly:
 
     def _parse_content(self, yumly_data: str, working_dir: str, until: PipelineStage) -> PipelineResult:
         try:
+            if until == PipelineStage.Evaluator:
+                bundle = libyumly.loadYumlyContentEvaluatorPy(yumly_data, working_dir)
+                return YumlyData(bundle["data"], bundle["yumyumy"])
+
             value = libyumly.loadYumlyContentPy(yumly_data, working_dir, until.value)
         except Exception as exc:
             raise self._wrap_error(exc) from exc

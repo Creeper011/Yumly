@@ -1,2 +1,0 @@
-include { "a.yumly" }
-include { "b.yumly" }

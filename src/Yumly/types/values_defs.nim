@@ -23,6 +23,7 @@ func decodeEscapes(raw: string, line, col: int): string =
     if raw[i] == '\\' and i + 1 < raw.len:
       case raw[i+1]:
       of 'n': result.add('\n'); i += 2
+      of 'r': result.add('\r'); i += 2
       of 't': result.add('\t'); i += 2
       of '\\': result.add('\\'); i += 2
       of '"': result.add('"'); i += 2
@@ -35,6 +36,7 @@ func encodeEscapes(raw: string): string =
   for ch in raw:
     case ch:
     of '\n': result.add("\\n")
+    of '\r': result.add("\\r")
     of '\t': result.add("\\t")
     of '\\': result.add("\\\\")
     of '"': result.add("\\\"")
@@ -75,7 +77,7 @@ func encodeValue*(val: Value, style: EncodingStyle = styleYumly): string
 func encodeString(val: Value, style: EncodingStyle): string =
   case style
   of styleYumly: return "\"" & encodeEscapes(val.strVal) & "\""
-  of styleYumyumy: return val.strVal
+  of styleYumyumy: return encodeEscapes(val.strVal)
 
 func encodeInt(val: Value, style: EncodingStyle): string =
   $val.intVal
@@ -89,7 +91,7 @@ func encodeBool(val: Value, style: EncodingStyle): string =
 func encodeEnv(val: Value, style: EncodingStyle): string =
   case style
   of styleYumly: "$[\"" & val.envName & "\"]"
-  of styleYumyumy: "\"" & val.envVal & "\""
+  of styleYumyumy: "\"" & encodeEscapes(val.envVal) & "\""
 
 func encodeList(val: Value, style: EncodingStyle): string =
   let elements = val.elements.mapIt(encodeValue(it, style)).join(", ")

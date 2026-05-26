@@ -1,0 +1,7 @@
+;> Test file metadata for load include not found errors <;
+
+name ;string = "Load Include Not Found"
+valid ;bool = false, number ;int = 0013
+phase ;string = "LI"
+
+cases ;list[string] = ["case1.yumly","case2.yumly"]

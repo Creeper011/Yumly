@@ -1,0 +1,6 @@
+(app) {
+    name = "web",
+    (env) {
+        stage = "prod"
+    }
+}

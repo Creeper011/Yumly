@@ -20,9 +20,9 @@ proc writeYumly*(config: var YumlyConf, path: string, inferType: bool = false) =
 func toYumly*(pairs: openArray[(string, Value)],
     inferType: bool = false): string =
   var cfg = newYumly()
-  for (k, v) in pairs:
-    let hint = if inferType: inferTypeHint(v) else: ""
-    cfg.addPair(k, v, hint)
+  for (key, value) in pairs:
+    let hint = if inferType: inferTypeHintRaw(value) else: ""
+    cfg.addPair(key, value, hint)
   return dumpYumly(cfg)
 
 func toYumly*(pairs: openArray[(string, Value, string)]): string =
@@ -33,7 +33,7 @@ func toYumly*(pairs: openArray[(string, Value, string)]): string =
 
 func toYumly*(t: Table[string, Value], inferType: bool = false): string =
   var cfg = newYumly()
-  for k, v in t.pairs:
-    let hint = if inferType: inferTypeHint(v) else: ""
-    cfg.addPair(k, v, hint)
+  for key, value in t.pairs:
+    let hint = if inferType: inferTypeHintRaw(value) else: ""
+    cfg.addPair(key, value, hint)
   return dumpYumly(cfg)

@@ -4,4 +4,4 @@ name ;string = "Tokenizer Failures"
 valid ;bool = false, number ;int = 0003
 phase ;string = "T"
 
-cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly"]
+cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly", "case8.yumly"]

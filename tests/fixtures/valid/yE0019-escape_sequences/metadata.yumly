@@ -1,0 +1,7 @@
+;> Test file metadata for evaluator escape sequence decoding <;
+
+name ;string = "Evaluator Escape Sequences"
+valid ;bool = true, number ;int = 0019
+phase ;string = "E"
+
+cases ;list[string] = ["case1.yumly","case2.yumly"]

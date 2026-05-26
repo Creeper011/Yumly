@@ -1,0 +1,7 @@
+;> Test file metadata for recursion limit failure <;
+
+name ;string = "Validator Recursion Limit"
+valid ;bool = false, number ;int = 0002
+phase ;string = "V"
+
+cases ;list[string] = ["case1.yumly"]

@@ -1,0 +1,7 @@
+;> Stress test metadata for large flat config <;
+
+name ;string = "Stress Large Flat Config"
+valid ;bool = true, number ;int = 0002
+phase ;string = "E"
+
+cases ;list[string] = ["case1.yumly"]

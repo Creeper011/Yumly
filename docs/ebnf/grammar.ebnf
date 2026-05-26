@@ -36,8 +36,8 @@ schar   = esc | (ANY - "'" - "\\") ;
 mlstring-lit = '"""', { mlchar }, '"""' ;
 mlchar  = esc | (ANY - '"') | ('"', (ANY - '"')) | ('""', (ANY - '"')) ;
 
-integer = ["-"], DIGIT, { DIGIT } ;
-float-lit = ["-"], DIGIT, { DIGIT }, ".", DIGIT, { DIGIT } ;
+integer = ["+" | "-"], DIGIT, { DIGIT } ;
+float-lit = ["+" | "-"], DIGIT, { DIGIT }, ".", DIGIT, { DIGIT }, [ ("e" | "E"), ["+" | "-"], DIGIT, { DIGIT } ] ;
 
 bool-lit = "true" | "false" ;
 env-var  = "$[", string-lit, "]" ;

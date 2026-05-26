@@ -1,0 +1,7 @@
+;> Stress test metadata for large string tokenizer buffer <;
+
+name ;string = "Stress Large String"
+valid ;bool = true, number ;int = 0003
+phase ;string = "T"
+
+cases ;list[string] = ["case1.yumly"]

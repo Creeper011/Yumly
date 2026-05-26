@@ -6,14 +6,12 @@ when not defined(python):
 ##
 # Python API to create Yumly files (this modules only create data, not serialize. serializer is in serializers/parser_python)
 ##
-import nimpy, os, strutils, streams
+import nimpy, os, streams
 import ../yumly_file
 import ../types/ast
 import ../types/token
-import ../types/nodes
 import ../phases/tokenizer
 import ../core/pipeline
-import ../core/builders
 import ../serializers/parser_python
 import ../serializers/parser_yumyumy
 
@@ -103,6 +101,21 @@ proc loadYumlyContentPy*(content: string, workingDir: string = ".", until: int =
   of psEvaluator:
     return res.config.toPython()
 
+proc evaluatedConfigToPy(config: YumlyConf, pyBuiltins: PyObject): PyObject =
+  result = pyBuiltins.dict()
+  result["data"] = config.toPython()
+  result["yumyumy"] = pyBuiltins.str(config.toYumyumy())
+
+proc loadYumlyEvaluatorPy*(path: string): PyObject {.exportpy.} =
+  let pyBuiltins = nimpy.pyBuiltinsModule()
+  let config = pipeline.loadYumly(path)
+  return evaluatedConfigToPy(config, pyBuiltins)
+
+proc loadYumlyContentEvaluatorPy*(content: string, workingDir: string = "."): PyObject {.exportpy.} =
+  let pyBuiltins = nimpy.pyBuiltinsModule()
+  let config = pipeline.loadYumlyContent(content, workingDir)
+  return evaluatedConfigToPy(config, pyBuiltins)
+
 proc dumpPy*(data: PyObject): string {.exportpy.} =
   if data.isNil:
     raise newException(ValueError, "HEYY! data is nil")
@@ -111,4 +124,12 @@ proc dumpPy*(data: PyObject): string {.exportpy.} =
 
 proc dictToYumyumyPy*(data: PyObject): string {.exportpy.} =
   let config = dictToYumlyConf(data)
+  return config.toYumyumy()
+
+proc loadYumyumyPy*(path: string): string {.exportpy.} =
+  let config = pipeline.loadYumly(path)
+  return config.toYumyumy()
+
+proc loadYumyumyContentPy*(content: string, workingDir: string = "."): string {.exportpy.} =
+  let config = pipeline.loadYumlyContent(content, workingDir)
   return config.toYumyumy()

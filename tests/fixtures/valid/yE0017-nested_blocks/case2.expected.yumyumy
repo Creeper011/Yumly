@@ -1,0 +1,8 @@
+[
+  [app] (
+    name (string) -> web
+    [env] (
+      stage (string) -> prod
+    )
+  )
+]

@@ -2,8 +2,7 @@
 # Modification utilities for Nim API
 ##
 
-import std/options
-import ../../types/ast, ../../types/type_hints
+import ../../types/ast
 import ../../utils/value_utils
 import ../../core/builders
 import ../../error_messages
@@ -25,17 +24,5 @@ func add*(val: var Value, element: int) =
 func add*(val: var Value, element: float) =
   val.add(newFloatValue(element))
 
-func applyTypeHints*(pairs: var seq[Pair]) =
-  for p in pairs.mitems:
-    if p.typeHint.isNone:
-      p.typeHint = some(TypeHint(raw: inferTypeHint(p.value), kind: thUnknown))
-
-func applyTypeHintsRec(blocks: var seq[Block]) =
-  for b in blocks.mitems:
-    applyTypeHints(b.pairs)
-    applyTypeHintsRec(b.subBlocks)
-
-func applyTypeHints*(config: var YumlyConf) =
-  applyTypeHints(config.pairs)
-  applyTypeHintsRec(config.blocks)
-
+proc applyTypeHints*(config: var YumlyConf) =
+  applyInferredTypeHints(config)

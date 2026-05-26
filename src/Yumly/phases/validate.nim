@@ -85,30 +85,29 @@ proc matchNodeToHint(node: YumNode, hintKind: TypeHintKind): bool =
     literalMatchesHint(node, hintKind)
 
 proc checkDuplicates(nodes: seq[YumNode], path: string, errors: var seq[string]) =
-  var seenBlocks = initHashSet[string]()
-  var seenPairs = initHashSet[string]()
+  var seenSymbols = initHashSet[string]()
   let where = if path.len == 0: "root" else: "'" & path & "'"
 
   for child in nodes:
     case child.kind
     of nkBlock:
-      if child.name in seenBlocks:
+      if child.name in seenSymbols:
         errors.add(
-          "Oh no! the block '(" & child.name & ")' is duplicated in " & where & "! (°ロ°)" &
+          "Oh no! the symbol '" & child.name & "' is duplicated in " & where & "! (°ロ°)" &
           loc(child.line, child.col) &
-          "\n  hint: merge them into one block or rename one, or check if this duplication comes from an include."
+          "\n  hint: pair keys and block names share the same scope; merge them or rename one."
         )
       else:
-        seenBlocks.incl(child.name)
+        seenSymbols.incl(child.name)
     of nkPair:
-      if child.key in seenPairs:
+      if child.key in seenSymbols:
         errors.add(
-          "Oh no! the key pair '(" & child.key & ")' is duplicated in " & where & "! (°ロ°)" &
+          "Oh no! the symbol '" & child.key & "' is duplicated in " & where & "! (°ロ°)" &
           loc(child.line, child.col) &
-          "\n  hint: choose one to prevail or rename the duplicated key."
+          "\n  hint: pair keys and block names share the same scope; choose one to prevail or rename it."
         )
       else:
-        seenPairs.incl(child.key)
+        seenSymbols.incl(child.key)
     else:
       discard
 

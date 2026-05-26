@@ -1,0 +1,7 @@
+;> Test file metadata for evaluator list and tuple output <;
+
+name ;string = "Evaluator Lists and Tuples"
+valid ;bool = true, number ;int = 0016
+phase ;string = "E"
+
+cases ;list[string] = ["case1.yumly","case2.yumly","case3.yumly","case4.yumly","case5.yumly", "case6.yumly"]
