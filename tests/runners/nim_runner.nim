@@ -22,6 +22,15 @@ type
     hasAssertion: bool
     error: string
 
+  BenchmarkEntry = object
+    file: string
+    testId: string
+    phase: string
+    time: float
+    memoryDelta: float
+
+var benchmarkEntries: seq[BenchmarkEntry] = @[]
+
 proc toPipelineStage(p: Phase): PipelineStage =
   case p
   of pTokenizer: psTokenizer
@@ -98,12 +107,9 @@ proc runTest(dir: string, id: string, benchmarkEnabled: bool, benchmarkWriter: v
           body
           let endT = cpuTime()
           let endM = getOccupiedMem()
-          benchmarkWriter.beginBlock("Benchmark")
-          benchmarkWriter.addField("File", fullPath)
-          benchmarkWriter.addField("Phase", phaseName)
-          benchmarkWriter.addField("Time", $(endT - startT) & "s")
-          benchmarkWriter.addField("Memory Delta", $(((endM - startM).float / 1024.0 / 1024.0)) & "MB")
-          benchmarkWriter.endBlock()
+          let deltaT = endT - startT
+          let deltaM = ((endM - startM).float / 1024.0 / 1024.0)
+          benchmarkEntries.add(BenchmarkEntry(file: fullPath, testId: id, phase: phaseName, time: deltaT, memoryDelta: deltaM))
 
         var tokens: seq[Token] = @[]
         var ast: YumNode
@@ -199,6 +205,14 @@ proc runTest(dir: string, id: string, benchmarkEnabled: bool, benchmarkWriter: v
   for key in envKeys:
     delEnv(key)
 
+proc formatTime(t: float): string =
+  if t < 0.001:
+    result = formatFloat(t * 1_000_000, ffDecimal, 1) & "μs"
+  elif t < 1.0:
+    result = formatFloat(t * 1_000, ffDecimal, 1) & "ms"
+  else:
+    result = formatFloat(t, ffDecimal, 2) & "s"
+
 proc main() =
   var benchmarkEnabled = false
   var benchmarkWriter = newYlwaWriter()
@@ -239,6 +253,41 @@ proc main() =
              if passedCount == total: fgGreen else: fgRed, $passedCount, "/", $total, " passed! :3"
 
   if benchmarkEnabled:
+    if benchmarkEntries.len > 0:
+      var totalTime = 0.0
+      var tokenizeCount = 0
+      var tokenizeTotal = 0.0
+      var peakMem = 0.0
+      var slowestEntry = benchmarkEntries[0]
+
+      for entry in benchmarkEntries:
+        totalTime += entry.time
+        if entry.phase == "tokenize":
+          tokenizeCount += 1
+          tokenizeTotal += entry.time
+        if entry.memoryDelta > peakMem:
+          peakMem = entry.memoryDelta
+        if entry.time > slowestEntry.time:
+          slowestEntry = entry
+
+      let avgTokenize = if tokenizeCount > 0: tokenizeTotal / tokenizeCount.float else: 0.0
+
+      benchmarkWriter.beginBlock("Summary")
+      benchmarkWriter.addField("Total Files", $benchmarkEntries.len)
+      benchmarkWriter.addField("Total Time", formatFloat(totalTime, ffDecimal, 2) & "s")
+      benchmarkWriter.addField("Avg Tokenize", formatTime(avgTokenize))
+      benchmarkWriter.addField("Peak Memory Delta", formatFloat(peakMem, ffDecimal, 2) & "MB")
+      benchmarkWriter.addField("Slowest Phase", slowestEntry.phase & " (" & slowestEntry.testId & ")")
+      benchmarkWriter.endBlock()
+
+      for entry in benchmarkEntries:
+        benchmarkWriter.beginBlock("Benchmark")
+        benchmarkWriter.addField("File", entry.file)
+        benchmarkWriter.addField("Phase", entry.phase)
+        benchmarkWriter.addField("Time", $entry.time & "s")
+        benchmarkWriter.addField("Memory Delta", $entry.memoryDelta & "MB")
+        benchmarkWriter.endBlock()
+
     writeFile("benchmark.ylwa", benchmarkWriter.toString())
     styledEcho fgCyan, "\n📊 Benchmark results saved to benchmark.ylwa"
 

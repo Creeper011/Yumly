@@ -56,6 +56,29 @@ def pytest_sessionfinish(session, exitstatus):
         f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     )
 
+    total_time = sum(r["time"] for r in BENCHMARK_RESULTS)
+    tokenize_times = [r["time"] for r in BENCHMARK_RESULTS if r["phase"] == "tokenizer"]
+    avg_tokenize = sum(tokenize_times) / len(tokenize_times) if tokenize_times else 0
+    peak_mem = max(r["memory_delta"] for r in BENCHMARK_RESULTS)
+    slowest = max(BENCHMARK_RESULTS, key=lambda r: r["time"])
+    slowest_test_id = Path(slowest["file"]).parent.name
+    slowest_phase = slowest["phase"]
+
+    def format_time(t):
+        if t < 0.001:
+            return f"{t * 1_000_000:.1f}μs"
+        elif t < 1.0:
+            return f"{t * 1_000:.1f}ms"
+        return f"{t:.2f}s"
+
+    writer.begin_block("Summary")
+    writer.add_field("Total Files", str(len(BENCHMARK_RESULTS)))
+    writer.add_field("Total Time", f"{total_time:.2f}s")
+    writer.add_field("Avg Tokenize", format_time(avg_tokenize))
+    writer.add_field("Peak Memory Delta", f"{peak_mem:.2f}MB")
+    writer.add_field("Slowest Phase", f"{slowest_phase} ({slowest_test_id})")
+    writer.end_block()
+
     for res in BENCHMARK_RESULTS:
         writer.begin_block("Benchmark")
         writer.add_field("File", res["file"])
