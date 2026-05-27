@@ -5,7 +5,7 @@ Helloo!! (˵ •̀ ᴗ •́˵ ) — Welcome to Yumly's ♡ Python usage documen
 
 - — this was tuff?
 
-Oh — before i forget, you also can use [the yumly playground notebook](playground/Yumly.ipynb) to test as a demo ദ്ദി •⩊• )
+Oh — before i forget, you also can use [the yumly playground notebook](../../playground/Yumly.ipynb) to test as a demo ദ്ദി •⩊• )
 
 ## ✿ Installation
 
@@ -105,7 +105,7 @@ with open("config.yumly", "w") as file:
 ### ✿ To Yumyumy ♡ (Serialization 2.0)
 
 Convert a dictionary to the internal Yumyumy string representation (useful for tests or visualization):
-> ⟡ If you don't know what is Yumyumy ♡, check [docs/yumyumy.md](docs/yumyumy.md)
+> ⟡ If you don't know what is Yumyumy ♡, check [docs/yumyumy.md](../yumyumy.md)
 
 ```python
 yumyumy_str = yumly.to_yumyumy(data)

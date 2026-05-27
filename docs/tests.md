@@ -67,7 +67,7 @@ cases ;list[string] = ["case1.yumly", "case2.yumly"]
 }
 ```
 
-Template: [tests/utils/template/metadata.yumly](tests/utils/template/metadata.yumly)
+Template: [tests/utils/template/metadata.yumly](../tests/utils/template/metadata.yumly)
 
 **ALL METADATA is NOT inferred from the parent folder**
 

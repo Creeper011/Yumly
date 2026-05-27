@@ -43,3 +43,20 @@ type
     blocks*: seq[Block]
     pairs*: seq[Pair]
     includes*: seq[Include]
+
+  YumlyElementKind* = enum
+    ekValue, ekBlock
+
+  YumlyElement* = object
+    case kind*: YumlyElementKind
+    of ekValue: val*: Value
+    of ekBlock: blk*: Block
+
+converter toValue*(elem: YumlyElement): Value =
+  if elem.kind == ekValue: elem.val
+  else: raise newException(ValueError, "not a value")
+
+converter toBlock*(elem: YumlyElement): Block =
+  if elem.kind == ekBlock: elem.blk
+  else: raise newException(ValueError, "not a block")
+

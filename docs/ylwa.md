@@ -28,8 +28,8 @@ There's no type system, every value is a string.
 .> Ylwa Representative Language Example <.
 
 .> 
-  This language is not an config language
-  is a representative language for benchmarking yumly.
+  This language is not a config language;
+  it is a representative language for benchmarking yumly.
 .<
 
 ~ Benchmark :

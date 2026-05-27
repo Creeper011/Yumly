@@ -48,7 +48,7 @@ pip install yumly
 from yumly import Yumly
 data = Yumly().load("config.yumly")
 ```
-> Hey!, look the [Python Usage Guide](docs/usage/python_usage.md) for more.
+> Hey!, check out the [Python Usage Guide](docs/usage/python_usage.md) for more.
 
 ### Nim
 
@@ -60,7 +60,7 @@ nimble install yumly
 import Yumly
 let config = loadYumly("config.yumly")
 ```
-> Hey!, look the [Nim Usage Guide](docs/usage/nim_usage.md) for more.
+> Hey!, check out the [Nim Usage Guide](docs/usage/nim_usage.md) for more.
 
 ---
 

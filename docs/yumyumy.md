@@ -26,7 +26,7 @@ As an internal representation of Yumly, Yumyumy has a few structural distinction
 
 ---
 
-An example from [examples/example2.yumly](example2.yumly):
+An example from [examples/example2.yumly](../examples/example2.yumly):
 
 ```yumyumy
 [

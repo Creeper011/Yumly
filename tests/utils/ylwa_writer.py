@@ -14,7 +14,7 @@ class YlwaWriter:
     def add_comment(self, comment: str):
         """Adds a multiline comment block."""
         comment_lines = comment.replace("\n", "\n  ")
-        self.output += f".> \n  {comment_lines}\n.< \n\n"
+        self.output += f".> \n  {comment_lines}\n<. \n\n"
 
     def begin_block(self, name: str):
         """Starts a block (~ Name :)"""

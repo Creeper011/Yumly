@@ -89,7 +89,7 @@ for key, val in config:
     echo key & " = " & val.getStr()
 ```
 
-Ok, now you know the basics, let's proced to the next step
+Ok, now you know the basics, let's proceed to the next step
 
 ## ✿ Core Types
 
@@ -155,6 +155,29 @@ Value* = object
 ```
 
 > from: [src/Yumly/types/ast.nim](../../src/Yumly/types/ast.nim) (line: 13–23)
+
+### `YumlyElement`
+
+To allow retrieving both **pairs** (values) and **blocks** using the same `[]` operator, lookups return a unified `YumlyElement` wrapper.
+
+You do **not** need to manually convert or unpack this type. The library handles conversions automatically:
+- **Direct Variable Assignment**: You can assign a `YumlyElement` directly to a `Value` or a `Block` variable.
+- **Method Chaining**: You can call any value accessor (like `.getStr()`, `.getInt()`) or index it further with a string (if it's a block) or an integer (if it's a list).
+
+#### Example:
+```nim
+# 1. Indexing a block and then a key inside it:
+echo config["global"]["project"].getStr()  # "Cid"
+
+# 2. Fetching a value directly:
+let port: Value = config["port"]
+echo port.getInt()
+
+# 3. Fetching a block directly:
+let db: Block = config["database"]
+echo db["host"].getStr()
+```
+
 
 ## ✿ Building Configs Programmatically
 
@@ -286,16 +309,18 @@ let hint = inferTypeHint(value)
 
 | Function | Description |
 |----------|-------------|
-| `getStr(val, default)` | Get string value |
-| `getInt(val, default)` | Get integer value |
-| `getFloat(val, default)` | Get float value |
-| `getBool(val, default)` | Get boolean value |
+| `getStr(val)` / `getStr(val, default)` | Get string value (strict / with default fallback) |
+| `getInt(val)` / `getInt(val, default)` | Get integer value (strict / with default fallback) |
+| `getFloat(val)` / `getFloat(val, default)` | Get float value (strict / with default fallback) |
+| `getBool(val)` / `getBool(val, default)` | Get boolean value (strict / with default fallback) |
+| `getList(val)` / `getList(val, default)` | Get list sequence (strict / with default fallback) |
+| `getTuple(val)` / `getTuple(val, default)` | Get tuple sequence (strict / with default fallback) |
 
 ### Indexing & Search
 
 | Operator / Proc | Description |
 |-----------------|-------------|
-| `config[key]` | Get value by key |
+| `config[key]` | Retrieve a pair (as `Value`) or block (as `Block`) wrapped in `YumlyElement` |
 | `hasKey(config, key)` | Check if key exists |
 | `hasBlock(config, name)` | Check if block exists |
 | `findBlock(config, name)` | Find block by name |

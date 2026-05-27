@@ -7,14 +7,14 @@ Yumly intentionally differs from common configuration syntaxes — because **pri
 
 I'll show you the yumly grammar in phases (features), because in my fucking head it's easier this way. `¯\_(ツ)_/¯`
 
-> ⟡ Just to remeber — no duplicate keys, blocks, or values in the same file, including includes! >:3
-> - If an file with `(blockA)` imports other file with `(blockA)` — it's a duplication!
+> ⟡ Just to remember — no duplicate keys, blocks, or values in the same file, including includes! >:3
+> - If a file with `(blockA)` imports another file with `(blockA)` — it's a duplication!
 
 ## ✿ Phase 1: Basic Grammar
 
 Ok — let's start with the basics, what is a pair and a block:
 
-- Pairs are the simplest structure, where you assign a value to a key, like `key = value` or with optional a specific type `key ;type = value`. The language encourages the use of type hints, even though they're optional, for better clarity and validation.
+- Pairs are the simplest structure, where you assign a value to a key, like `key = value` or optionally with a specific type `key ;type = value`. The language encourages the use of type hints, even though they're optional, for better clarity and validation.
 - Blocks are nested structures, delimited by braces `{ ... }`, where you can have multiple pairs or other blocks inside.
 
 Example:
@@ -98,10 +98,10 @@ include { "base.yumly" }     ;> Imports blocks and pairs from another file <;
 include { "shared.yuy" }     ;> Accepts .yuy or .yumly <;
 ```
 
-Oh, an important thing — includes count for the **no duplication** rule! if an file with `(blockA)` imports other file with `(blockA)` — it's a duplication! (i'm talking seriously >:3)
+Oh, an important thing — includes count for the **no duplication** rule! if a file with `(blockA)` imports another file with `(blockA)` — it's a duplication! (i'm talking seriously >:3)
 
 Includes "merges" into the parent file! so, if a file that you're importing has the same block as another file, it will be counted as a duplication! >:3
-Make sure if you don't include an file A that includes an file B that includes an file A, this is a circular import >_<
+Make sure you don't include a file A that includes a file B that includes a file A, as this is a circular import >_<
 
 ## ✿ Phase 5: Strings and Escapes
 
@@ -185,7 +185,7 @@ job = "dev"
 
 ## ✿ Phase 8: File Structure
 
-The yumly has an syntax order — includes first, then pairs and blocks.
+Yumly files have a syntax order — includes first, then pairs and blocks.
 these orders are analyzed in parsing! >:3
 
 ```yumly
@@ -195,7 +195,7 @@ include { ".env" }
 pair or block...
 ```
 
-- **Include** must come first (comments before includes does not count! so you can add before of includes)
+- Include must come first (comments before includes do not count! so you can add comments before includes)
 - Then come pairs and blocks, in any order
 
 ## ✿ Complete Example
@@ -234,5 +234,5 @@ include { ".env" }
 
 Now you can finally use yumly! :3
 
-#### Oh! — you reached at the end!! congratulations!! here's an gift for you: ⸜( ˶' ᵕ '˶ )⸝
+#### Oh! — you reached the end!! congratulations!! here's a gift for you: ⸜( ˶' ᵕ '˶ )⸝
 mikuu dayoo!

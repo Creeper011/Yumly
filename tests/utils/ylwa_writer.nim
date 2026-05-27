@@ -19,7 +19,7 @@ proc addHeader*(w: var YlwaWriter, header: string) =
 
 proc addComment*(w: var YlwaWriter, comment: string) =
   ## Adds a multiline comment block.
-  w.output.add(".> \n  " & comment.replace("\n", "\n  ") & "\n.< \n\n")
+  w.output.add(".> \n  " & comment.replace("\n", "\n  ") & "\n<. \n\n")
 
 proc beginBlock*(w: var YlwaWriter, name: string) =
   ## Starts a block (~ Name :)
