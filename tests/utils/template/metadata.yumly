@@ -14,3 +14,8 @@ cases ;list[string] = ["case1.yumly", "case2.yumly"]
     VAR3 ;string = "Value",
     VAR4 ;string = "Value"
 }
+
+;> Executes Python code inside an isolated sandbox before the test suite runs <;
+preSuiteEval ;string = """
+# your python code here
+"""

@@ -1,11 +1,48 @@
 import os
+import sys
 import time
 import pytest
+import subprocess
+import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List, TypedDict, Optional
 from yumly import Yumly, YumlyError, PipelineStage, PipelineResult
 # pyrefly: ignore [missing-import]
 from utils_python.memory import get_rss
+
+
+def _run_python_sandboxed(code: str, work_dir: Path, timeout: int = 30) -> None:
+    python_bin = sys.executable
+    if not python_bin:
+        pytest.skip("No Python interpreter available")
+
+    with tempfile.TemporaryDirectory(prefix="py_sandbox_") as sandbox_dir:
+        env = os.environ.copy()
+        for key in list(env.keys()):
+            if key in ("PATH", "HOME", "USER", "TMPDIR", "TEMP", "TMP"):
+                continue
+            del env[key]
+
+        script = (
+            "import os, sys\n"
+            f"os.chdir({str(work_dir.resolve())!r})\n"
+            "sys.path.insert(0, os.getcwd())\n"
+            + code
+        )
+
+        result = subprocess.run(
+            [python_bin, "-c", script],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=sandbox_dir,
+            env=env,
+        )
+        if result.returncode != 0:
+            pytest.fail(
+                f"Python pre-suite script failed (exit code {result.returncode}):\n"
+                f"{result.stderr or result.stdout}"
+            )
 
 class CaseDefinition(TypedDict):
     case_id: str
@@ -15,6 +52,7 @@ class CaseDefinition(TypedDict):
     is_valid_expected: bool
     phase_str: str
     envs: Dict[str, Any]
+    pre_suite_eval: Optional[str]
 
 
 ALL_STAGES = [
@@ -90,6 +128,7 @@ def get_test_cases() -> List[CaseDefinition]:
             phase_str = str(meta.get("phase", "E"))
             test_cases = list(meta.get("cases", []))
             envs_block = dict(meta.get("envs", {}))
+            pre_suite_eval = meta.get("preSuiteEval")
 
             for case_file in test_cases:
                 cases.append({
@@ -100,6 +139,7 @@ def get_test_cases() -> List[CaseDefinition]:
                     "is_valid_expected": is_valid_expected,
                     "phase_str": phase_str,
                     "envs": envs_block,
+                    "pre_suite_eval": pre_suite_eval,
                 })
 
     return cases
@@ -178,6 +218,10 @@ def _assert_tokenizer_output(full_path: Path, data: PipelineResult) -> None:
 
 @pytest.mark.parametrize("test_def", get_test_cases(), ids=lambda test_def: test_def["case_id"])
 def test_yumly_phases(yumly: Yumly, test_def: CaseDefinition, benchmark_collector) -> None:
+    # Execute pre-suite script in a sandboxed Python subprocess
+    if test_def["pre_suite_eval"]:
+        _run_python_sandboxed(test_def["pre_suite_eval"], test_def["folder_path"])
+
     env_keys = []
     # set env vars for the test
     if isinstance(test_def["envs"], dict):

@@ -1,7 +1,0 @@
-;> Stress test metadata for deep nesting <;
-
-name ;string = "Deep Nesting Stress Test"
-valid ;bool = true, number ;int = 0001
-phase ;string = "V"
-
-cases ;list[string] = ["test.yumly"]

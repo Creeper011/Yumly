@@ -1,0 +1,13 @@
+;> Stress test metadata for large flat config <;
+
+name ;string = "Stress Large Flat Config"
+valid ;bool = true, number ;int = 0002
+phase ;string = "E"
+
+cases ;list[string] = ["case1.yumly"]
+
+preSuiteEval ;string = """
+content = "\\n".join(f"key{i} ;int = {i}" for i in range(300))
+with open("case1.yumly", "w") as f:
+    f.write(content)
+"""

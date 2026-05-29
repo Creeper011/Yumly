@@ -1,4 +1,4 @@
-import std/[os, strutils, terminal, options, streams, times]
+import std/[os, strutils, terminal, options, streams, times, osproc]
 import ../../src/Yumly/core/pipeline
 import ../../src/Yumly/api/nim_api
 import ../../src/Yumly/serializers/parser_yumyumy
@@ -77,6 +77,24 @@ proc runTest(dir: string, id: string, benchmarkEnabled: bool, benchmarkWriter: v
   let isValidExpected = validVal.get().getBool()
   let phaseStr = if phaseVal.isSome: phaseVal.get().getStr() else: "E"
   let cases = casesVal.get().getList()
+
+  # Execute pre-suite Python script in a sandboxed subprocess
+  let preSuiteVal = meta.findPair("preSuiteEval")
+  if preSuiteVal.isSome:
+    let code = preSuiteVal.get().getStr()
+    let pythonBin = findExe("python3")
+    if pythonBin == "":
+      return @[TestResult(name: "Pre-suite Error", id: id, passed: false,
+               error: "Python3 not found in PATH")]
+    let script = "import os, sys\nos.chdir(\"" & dir.replace("\\", "\\\\").replace("\"", "\\\"") & "\")\nsys.path.insert(0, os.getcwd())\n" & code
+    let tmpFile = getTempDir() / "yumly_presuite_" & id & ".py"
+    writeFile(tmpFile, script)
+    let cmd = quoteShell(pythonBin) & " " & quoteShell(tmpFile)
+    let (output, exitCode) = execCmdEx(cmd)
+    removeFile(tmpFile)
+    if exitCode != 0:
+      return @[TestResult(name: "Pre-suite Error", id: id, passed: false,
+               error: "Python pre-suite script failed (exit code " & $exitCode & "):\n" & output)]
 
   let envsBlock = meta.findBlock("envs")
   var envKeys: seq[string] = @[]
