@@ -13,6 +13,7 @@ nimble.develop
 nimble.paths
 __pycache__
 libyumly.so
+*.ylwa
 
 # Personal
 waifus
@@ -36,3 +37,9 @@ test_encoder
 # test binaries
 nim_runner
 create_new_test
+
+# tests
+tests/fixtures/stress/**/*.yumly
+!tests/fixtures/stress/**/metadata.yumly
+tests/fixtures/stress/sLI0002-deep-include-nesting/depth/
+tests/fixtures/invalid/xV0002-recursion-limit/case1.yumly

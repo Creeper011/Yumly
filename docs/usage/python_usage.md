@@ -29,7 +29,7 @@ pip install .
 from yumly import Yumly
 
 yumly = Yumly()
-data = yumly.load("config.yumly")
+data = yumly.load("config.yumly") # returns a dict (YumlyData)
 print(data["app"]["name"])
 ```
 
@@ -63,6 +63,42 @@ data = yumly.loads(content)
 print(data["app"]["name"])  # "Yumly"
 ```
 
+---
+
+## ✿ YumlyData
+
+`load()` and `loads()` don't return a plain `dict` — they return a `YumlyData` instance, which is a `dict` subclass with one extra capability: it caches the original Yumyumy ♡ representation produced during parsing.
+
+> ⟡ If you don't know what is Yumyumy ♡, check [docs/yumyumy.md](../yumyumy.md)
+
+```python
+from yumly import Yumly, YumlyData
+
+yumly = Yumly()
+data = yumly.load("config.yumly")
+
+print(type(data))          # <class 'yumly.yumly.YumlyData'>
+print(isinstance(data, dict))  # True — behaves exactly like a dict
+```
+
+### ✿ `original_yumyumy()`
+
+Returns the cached Yumyumy ♡ generated during parsing. Returns None if the instance was modified after loading.
+
+```python
+data = yumly.load("config.yumly")
+
+# immediately after loading — returns the cached representation
+print(data.original_yumyumy())
+
+# after any mutation — returns None
+data["new_key"] = "new_value"
+print(data.original_yumyumy())  # None
+```
+
+> ⟡ This is useful when you load a file and want to display its internal representation without calling `to_yumyumy()` again, which would require re-serializing the dict from scratch.
+
+---
 
 ## ✿ Validation
 
@@ -102,15 +138,16 @@ with open("config.yumly", "w") as file:
     yumly.dump(data, file)
 ```
 
-### ✿ To Yumyumy ♡ (Serialization 2.0)
+### ✿ To Yumyumy ♡ (Serialization 2.0 in python context)
 
 Convert a dictionary to the internal Yumyumy string representation (useful for tests or visualization):
-> ⟡ If you don't know what is Yumyumy ♡, check [docs/yumyumy.md](../yumyumy.md)
 
 ```python
 yumyumy_str = yumly.to_yumyumy(data)
 print(yumyumy_str)
 ```
+
+> ⟡ When possible, Yumly reuses the cached representation stored inside YumlyData. 
 
 ---
 
@@ -176,7 +213,7 @@ class TaskManager():
         return True
 ```
 
-> ⟡ — now, i'll never forgot to feed my fish! (˶>⩊<˶)
+> ⟡ — now, i'll never forget to feed my fish! (˶>⩊<˶)
 
 ---
 
@@ -195,32 +232,51 @@ tokens = yumly.load_until("config.yumly", PipelineStage.Tokenizer)
 # Stop at Parser (returns YumNode AST)
 ast = yumly.load_until("config.yumly", PipelineStage.Parser)
 
+# Stop at Load_Includes — resolves include { } directives and .env files,
+# but does not yet validate types or evaluate values (returns YumNode AST)
+ast_with_includes = yumly.load_until("config.yumly", PipelineStage.Load_Includes)
+
+# Stop at Resolver (returns YumNode AST)
+ast = yumly.load_until("config.yumly", PipelineStage.Resolver)
+
+# Stop at Validator (returns YumNode AST)
+ast = yumly.load_until("config.yumly", PipelineStage.Validator)
+
+# Full pipeline — default used by load() (returns YumlyData)
+data = yumly.load_until("config.yumly", PipelineStage.Evaluator)
+
 # Valid stages:
 # PipelineStage.Tokenizer
 # PipelineStage.Parser
+# PipelineStage.Load_Includes
 # PipelineStage.Resolver
 # PipelineStage.Validator
-# PipelineStage.Evaluator (default used by load())
+# PipelineStage.Evaluator -> default used by load()
 ```
 
 ## ✿ API Reference (for you never forget ;3)
 
 | Method | Description |
 |--------|-------------|
-| `load(path)` | Load and parse a `.yumly` or `.yuy` file |
+| `load(path)` | Load and parse a `.yumly` or `.yuy` file — returns `YumlyData` |
 | `load_until(path, stage)` | Load up to a specific pipeline stage |
-| `loads(content)` | Parse Yumly content from a string |
+| `loads(content)` | Parse Yumly content from a string — returns `YumlyData` |
 | `loads_until(content, stage)` | Parse up to a specific pipeline stage |
-| `to_yumyumy(data)` | Convert dict to Yumyumy string |
+| `to_yumyumy(data)` | Convert dict or `YumlyData` to Yumyumy string |
 | `dump(data, stream)` | Serialize dict to a file-like stream |
 | `dumps(data)` | Serialize dict to a Yumly string |
 | `validate_content(content)` | Check if content is valid Yumly |
 | `validate_file(path)` | Check if file is valid Yumly |
 
+### ✿ YumlyData
+
+| Method / Property | Description |
+|-------------------|-------------|
+| `original_yumyumy()` | Returns the cached Yumyumy ♡ string if the instance was not mutated, `None` otherwise |
 
 ---
 
-#### Oh! — you reached at the end!! congratulations!! here's an gift for you: ⸜( ˶' ᵕ '˶ )⸝
+#### Oh! — you reached at the end!! congratulations!! here's a gift for you: ⸜( ˶' ᵕ '˶ )⸝
 ```text
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣤⡤⠤⠤⠤⣤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡤⠞⠋⠁⠀⠀⠀⠀⠀⠀⠀⠉⠛⢦⣤⠶⠦⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀

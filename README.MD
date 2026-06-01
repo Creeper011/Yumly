@@ -70,9 +70,11 @@ let config = loadYumly("config.yumly")
 - **VSCode:** Check the [extension folder](yumly-vscode/) for installation.
 - **Tests:** Detailed in [Test System](docs/tests.md).
 
-## ✿ Limitations:
-- The current limitations are:
-    - Yumly is not fully streamable by design, as it needs all context to resolve includes, blocks and pairs. Only the parser and the tokenizer (lexer) are streamable for now.
+## ✿ Additional Information:
+
+- This is a **super personal project** with open code. Contributions are welcome, 
+  but theres no guarantee of support or roadmap. use it, enjoy it, and if 
+  something breaks, open an issue ♡
 
 ## ★ License ★
 

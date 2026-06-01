@@ -1,35 +1,46 @@
-# Yumly Test System
+# ⋆˚.♪ Yumly Fixture Test System ♪.˚⋆
+⊹˚. ♡.𖥔 ݁ ˖
 
-The test system is file-based — you understand a test just by looking at the files, no tooling needed.
+yooooo!! welcome to the testing arena!! 🥀 ⸜(｡˃ ᵕ ˂ )⸝♡
+
+The testing system focuses on fixtures, which in turn are file-based, thus allowing tests that are not tied to any specific language. It's a way to decouple tests and also centralize them through identifiers.
+
+There are Runners, which consist of searching the fixture architecture for tests and running them. Runners will try to execute every test in the suite (failing fast on the first error encountered), providing a cute summary of the results at the very end.
 
 ---
 
-## Structure
+## ✿ Architecture
+
+Every test lives inside its own little folder. Here's how it looks:
 
 ```
 tests/
   fixtures/
     valid/                         ← tests that must parse successfully
-      y0001-multiline-string/
+      yE0015-basic-types/
         metadata.yumly
         test.yumly
         test.expected.yumyumy      ← optional: asserts evaluator output
     invalid/                       ← tests that must fail
-      x0002-duplicated-pair/
+      xV0001-duplicated-pair/
         metadata.yumly
         case1.yumly
         case2.yumly
     stress/                        ← stress/performance tests
-      sV0017-deep-nesting/
+      sV0001-deep-nesting/
         metadata.yumly
         test.yumly
   runners/
-    nim_runner.nim
+    nim_runner.nim                 ← the one that makes it all happen!
   utils/
-    create_new_test.nim
+    create_new_test.nim            ← your best friend for new tests
 ```
 
-### Folder naming
+### ✿ How to name tests
+
+You might be wondering, what are these strange folder names (like `xV002`)? They are identifiers!
+
+For my cute test system, every folder follows this pattern:
 
 ```
 {identifier}{phase}{number}-{name}
@@ -40,13 +51,14 @@ tests/
 | `identifier` | `y` = valid, `x` = invalid, `s` = stress             |
 | `phase`      | Pipeline stage to run up to (optional)               |
 | `number`     | Global 4-digit counter, e.g. `0001`                  |
-| `name`       | Lowercase with underscores, e.g. `multiline_string`  |
+| `name`       | Lowercase with hyphens (kebab-case), e.g. `multiline-string` |
 
-The number is **global per identifier** — it increments across all tests regardless of phase.
+> **Note:** The number is **global per identifier** — it keeps incrementing 
+> across all tests regardless of which phase they target!
 
----
+## ✿ Test Metadata ‧₊˚
 
-## metadata.yumly
+Every test folder MUST have a `metadata.yumly` file. This tells the runner exactly what to do. **Runners do never infer from the folder name!!**
 
 ```yumly
 ;> Test file metadata template for unit tests <;
@@ -65,28 +77,35 @@ cases ;list[string] = ["case1.yumly", "case2.yumly"]
     VAR3 ;string = "Value",
     VAR4 ;string = "Value"
 }
+
+;> Executes Python code inside an isolated sandbox before the test suite runs <;
+
+preSuiteEval ;string = """
+# your python code here
+"""
 ```
 
 Template: [tests/utils/template/metadata.yumly](../tests/utils/template/metadata.yumly)
 
-**ALL METADATA is NOT inferred from the parent folder**
+### ✿ Pipeline Phases ‧₊˚
 
-### Phase values
+| Value | Stage        | Description |
+|-------|--------------|-------------|
+| `T`   | Tokenizer    | Raw token stream |
+| `P`   | Parser       | AST construction |
+| `R`   | Resolver     | Type & Env resolution |
+| `LI`  | Load Include | Including external files |
+| `V`   | Validator    | Structural checks |
+| `E`   | Evaluator    | Final value generation |
 
-| Value | Stage        |
-|-------|--------------|
-| `T`   | Tokenizer    |
-| `P`   | Parser       |
-| `R`   | Resolver     |
-| `LI`  | Load Include |
-| `V`   | Validator    |
-| `E`   | Evaluator    |
+---
 
-## Assertions
+## ✿ Making Assertions ‧₊˚
 
-Assertions are always **optional**. Without an expected file, the runner only checks pass/fail. This avoids silent success — a test that parses without error but produces wrong output.
+Assertions are **optional** but highly recommended!! Without an expected file, the runner only checks if the test passes or fails. 
 
-Each phase has its own assertion format:
+Expected files verify that the result produced by the parser is indeed the expected result. It is important to note that the error message is ignored, and if the program fails during execution, the assertion will not be made and the test will be marked as failed.
+
 
 | Phase | Expected file            | Format       |
 |-------|--------------------------|--------------|
@@ -94,19 +113,19 @@ Each phase has its own assertion format:
 | `E`   | `case1.expected.yumyumy` | yumyumy ♡    |
 | other | —                        | pass/fail only |
 
-If a test has multiple cases, each case can have its own expected file independently:
+If a test has multiple cases, each case can have its own assertion:
 
 ```
-y0005-basic-types/
+yE0015-basic-types/
   metadata.yumly
   case1.yumly
   case1.expected.yumyumy   ← asserts output
   case2.yumly              ← pass/fail only
 ```
 
-### Tokenizer assertions — `.expected.tokens`
+### ⟡ Tokenizer assertions (`.expected.tokens`)
 
-One token per line. Tokens with a value include it quoted; tokens without a value stand alone.
+The runner compares the serialized token stream.
 
 ```
 tkIdent "name"
@@ -119,88 +138,72 @@ tkEOF
 
 The runner serializes the token stream produced by the tokenizer and compares it as a string against this file.
 
-### Evaluator assertions — `.expected.yumyumy`
+### ⟡ Evaluator assertions (`.expected.yumyumy`)
 
-The runner evaluates the input and serializes the result with `toYumyumy`, then compares as a string.
+The runner serializes the result with `toYumyumy`.
 
 `test.yumly`:
 ```yumly
 name ;string = "Yumly"
-port ;int    = 8080
-
-(database) {
-    host = "localhost",
-    port = 5432
-}
+(database) { host = "localhost" }
 ```
 
 `test.expected.yumyumy`:
 ```
 [
   name (string) -> Yumly
-  port (int) -> 8080
   [database] (
     host (string) -> localhost
-    port (int) -> 5432
   )
 ]
 ```
 
-Env vars are shown as their **resolved values** in yumyumy ♡, so assertions implicitly verify env resolution too.
+Env vars are shown as their **resolved values** in yumyumy ♡, so assertions 
+implicitly verify env resolution too!! ✧
 
-### What a failing assertion looks like
-
-```
-  [KYAA] y0005 - Basic Types (test.yumly)
-         assertion failed
-         expected: port (int) -> 9090
-         got:      port (int) -> 8080
-```
+> ⟡ If you don't know what is Yumyumy ♡, check [docs/yumyumy.md](../yumyumy.md)
 
 ---
 
-## Invalid tests
+## ✿ Testing for failures ‧₊˚
 
-No expected file. The test passes if parsing fails at or before the target phase.
+Invalid tests don't use expected files. An invalid test, for example, passes if it **fails** at or before the targeted phase.
 
-```
-x0002-duplicated-pair/
-  case1.yumly     ← must fail
-  case2.yumly     ← must fail
-  metadata.yumly
-```
-
-The failure message is not asserted — error messages are intentionally not part of the contract, as they may change over time.
+The failure message is not asserted — error messages are intentionally not 
+part of the contract, as they may change over time (hopefully getting cuter!). ✿
 
 ---
 
-## Creating a test
+## ✿ Creating a new test ‧₊˚
+
+Don't do it manually!! Use this utility:
 
 ```bash
 nim c -r tests/utils/create_new_test.nim
 ```
 
-It will:
-1. Ask for name, valid/invalid, phase, and number of cases
-2. Auto-assign the next global number scanning all fixtures
-3. Create the folder, case files, and `metadata.yumly`
-4. Optionally open each case file in `$EDITOR`
+It will guide you through:
+1. Naming your test
+2. Choosing valid/invalid and the target phase
+3. Automatically assigning the next global number scanning all fixtures
+4. Creating all the folders and files for you!! ✧
 
 ---
 
-## Running tests
+## ✿ Running the tests ‧₊˚
+
+To run everything and see the magic:
 
 ```bash
 nim c -r tests/runners/nim_runner.nim
 ```
 
-Output:
+You'll get a cute summary like this:
 ```
 === Yumly Test Runner (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ ===
 
   [YAY!] y0001 - Multiline String (test.yumly)
   [YAY!] x0002 - Duplicated Pair (case1.yumly)
-  [YAY!] x0002 - Duplicated Pair (case2.yumly)
   [KYAA] y0005 - Basic Types (test.yumly)
          assertion failed
          expected: port (int) -> 9090
@@ -209,12 +212,21 @@ Output:
 ✨ Summary: 3/4 passed! :3
 ```
 
+Additionally, the runners can generate benchmark results! Just add `--benchmark` to the end of the command. This will generate a cute `.ylwa` file (wa wa wa) for you to analyze performance, which you can check out in [docs/ylwa.md](../docs/ylwa.md).
+
 ---
 
-## Conventions
+## ✿ Best Practices ‧₊˚
 
-- **One concern per folder.** Don't mix unrelated cases.
-- **Case files should be self-explanatory.** A reviewer should understand what's being tested by reading the `.yumly` file alone.
-- **Invalid cases should be minimal.** Include only what triggers the failure, not a full config.
-- **Write the expected file after verifying the output is correct.** Never copy a wrong output as the expected.
-- **Don't assert what you don't care about.** If you only care that parsing succeeds, skip the expected file.
+- ⟡ **One concern per folder.** Keep it focused!!
+- ⟡ **Self-explanatory cases.** A reviewer should understand the test just by 
+  reading the `.yumly` file.
+- ⟡ **Minimal invalid cases.** Only include what triggers the failure.
+- ⟡ **Verify before you assert.** Make sure your `.expected` files are actually 
+  correct before committing them!
+- ⟡ **Don't assert what you don't care about.** If you only care that parsing 
+  succeeds, skip the expected file.
+
+---
+
+#### yeah, you're a testing pro now!! (๑˃ᴗ˂)ﻭ

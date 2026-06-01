@@ -89,6 +89,7 @@ phases, PoCs, and real-world examples.
 - Yumly is not fully streamable by design — it needs all context to resolve 
   includes, blocks, and pairs. Only the tokenizer and parser are streamable 
   for now.
+- By default, includes are sandboxed to your home directory (`~`) using the compile-time constant `YumlySandboxDir` (configured via Nim's `--define:YumlySandboxDir=...` or `-d:YumlySandboxDir=...`). If you are running Yumly in a server or shared environment, the default `"~"` lets includes access any `.env`, `.yumly`, or `.yuy` file under your home folder.
 - This is a **super personal project** with open code. Contributions are welcome, 
   but theres no guarantee of support or roadmap. use it, enjoy it, and if 
   something breaks, open an issue ♡

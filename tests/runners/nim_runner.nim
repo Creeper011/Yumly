@@ -133,7 +133,7 @@ proc runTest(dir: string, id: string, benchmarkEnabled: bool, benchmarkWriter: v
         var ast: YumNode
         var resolvedAst: YumNode
 
-        measure("tokenize"):
+        measure("tokenizer"):
           let s = newStringStream(content)
           let puller = tokenize(s)
           while true:
@@ -142,7 +142,7 @@ proc runTest(dir: string, id: string, benchmarkEnabled: bool, benchmarkWriter: v
             if t.kind == tkEOF: break
         
         if phase in {pParser, pLoadInclude, pResolver, pValidator, pEvaluator}:
-          measure("parse"):
+          measure("parser"):
             var i = 0
             let puller = proc(): Token =
               if i < tokens.len: result = tokens[i]; inc i
@@ -156,17 +156,17 @@ proc runTest(dir: string, id: string, benchmarkEnabled: bool, benchmarkWriter: v
               loadIncludes(ast, dir)
             
         if phase in {pResolver, pValidator, pEvaluator}:
-          measure("resolve"):
+          measure("resolver"):
             if ast.hasTypeHints.get(false):
               resolveAst(ast)
             resolvedAst = ast
             
         if phase in {pValidator, pEvaluator}:
-          measure("validate"):
+          measure("validator"):
             validateConfig(resolvedAst)
             
         if phase == pEvaluator:
-          measure("evaluate"):
+          measure("evaluator"):
             discard evaluateConfig(resolvedAst)
 
       # Normal test execution/assertion
