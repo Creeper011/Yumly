@@ -15,19 +15,18 @@ SYMBOL  = "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" |
 
 ANY     = LETTER | DIGIT | SYMBOL | WS ;
 
-ident   = LETTER, { LETTER | DIGIT | "_" } ;
+ident-char = ANY - ";" - "\n" - "\r" - "," ;
+ident      = ident-char, { ident-char } ;
 
 (* Value in Ylwa is always a raw string until the comma *)
-value-char = ANY - "," ;
+value-char = ANY - "," - ";" - ":" - "<" - ">" ;
 value      = { value-char } ;
 
 (* ===== STRUCTURES ===== *)
 
-(* Header: .> Title <. *)
-header = ".>", { ANY - "<" }, "<." ;
-
 (* Comment Block: .> ... <. *)
-comment = ".>", { ANY - "." | (".", ANY - "<") }, ".<" ;
+comment-char = ANY ;
+comment = ".>", { comment-char }, "<." ;
 
 (* Field: - Key ; Value, *)
 field = "-", ident, ";", value, ",", { WS }, [ comment ] ;
@@ -36,5 +35,5 @@ field = "-", ident, ";", value, ",", { WS }, [ comment ] ;
 block = "~", ident, ":", { field | comment | WS }, ":" ;
 
 (* File Structure *)
-ylwa-item = header | comment | block | WS ;
+ylwa-item = comment | block | WS ;
 ylwa-file = { ylwa-item } ;

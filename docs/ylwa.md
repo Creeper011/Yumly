@@ -15,8 +15,7 @@ For the formal grammar, see the [Ylwa EBNF Specification](ebnf/ylwa.ebnf).
 
 | Element | Syntax | Description |
 |---------|--------|-------------|
-| Header  | `.> Title <.` | Top-level section title |
-| Comment | `.> ... .<` | Multiline comment block |
+| Comment | `.> ... <.` | Multiline comment block |
 | Block   | `~ Name : ... :` | A named container for data |
 | Field   | `- Key ; Value,` | A key-value pair (Value is always a string) |
 
@@ -30,7 +29,7 @@ There's no type system, every value is a string.
 .> 
   This language is not a config language;
   it is a representative language for benchmarking yumly.
-.<
+<.
 
 ~ Benchmark :
  - File ; examples/example2.yumly,
