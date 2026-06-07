@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yumly"
-version = "0.8.3"
+version = "0.9.0"
 description = "A cute, declarative config language with fail-fast behavior and optional type safety."
 readme = "README.md"
 authors = [{ name = "Yumene", email = "yumene@yume.dev.br" }]

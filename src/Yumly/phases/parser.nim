@@ -44,7 +44,7 @@ proc parseTypeHint(parser: var Parser): Option[TypeHint] =
     let elemToken = parser.expect(tkIdent, expIdentifier)
     discard parser.expect(tkRBracket, expRBracket)
     return some(TypeHint(
-      raw: baseToken.value,
+      raw: baseToken.value & "[" & elemToken.value & "]",
       kind: thList,
       elementRaw: elemToken.value,
       line: baseToken.line, col: baseToken.col

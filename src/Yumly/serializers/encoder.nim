@@ -17,7 +17,10 @@ template emitRaw(ctx: var EncoderCtx, line: string) =
 
 func formatTypeHint(hint: Option[TypeHint]): string =
   if hint.isSome:
-    return " ;" & hint.get.raw
+    let h = hint.get
+    if h.kind == thList and h.raw == "list" and h.elementRaw != "":
+      return " ;list[" & h.elementRaw & "]"
+    return " ;" & h.raw
   return ""
 
 func formatPair(pair: Pair): string =
