@@ -53,7 +53,9 @@ data = Yumly().load("config.yumly")
 ### Nim
 
 ```bash
-nimble install yumly
+git clone https://github.com/Creeper011/Yumly
+cd Yumly/
+nimble install --path:. # not published on Nimble yet
 ```
 
 ```nim
@@ -62,11 +64,16 @@ let config = loadYumly("config.yumly")
 ```
 > Hey!, check out the [Nim Usage Guide](docs/usage/nim_usage.md) for more.
 
----
+### Nix / NixOS (For the [Yumly CLI](docs/usage/yumly_cli.md) ✨)
+
+```bash
+nix profile install github:Creeper011/Yumly
+```
 
 ## ✿ Development & Tools
 
-- **CLI:** `yumly_cli check config.yumly`
+- **CLI ✨:** Check the Yumly CLI ✨ documentation in [docs/usage/yumly_cli.md](docs/usage/yumly_cli.md)
+- **Playground 🛝:** Explore PoCs and interactive notebooks in [The Playground](docs/playground.md)
 - **VSCode:** Check the [extension folder](yumly-vscode/) for installation.
 - **Tests:** Detailed in [Test System](docs/tests.md).
 
@@ -79,3 +86,4 @@ let config = loadYumly("config.yumly")
 ## ★ License ★
 
 MIT — see [LICENSE](LICENSE).
+  

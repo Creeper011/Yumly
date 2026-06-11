@@ -4,14 +4,14 @@
 ##
 
 import os, options, streams
-import ../yumly_file
-import ../phases/tokenizer
-import ../phases/parser
-import ../phases/resolver
-import ../phases/evaluator
-import ../phases/load_include
-import ../phases/validate
-import ../serializers/encoder
+import ../utils/file
+import ../phases/tokenizer/tokenizer
+import ../phases/parser/parser
+import ../phases/resolver/resolver
+import ../phases/evaluator/evaluator
+import ../phases/includes/loader
+import ../phases/validator/validate
+import ../serializers/yumly/encoder
 import ../types/ast
 import ../types/nodes
 import ../types/token
@@ -90,16 +90,20 @@ proc loadYumlyContent*(content: string, workingDir: string = "."): YumlyConf =
 # File overloads
 proc loadYumly*(path: string, until: PipelineStage): PipelineResult =
   let stream = newYumlyStream(path)
-  result = runPipeline(stream, until, parentDir(path))
-  if result.stage in {psParser, psIncludes, psResolver, psValidator}:
-    result.ast.sourceFile = os.absolutePath(path)
-  stream.close()
+  try:
+    result = runPipeline(stream, until, parentDir(path))
+    if result.stage in {psParser, psIncludes, psResolver, psValidator}:
+      result.ast.sourceFile = os.absolutePath(path)
+  finally:
+    stream.close()
 
 proc loadYumly*(path: string = "config.yumly"): YumlyConf =
   let stream = newYumlyStream(path)
-  let res = runPipeline(stream, psEvaluator, parentDir(path))
-  stream.close()
-  result = res.config
+  try:
+    let res = runPipeline(stream, psEvaluator, parentDir(path))
+    result = res.config
+  finally:
+    stream.close()
 
 func dumpYumly*(config: YumlyConf): string =
   result = encoder.dumpYumly(config)

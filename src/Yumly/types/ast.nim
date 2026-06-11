@@ -8,7 +8,7 @@ import ../types/type_hints
 type
   # NOTE: filled in by the evaluator
   ValueKind* = enum
-    vkString, vkInt, vkFloat, vkBool, vkList, vkTuple, vkEnv
+    vkString, vkInt, vkFloat, vkBool, vkList, vkEnv
 
   Value* = object
     case kind*: ValueKind
@@ -16,7 +16,7 @@ type
     of vkInt: intVal*: int
     of vkFloat: floatVal*: float
     of vkBool: boolVal*: bool
-    of vkList, vkTuple:
+    of vkList:
       elements*: seq[Value]
     of vkEnv:
       envName*: string

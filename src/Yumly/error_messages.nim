@@ -1,25 +1,8 @@
 ##
 # This module is responsible to maintain all error messages
 ##
-import types/token
+import types/[token, errors]
 import utils/loc
-
-type Expected* = enum
-  expValue = "a value"
-  expIdentifier = "an identifier"
-  expString = "a string"
-  expInteger = "an integer"
-  expFloat = "a float"
-  expBoolean = "a boolean"
-  expEnvVar = "an environment variable"
-  expBlockName = "a block name"
-  expEquals = "'='"
-  expLBrace = "'{'"
-  expRBrace = "'}'"
-  expLBracket = "'['"
-  expRBracket = "']'"
-  expComma = "','"
-  expEOF = "end of file"
 
 func getTokenValue(token: Token): string =
   case token.kind
@@ -63,6 +46,12 @@ func includeOrderError*(token: Token) =
       "Ehhh... include statements must stay at the very top of the file! >_<\n" &
       loc(token.line, token.col) & "\n" &
       "  hint: keep include { \"...\" } above all global symbols, pairs, and blocks")
+
+func includeCommaError*(token: Token) =
+  raise newException(ValueError,
+      "Ehhh... include statement should not be followed by a comma! >_<\n" &
+      loc(token.line, token.col) & "\n" &
+      "  hint: remove the comma after include { \"...\" }")
 
 # IO errors
 
@@ -197,8 +186,8 @@ func configValidationFailedError*(errorCount: int, errors: string) =
 
 # Nim API/Value/Block/Conf errors
 
-func iteratorNonListTupleError*() =
-  raise newException(ValueError, "Cannot iterate over non-list/tuple value")
+func iteratorNonListError*() =
+  raise newException(ValueError, "Cannot iterate over non-list value")
 
 func blockNotFoundError*(name: string) =
   raise newException(KeyError, "Block not found: " & name)
@@ -206,14 +195,14 @@ func blockNotFoundError*(name: string) =
 func subBlockNotFoundError*(name: string) =
   raise newException(KeyError, "Sub-block not found: " & name)
 
-func cannotAddToNonListTupleError*() =
-  raise newException(IndexDefect, "Cannot add to a non-list/tuple value")
+func cannotAddToNonListError*() =
+  raise newException(IndexDefect, "Cannot add to a non-list value")
 
 func expectedTypeError*(expected: string, got: string) =
   raise newException(ValueError, "I expected " & expected & ", got " & got)
 
-func notListTupleError*() =
-  raise newException(IndexDefect, "This value isn't a list or tuple")
+func notListError*() =
+  raise newException(IndexDefect, "This value isn't a list")
 
 func keyNotFoundError*(key: string) =
   raise newException(KeyError, "I can't find '" & key & "' in the YumlyConf")

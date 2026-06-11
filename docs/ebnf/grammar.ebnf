@@ -46,8 +46,8 @@ env-var  = "$[", string-lit, "]" ;
 
 primitive-type = "string" | "int" | "float" | "bool" | "env" ;
 type-name      = primitive-type
-               | "list", "[", primitive-type, "]"
-               | "tuple" ;
+               | "list"
+               | "list", "[", primitive-type, "]" ;
 
 type-hint = ";", type-name ;
 
@@ -55,7 +55,6 @@ type-hint = ";", type-name ;
 
 primitive = string-lit | mlstring-lit | integer | float-lit | bool-lit | env-var ;
 
-(* Same syntax for list and tuple; distinction is semantic *)
 array-value = "[", [ value, { ",", value } ], "]" ;
 
 value = primitive | array-value ;
@@ -72,7 +71,7 @@ block = block-name, "{", [ block-body ], "}" ;
 include-stmt = "include", "{", string-lit, "}" ;
 
 root-item = pair | block ;
+root-seq  = root-item, { ",", root-item }, [ "," ] ;
 
-(* Includes must come first. Separator rules at root are layout-sensitive
-   and should be handled by the lexer/parser, not by pure EBNF. *)
-yumly-file = { include-stmt }, { root-item } ;
+(* Includes must come first, then root items, optionally comma-separated *)
+yumly-file = { include-stmt }, [ root-seq ] ;

@@ -1,0 +1,8 @@
+;> Default main configuration for the GetWaifu CLI PoC <;
+;> this configuration is used by default if you don't specify one in the CLI <;
+
+(application) {
+    category ;string = "" ;> empty string indicates no category <;
+    nsfw ;bool = false ;> only change this to true  if you are over 18, baka!<;
+    download-path ;string = "waifus"
+}

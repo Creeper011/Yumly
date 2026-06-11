@@ -147,7 +147,7 @@ Value* = object
     of vkInt: intVal*: int
     of vkFloat: floatVal*: float
     of vkBool: boolVal*: bool
-    of vkList, vkTuple:
+    of vkList:
       elements*: seq[Value]
     of vkEnv:
       envName*: string
@@ -240,12 +240,21 @@ echo app.project  # "Orion"
 
 ## ✿ Serialization
 
-### To string
+### To Yumly string
 
 ```nim
 let content = dumpYumly(config)
 echo content
 ```
+
+### To Yumyumy ♡ string
+
+```nim
+let content = toYumyumy(config)
+echo content
+```
+
+> ⟡ If you don't know what is Yumyumy ♡, check [docs/yumyumy.md](../yumyumy.md)
 
 ### To file
 
@@ -305,6 +314,14 @@ let hint = inferTypeHint(value)
 | `loadYumlyContent(content)` | Parse content from a string |
 | `parseContentToAST(content)` | Tokenize and parse to AST |
 
+### Serialization
+
+| Function | Description |
+|----------|-------------|
+| `dumpYumly(config)` | Serialize config to Yumly string |
+| `toYumyumy(config)` | Serialize config to Yumyumy ♡ string |
+| `writeYumly(config, path)` | Write config to a `.yumly` file |
+
 ### Accessors
 
 | Function | Description |
@@ -314,7 +331,6 @@ let hint = inferTypeHint(value)
 | `getFloat(val)` / `getFloat(val, default)` | Get float value (strict / with default fallback) |
 | `getBool(val)` / `getBool(val, default)` | Get boolean value (strict / with default fallback) |
 | `getList(val)` / `getList(val, default)` | Get list sequence (strict / with default fallback) |
-| `getTuple(val)` / `getTuple(val, default)` | Get tuple sequence (strict / with default fallback) |
 
 ### Indexing & Search
 

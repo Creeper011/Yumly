@@ -1,7 +1,7 @@
 ##
 # Playground for testing the tokenizer
 ##
-import ../../src/Yumly/phases/tokenizer
+import ../../src/Yumly/phases/tokenizer/tokenizer
 import ../../src/Yumly/types/token
 import std/streams
 
@@ -38,6 +38,6 @@ It can also contain newlines.
 let nextToken = tokenize(newStringStream(fileContent))
 while true:
   let token = nextToken()
-  echo token
+  echo $token
   if token.kind == tkEOF:
     break

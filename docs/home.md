@@ -37,7 +37,9 @@ data = Yumly().load("config.yumly")
 ### Nim
 
 ```bash
-nimble install yumly
+git clone https://github.com/Creeper011/Yumly
+cd Yumly/
+nimble install --path:. # not published on Nimble yet
 ```
 
 ```nim
@@ -78,7 +80,7 @@ phases, PoCs, and real-world examples.
 
 ### ✿ Tools
 
-- **CLI:** `yumly_cli check config.yumly`
+- **CLI ✨:** Check the Yumly CLI ✨ documentation in [docs/usage/yumly_cli.md](usage/yumly_cli.md)
 - **VSCode:** Check the [extension folder](../yumly-vscode/) for syntax 
   highlighting installation.
 

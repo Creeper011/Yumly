@@ -131,28 +131,22 @@ The escapes available are:
 - `\"` (double quote)
 - `\'` (single quote)
 
-## ✿ Phase 6: Lists and Tuples
+## ✿ Phase 6: Lists
 
 ### ⟡ Lists
 
-Lists are homogeneous — all elements must be of the same type: (don't forget it!)
+Lists can be homogeneous (all same type with `;list[T]`) or heterogeneous (mixed types with `;list` or no type hint):
 
 ```yumly
-tags    ;list[string] = ["api", "v2", "stable"]
-ports   ;list[int]    = [6767, 4242, 6969]
+tags ;list[string] = ["api", "v2", "stable"]
+ports ;list[int] = [6767, 4242, 6969]
+info ;list = ["localhost", 8080, true]
 
 ;> without type hint, inferred from content <;
 hosts = ["localhost", "0.0.0.0"]
 ```
 
 Valid types for lists: `string`, `int`, `float`, `bool`, `env`.
-
-### ⟡ Tuples
-
-Tuples are heterogeneous — they can have different types:
-
-```yumly
-server_info ;tuple = ["localhost", 8080, true]
 
 ;> automatically inferred if types are mixed <;
 meta = ["staging", 42, false]

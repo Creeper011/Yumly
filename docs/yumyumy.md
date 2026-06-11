@@ -20,7 +20,6 @@ As an internal representation of Yumly, Yumyumy has a few structural distinction
 | Block | `(block) { ... }` | `[block] ( ... )` |
 | Assignment | `key ;type = value` | `key (type) -> value` |
 | List | `[a, b, c]` | `[a, b, c]` |
-| Tuple | `(a, b, c)` | `(a, b, c)` |
 
 > NOTE: comments are not preserved in yumyumy format
 
@@ -33,14 +32,14 @@ An example from [examples/example2.yumly](../examples/example2.yumly):
   name (string) -> John Doe
   fullName (string) -> John Doe 67!
   age (int) -> 30
-  hobbies (list) -> [reading, hiking, cooking]
+  hobbies (list, string) -> [reading, hiking, cooking]
   homeDir (env) -> "/home/yumene"
   [block1] (
     variable1 (string) -> value
     variable2 (int) -> 1
     variable3 (list, int) -> [1, 2, 3, 4, 5]
     variable4 (list, string) -> [one, two, three, four, five]
-    variable5 (tuple) -> (1, two, 3.3, four, [five])
+    variable5 (list) -> [1, two, 3.3, four, [five]]
     variable6 (string) -> string with a "quote" inside and a \ backslash inside
   )
 ]

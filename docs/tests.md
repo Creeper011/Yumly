@@ -67,10 +67,10 @@ name ;string = "Test Name"
 valid ;bool = false, number ;int = 0000
 phase ;string = "T" ;> if is a full case, this pair doesn't exist <;
 
-;> for multiples levels of test<;
+;> For multiples levels of test<;
 cases ;list[string] = ["case1.yumly", "case2.yumly"]
 
-;> set environment variables for the test case (optional) <;
+;> Set environment variables for the test case (optional) <;
 (envs) {
     VAR1 ;string = "Value",
     VAR2 ;string = "Value",
@@ -94,7 +94,7 @@ Template: [tests/utils/template/metadata.yumly](../tests/utils/template/metadata
 | `T`   | Tokenizer    | Raw token stream |
 | `P`   | Parser       | AST construction |
 | `R`   | Resolver     | Type & Env resolution |
-| `LI`  | Load Include | Including external files |
+| `LI`  | Load Includes | Including external files |
 | `V`   | Validator    | Structural checks |
 | `E`   | Evaluator    | Final value generation |
 

@@ -26,4 +26,5 @@ commentary
     variable6 ;string = "string with a \"quote\" inside and a \\ backslash inside"
     empty = [], ;> is a list[string] by default <;
     emptyTyped ;list[int] = []
+    emptyTypedWithNoType ;list = ["a", 1, "a"]
 }

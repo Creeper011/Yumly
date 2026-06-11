@@ -1,6 +1,6 @@
 import ../../src/Yumly/types/ast
 import ../../src/Yumly/core/builders
-import ../../src/Yumly/serializers/encoder
+import ../../src/Yumly/serializers/yumly/encoder
 
 var cfg = newYumly()
 cfg.pairs.add(Pair(key: "hello", value: Value(kind: vkString, strVal: "\t\"world\nhello\"")))

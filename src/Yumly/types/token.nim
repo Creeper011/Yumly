@@ -25,3 +25,9 @@ type
     case kind*: TokenKind
     of tkString, tkIdent, tkLiteral: value*: string
     else: discard
+
+func `$`*(t: Token): string =
+  result = $t.kind
+  if t.kind in {tkString, tkIdent, tkLiteral}:
+    result.add("(\"" & t.value & "\")")
+  result.add(" @ " & $t.line & ":" & $t.col)

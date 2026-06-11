@@ -4,6 +4,7 @@
 ##
 
 import ../types/ast
+import ../types/type_hints
 import strutils, sequtils, options
 import ../error_messages
 
@@ -67,9 +68,6 @@ func decodeEnv*(raw: string, line, col: int): Value =
 func decodeList*(raw: string, line, col: int): Value =
   Value(kind: vkList, elements: @[])
 
-func decodeTuple*(raw: string, line, col: int): Value =
-  Value(kind: vkTuple, elements: @[])
-
 # Encode Methods
 
 func encodeValue*(val: Value, style: EncodingStyle = styleYumly): string
@@ -97,12 +95,6 @@ func encodeList(val: Value, style: EncodingStyle): string =
   let elements = val.elements.mapIt(encodeValue(it, style)).join(", ")
   "[" & elements & "]"
 
-func encodeTuple(val: Value, style: EncodingStyle): string =
-  let elements = val.elements.mapIt(encodeValue(it, style)).join(", ")
-  case style
-  of styleYumly: "[" & elements & "]"
-  of styleYumyumy: "(" & elements & ")"
-
 func encodeValue*(val: Value, style: EncodingStyle = styleYumly): string =
   case val.kind
   of vkString: encodeString(val, style)
@@ -111,7 +103,6 @@ func encodeValue*(val: Value, style: EncodingStyle = styleYumly): string =
   of vkBool: encodeBool(val, style)
   of vkEnv: encodeEnv(val, style)
   of vkList: encodeList(val, style)
-  of vkTuple: encodeTuple(val, style)
 
 const VALUES_DEF*: array[ValueKind, ValueDef] = [
   vkString: ValueDef(
@@ -139,11 +130,6 @@ const VALUES_DEF*: array[ValueKind, ValueDef] = [
     decode: decodeList,
     encode: encodeList
   ),
-  vkTuple: ValueDef(
-    typeHint: "tuple",
-    decode: decodeTuple,
-    encode: encodeTuple
-  ),
   vkEnv: ValueDef(
     typeHint: "env",
     decode: decodeEnv,
@@ -160,3 +146,54 @@ func classifyLiteral*(raw: string): Value =
     let response = tryDecode(raw, vk)
     if response.isSome: return response.get
   couldNotDecodeLiteralError(raw)
+
+# Type inference utilities
+
+func inferListElementString*(val: Value): string
+
+func inferTypeString*(val: Value): string =
+  ## Yumly-format type string: "string", "int", "list[string]".
+  case val.kind
+  of vkList:
+    let elem = inferListElementString(val)
+    if elem.len > 0: "list[" & elem & "]"
+    else: "list"
+  else:
+    VALUES_DEF[val.kind].typeHint
+
+func inferTypeKind*(val: Value): TypeHintKind =
+  ## Maps a ValueKind to its corresponding TypeHintKind.
+  case val.kind
+  of vkString: thString
+  of vkInt: thInt
+  of vkFloat: thFloat
+  of vkBool: thBool
+  of vkList: thList
+  of vkEnv: thEnv
+
+func inferListElementString*(val: Value): string =
+  ## Type name of the first list element via VALUES_DEF, or "" for empty lists.
+  if val.kind == vkList and val.elements.len > 0:
+    VALUES_DEF[val.elements[0].kind].typeHint
+  else: ""
+
+func inferListElementKind*(val: Value): TypeHintKind =
+  ## Type hint kind of the first list element, or thString for empty lists.
+  if val.kind == vkList and val.elements.len > 0:
+    inferTypeKind(val.elements[0])
+  else: thString
+
+func inferTypeHintObject*(val: Value): TypeHint =
+  ## Builds a TypeHint object inferred from a Value.
+  let raw = inferTypeString(val)
+  case val.kind
+  of vkList:
+    TypeHint(
+      raw: raw,
+      kind: thList,
+      elementKind: inferListElementKind(val),
+      elementRaw: inferListElementString(val)
+    )
+  else:
+    TypeHint(raw: raw, kind: inferTypeKind(val))
+

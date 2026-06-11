@@ -17,6 +17,7 @@ pkgs.mkShell {
     gcc
     gnumake
     pkg-config
+    openssl
 
     # Versionament tools
     git

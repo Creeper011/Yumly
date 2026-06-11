@@ -1,9 +1,13 @@
 import std/[os, strutils, terminal, options, streams, times, osproc]
 import ../../src/Yumly/core/pipeline
-import ../../src/Yumly/api/nim_api
-import ../../src/Yumly/serializers/parser_yumyumy
+import ../../src/Yumly/api/nim/api
 import ../../src/Yumly/types/[token, nodes, ast]
-import ../../src/Yumly/phases/[tokenizer, parser, load_include, resolver, validate, evaluator]
+import ../../src/Yumly/phases/tokenizer/tokenizer
+import ../../src/Yumly/phases/parser/parser
+import ../../src/Yumly/phases/includes/loader
+import ../../src/Yumly/phases/resolver/resolver
+import ../../src/Yumly/phases/validator/validate
+import ../../src/Yumly/phases/evaluator/evaluator
 import ../utils/ylwa_writer
 
 type

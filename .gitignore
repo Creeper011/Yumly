@@ -26,6 +26,7 @@ test_write
 /Yumly
 change_version
 yumly_cli
+yumly-cli
 cafe
 markers_finder
 
