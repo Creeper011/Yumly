@@ -67,7 +67,7 @@ let config = loadYumly("config.yumly")
 ### Nix / NixOS (For the [Yumly CLI](docs/usage/yumly_cli.md) ✨)
 
 ```bash
-nix profile install github:Creeper011/Yumly
+nix profile add github:Creeper011/Yumly
 ```
 
 ## ✿ Development & Tools

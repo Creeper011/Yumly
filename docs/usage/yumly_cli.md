@@ -17,7 +17,7 @@ If you use Nix, you can install Yumly CLI directly from the flake:
 
 ```sh
 # Install to your profile
-nix profile install github:Creeper011/Yumly
+nix profile add github:Creeper011/Yumly
 
 # Or run it directly without installing
 nix run github:Creeper011/Yumly -- load example.yumly
