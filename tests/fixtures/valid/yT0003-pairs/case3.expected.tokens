@@ -1,0 +1,8 @@
+tkIdent "a"
+tkEquals
+tkString "x"
+tkComma
+tkIdent "b"
+tkEquals
+tkString "y"
+tkEOF

@@ -1,0 +1,39 @@
+(*
+ * Ylwa Benchmark Representation — EBNF Specification
+ * Ylwa is a string-only format used for logs and benchmark results.
+ *)
+
+(* ===== TERMINALS ===== *)
+
+LETTER  = "A".."Z" | "a".."z" ;
+DIGIT   = "0".."9" ;
+WS      = " " | "\t" | "\n" | "\r" ;
+SYMBOL  = "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" |
+          "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" |
+          "=" | ">" | "?" | "@" | "[" | "]" | "^" | "_" | "`" |
+          "{" | "|" | "}" | "~" ;
+
+ANY     = LETTER | DIGIT | SYMBOL | WS ;
+
+ident-char = ANY - ";" - "\n" - "\r" - "," ;
+ident      = ident-char, { ident-char } ;
+
+(* Value in Ylwa is always a raw string until the comma *)
+value-char = ANY - "," - ";" - ":" - "<" - ">" ;
+value      = { value-char } ;
+
+(* ===== STRUCTURES ===== *)
+
+(* Comment Block: .> ... <. *)
+comment-char = ANY ;
+comment = ".>", { comment-char }, "<." ;
+
+(* Field: - Key ; Value, *)
+field = "-", ident, ";", value, ",", { WS }, [ comment ] ;
+
+(* Block: ~ Name : ... : *)
+block = "~", ident, ":", { field | comment | WS }, ":" ;
+
+(* File Structure *)
+ylwa-item = comment | block | WS ;
+ylwa-file = { ylwa-item } ;

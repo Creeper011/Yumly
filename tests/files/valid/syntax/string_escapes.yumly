@@ -1,7 +1,0 @@
-(test_escapes) {
-    valid_newline = "This string has a \n newline",
-    valid_tab = "This string has a \t tab",
-    valid_backslash = "This string has a \\ backslash",
-    valid_quote = "This string has a \" quote",
-    valid_single_quote = "This string has a \' single quote"
-}

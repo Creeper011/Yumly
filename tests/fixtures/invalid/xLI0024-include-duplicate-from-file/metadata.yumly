@@ -1,0 +1,7 @@
+;> Test file metadata for include duplicate detection from file <;
+
+name ;string = "Load Include Duplicate From File"
+valid ;bool = false, number ;int = 0024
+phase ;string = "V"
+
+cases ;list[string] = ["case1.yumly"]

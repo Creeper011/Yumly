@@ -13,29 +13,35 @@ nimble.develop
 nimble.paths
 __pycache__
 libyumly.so
+*.ylwa
 
 # Personal
 waifus
 tasks.yumly
+examples/.env
 
 #binaries
+libyumly
 waifuu
 test_write
 /Yumly
 change_version
 yumly_cli
+yumly-cli
 cafe
 markers_finder
 
-# test binaries
+# playground binaries
 test_tokenizer
-test_validate
-test_values
-test_builders
-test_pipeline
 test_parser
-test_evaluator
-test_resolver
 test_encoder
-test_nim_api
-test_full_flow
+
+# test binaries
+nim_runner
+create_new_test
+
+# tests
+tests/fixtures/stress/**/*.yumly
+!tests/fixtures/stress/**/metadata.yumly
+tests/fixtures/stress/sLI0002-deep-include-nesting/depth/
+tests/fixtures/invalid/xV0002-recursion-limit/case1.yumly

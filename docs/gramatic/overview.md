@@ -1,16 +1,23 @@
-# Yumly Grammar Overview
+# ₊⋆⋆⁺ Yumly Grammar Overview ⁺₊⋆⁺
+⊹˚. ♡.𖥔 ݁ ˖
 
-Helloo — I'm going to show you how Yumly's grammar works.
-Yumly intentionally differs from common configuration syntaxes — because it's a config language for meeeee — to provide explicit structure and validation.
+Do you want to know about Yumly's grammar? don't care, i'll show you anyway! >:3
 
-## Phase 1: Basic Grammar
+Yumly intentionally differs from common configuration syntaxes — because **primarily, it's a config language for meeee >:3** — to provide explicit structure and validation.
 
-Let's start with the basics, what is a pair and a block:
+I'll show you the yumly grammar in phases (features), because in my fucking head it's easier this way. `¯\_(ツ)_/¯`
 
-- Pairs are the simplest structure, where you assign a value to a key, like `key = value` or with a specific type `key ;type = value`. The language encourages the use of type hints, even though they're optional, for better clarity and validation.
+> ⟡ Just to remember — no duplicate keys, blocks, or values in the same file, including includes! >:3
+> - If a file with `(blockA)` imports another file with `(blockA)` — it's a duplication!
+
+## ✿ Phase 1: Basic Grammar
+
+Ok — let's start with the basics, what is a pair and a block:
+
+- Pairs are the simplest structure, where you assign a value to a key, like `key = value` or optionally with a specific type `key ;type = value`. The language encourages the use of type hints, even though they're optional, for better clarity and validation.
 - Blocks are nested structures, delimited by braces `{ ... }`, where you can have multiple pairs or other blocks inside.
 
-- Example:
+Example:
 ```yumly
 nameWithoutType = "Yumly"
 nameWithType ;string = "Yumly"
@@ -23,18 +30,21 @@ nameWithType ;string = "Yumly"
   }
 }
 ```
----
 
-Also, comments are made with `;> ... <;` (like a shy anime girl) and can be used for inline documentation or block comments.
+Also, comments are made with `;> ... <;` (like a shy anime girl (ᵕ—ᴗ—). ) and can be used for inline documentation or block comments.
 ```yumly
 ;> This is an inline comment <;
+
 ;> This is a veeeery long comment
-that can span multiple lines <;
+that can have multiple lines
+and ends here <;
 ```
 
-## Phase 2: Available Types
+> you can use comments anywhere! pairs, blocks, includes, etc. in parser, they are not "counted" at all :3
 
-The language supports several value types. Type hints are optional — if you don't specify one, the type is inferred automatically.
+## ✿ Phase 2: Available Types
+
+The language supports several value types. Type hints are optional — if you don't specify one, the type is inferred automatically (use type hints pls 🥀).
 
 ### Primitives
 
@@ -48,7 +58,7 @@ The language supports several value types. Type hints are optional — if you do
 
 ### Type Inference
 
-If you don't specify the type hint, the language will infer the type based on the value:
+If you don't specify the type hint, the language will infer the type based on the value: (use type hints pls, they're cute 🥀)
 
 ```yumly
 active = true         ;> inferred as bool <;
@@ -57,9 +67,9 @@ ratio = 3.14          ;> inferred as float <;
 name = "Yumly"        ;> inferred as string <;
 ```
 
-The language encourages the use of type hints for better clarity and validation, but is flexible enough to infer types when they are not explicitly provided.
+The language encourages the use of type hints for better clarity and validation, but is flexible enough to infer types when they are not explicitly provided. (if you don't use type hints, you're a bad person 😭)
 
-## Phase 3: Environment Variables
+## ✿ Phase 3: Environment Variables
 
 Environment variables are natively supported with the syntax `$["VAR_NAME"]`:
 
@@ -75,17 +85,25 @@ You can also load a `.env` file with `include`:
 include { ".env" }
 ```
 
-## Phase 4: Include
+> that's cool, right? (´▽｀) you don't need to use another lib just to load environment variables... i made it easy for you 🥀, do you like me now? ;-;
 
-The `include` command allows you to import content from other files. Includes must come at the top of the file!
+## ✿ Phase 4: Include
+
+The `include` command allows you to import content from other files. Includes must come at the top of the file! >:3
 
 ```yumly
-include { ".env" }           ;> loads environment variables <;
-include { "base.yumly" }     ;> imports blocks from another file <;
-include { "shared.yuy" }     ;> accepts .yuy or .yumly <;
+;> Example of valid includes <;
+include { ".env" }           ;> Loads environment variables, this will populate the $[] variable values <;
+include { "base.yumly" }     ;> Imports blocks and pairs from another file <;
+include { "shared.yuy" }     ;> Accepts .yuy or .yumly <;
 ```
 
-## Phase 5: Strings and Escapes
+Oh, an important thing — includes count for the **no duplication** rule! if a file with `(blockA)` imports another file with `(blockA)` — it's a duplication! (i'm talking seriously >:3)
+
+Includes "merges" into the parent file! so, if a file that you're importing has the same block as another file, it will be counted as a duplication! >:3
+Make sure you don't include a file A that includes a file B that includes a file A, as this is a circular import >_<
+
+## ✿ Phase 5: Strings and Escapes
 
 Strings can use double or single quotes, and also support multiline with `"""`:
 
@@ -95,7 +113,7 @@ single = 'Also works with single quotes'
 multiline = """
     This is some text
     that spans multiple
-    lines!
+    lines! >:3
 """
 ```
 
@@ -103,18 +121,26 @@ Available escape sequences:
 ```yumly
 newline = "Line 1\nLine 2"
 tab = "Column 1\tColumn 2"
-backslash = "X:\\Path\\Windows"
+backslash = "X:\\Path\\Windows\\Microslop"
 ```
 
-## Phase 6: Lists and Tuples
+The escapes available are:
+- `\n` (newline)
+- `\t` (tab)
+- `\\` (backslash)
+- `\"` (double quote)
+- `\'` (single quote)
 
-### Lists
+## ✿ Phase 6: Lists
 
-Lists are homogeneous — all elements must be of the same type:
+### ⟡ Lists
+
+Lists can be homogeneous (all same type with `;list[T]`) or heterogeneous (mixed types with `;list` or no type hint):
 
 ```yumly
-tags    ;list[string] = ["api", "v2", "stable"]
-ports   ;list[int]    = [6767, 4242, 6969]
+tags ;list[string] = ["api", "v2", "stable"]
+ports ;list[int] = [6767, 4242, 6969]
+info ;list = ["localhost", 8080, true]
 
 ;> without type hint, inferred from content <;
 hosts = ["localhost", "0.0.0.0"]
@@ -122,20 +148,15 @@ hosts = ["localhost", "0.0.0.0"]
 
 Valid types for lists: `string`, `int`, `float`, `bool`, `env`.
 
-### Tuples
-
-Tuples are heterogeneous — they can have different types:
-
-```yumly
-server_info ;tuple = ["localhost", 8080, true]
-
 ;> automatically inferred if types are mixed <;
 meta = ["staging", 42, false]
 ```
 
-## Phase 7: Comma Rules
+## ✿ Phase 7: Comma Rules
 
-### Inside Blocks
+> this is a little bit different from other syntaxes — so, lock in bro. (ㆆ_ㆆ)
+
+### ⟡ Inside Blocks
 
 Commas separate pairs and sub-blocks. The last item **does not** need a comma:
 
@@ -143,11 +164,11 @@ Commas separate pairs and sub-blocks. The last item **does not** need a comma:
 (block) {
     a = "x",
     b = "y",
-    c = "z"    ;> last, no comma <;
+    c = "z"    ;> last, optional comma <;
 }
 ```
 
-### At Root
+### ⟡ At Root
 
 Pairs on the same line need a comma, but different lines don't:
 
@@ -156,9 +177,24 @@ name = "John", age = 30
 job = "dev"
 ```
 
-## Complete Example
+## ✿ Phase 8: File Structure
 
-Here is a complete Yumly file demonstrating everything together:
+Yumly files have a syntax order — includes first, then pairs and blocks.
+these orders are analyzed in parsing! >:3
+
+```yumly
+include { "file.yumly" }
+include { ".env" }
+
+pair or block...
+```
+
+- Include must come first (comments before includes do not count! so you can add comments before includes)
+- Then come pairs and blocks, in any order
+
+## ✿ Complete Example
+
+A complete Yumly file demonstrating everything together:
 
 ```yumly
 include { ".env" }
@@ -188,19 +224,9 @@ include { ".env" }
 }
 ```
 
----
+> ⟡ look this syntax!!! is soooo cuteee (˶>⩊<˶)
 
-## Yumly File Structure
+Now you can finally use yumly! :3
 
-The basic structure of a Yumly file is:
-
-```
-[include { "file" }]
-[include { ".env" }]
-
-[pair or block]...
-```
-
-- **Include** must come first (or with others at the top)
-- Then come pairs and blocks, in any order
-- No indentation required — uses `{ }` to delimit blocks
+#### Oh! — you reached the end!! congratulations!! here's a gift for you: ⸜( ˶' ᵕ '˶ )⸝
+mikuu dayoo!

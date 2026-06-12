@@ -1,0 +1,5 @@
+[
+  host (string) -> localhost
+  port (int) -> 5432
+  name (string) -> root
+]

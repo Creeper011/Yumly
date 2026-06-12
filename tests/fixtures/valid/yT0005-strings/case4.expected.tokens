@@ -1,0 +1,4 @@
+tkIdent "a"
+tkEquals
+tkString "hello "world""
+tkEOF

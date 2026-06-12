@@ -1,0 +1,8 @@
+title = "MyApp",
+(version) {
+    number ;int = 1
+},
+enabled ;bool = true,
+(server) {
+    port ;int = 8080
+}

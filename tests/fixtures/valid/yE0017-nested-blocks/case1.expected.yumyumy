@@ -1,0 +1,6 @@
+[
+  [db] (
+    host (string) -> localhost
+    port (int) -> 5432
+  )
+]

@@ -19,21 +19,26 @@ endif
 
 OUT := $(OUT_DIR)/$(MODULE_NAME).$(EXT)
 
-.PHONY: build build-nim build-py clean deps tests help
+.PHONY: build build-nim build-py build-cli clean deps deps-full tests help
 
 help:
 	@echo "Yumly Makefile"
-	@echo "  make deps       Install Nim dependencies"
-	@echo "  make build-py   Build the Nim shared library for Python"
-	@echo "  make build-nim  Build the Nim source for Nim use"
-	@echo "  make tests      Run integration and unit tests"
-	@echo "  make clean      Remove build artifacts"
+	@echo "  make deps        Install core Nim dependencies"
+	@echo "  make deps-full   Install all dependencies (including YAML)"
+	@echo "  make build-py    Build the Nim shared library for Python"
+	@echo "  make build-nim   Build the Nim source for Nim use"
+	@echo "  make build-cli   Build the Yumly CLI (with JSON and YAML support)"
+	@echo "  make tests       Run integration and unit tests"
+	@echo "  make clean       Remove build artifacts"
 
 build-py: $(OUT)
 	$(PIP) install .
 
 build-nim:
 	$(NIM) c $(NIM_FLAGS) $(SRC)
+
+build-cli:
+	$(NIM) c $(NIM_FLAGS) -d:yumlyJson -d:yumlyYaml -o:yumly-cli utils/yumly_cli.nim
 
 $(OUT): $(SRC)
 	@mkdir -p $(OUT_DIR)
@@ -42,21 +47,21 @@ $(OUT): $(SRC)
 deps:
 	$(NIMBLE) install -y nimpy dotenv
 
+deps-full:
+	$(NIMBLE) install -y nimpy dotenv yaml
+
 tests: build-py
-	@echo "--- Running Python Integration Tests ---"
-	.venv/bin/pytest tests/integration/run_tests.py
-	@echo "--- Running Nim Unit Tests ---"
-	$(NIM) c -r --path:src tests/components/test_encoder.nim
-	$(NIM) c -r --path:src tests/components/test_tokenizer.nim
-	$(NIM) c -r --path:src tests/components/test_parser.nim
-	$(NIM) c -r --path:src tests/components/test_evaluator.nim
-	$(NIM) c -r --path:src tests/components/test_validate.nim
-	$(NIM) c -r --path:src tests/components/test_resolver.nim
-	$(NIM) c -r --path:src tests/components/test_values.nim
-	$(NIM) c -r --path:src tests/core/test_pipeline.nim
-	$(NIM) c -r --path:src tests/core/test_builders.nim
-	$(NIM) c -r --path:src tests/api/test_nim_api.nim
-	$(NIM) c -r --path:src tests/integration/test_full_flow.nim
+	@echo "--- Running Python Runner ---"
+	-$(PYTHON) -m pytest tests/runners/python_runner.py
+	@echo "--- Running Nim Runner ---"
+	nim c -r tests/runners/nim_runner.nim
+
+
+tests-bench: build-py
+	@echo "--- Running Python Benchmark Runner ---"
+	$(PYTHON) -m pytest tests/runners/python_runner.py --benchmark
+	@echo "--- Running Nim Benchmark Runner ---"
+	nim c -r tests/runners/nim_runner.nim --benchmark
 
 clean:
 	rm -rf $(OUT_DIR)/$(MODULE_NAME).so $(OUT_DIR)/$(MODULE_NAME).pyd

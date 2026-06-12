@@ -10,8 +10,6 @@ func newEnvValue*(name: string, val: string = ""): Value = Value(kind: vkEnv,
     envName: name, envVal: if val == "": name else: val)
 func newListValue*(elements: seq[Value]): Value = Value(kind: vkList,
     elements: elements)
-func newTupleValue*(elements: seq[Value]): Value = Value(kind: vkTuple,
-    elements: elements)
 
 # Block/Pair helpers
 func newYumly*(): YumlyConf =

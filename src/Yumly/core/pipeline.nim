@@ -1,76 +1,141 @@
 ##
 # This module defines the pipeline process to build an yumly config
-# the steps in pipeline are: tokenizer (lexer) [Tokens]-> parser (ast) [YumNodes]-> include loader -> [YumNodes] resolver (resolve type hints) -> validator [value defs] -> evaluator (evaluate variables like env) [value defs]
-# or: text -> encoder
+# steps: tokenizer (pull) -> parser (recursive descent) -> includes -> resolver -> validator -> evaluator
 ##
 
-import os, options
-import ../yumly_file
-import ../phases/tokenizer
-import ../phases/parser
-import ../phases/resolver
-import ../phases/evaluator
-import ../phases/load_include
-import ../phases/validate
-import ../serializers/encoder
+import os, options, streams
+import ../utils/file
+import ../phases/tokenizer/tokenizer
+import ../phases/parser/parser
+import ../phases/resolver/resolver
+import ../phases/evaluator/evaluator
+import ../phases/includes/loader
+import ../phases/validator/validate
+import ../serializers/yumly/encoder
 import ../types/ast
 import ../types/nodes
+import ../types/token
 
-proc parseContentToAST*(content: string): YumNode =
-  let tokens = tokenize(content)
-  result = createNodes(tokens)
+type
+  PipelineStage* = enum
+    psTokenizer
+    psParser
+    psIncludes
+    psResolver
+    psValidator
+    psEvaluator
 
-proc parseFileToAST*(path: string): YumNode =
-  checkFileExtension(path)
-  let content = openFileContent(path)
-  result = parseContentToAST(content)
-  result.sourceFile = os.absolutePath(path)
+  PipelineResult* = object
+    case stage*: PipelineStage
+    of psTokenizer:
+      discard
+    of psParser, psIncludes, psResolver, psValidator:
+      ast*: YumNode
+    of psEvaluator:
+      config*: YumlyConf
 
-proc resolveYumly*(ast: var YumNode; workingDir: string) =
+proc runPipeline*(stream: Stream, until: PipelineStage = psEvaluator, workingDir: string = "."): PipelineResult =
+  result = PipelineResult(stage: until)
+  
+  let puller = tokenize(stream)
+  if until == psTokenizer:
+    while true:
+      let t = puller()
+      if t.kind == tkEOF: break
+    return
+
+  var parser = newParser(puller)
+  let ast = parser.parse()
+  if until == psParser:
+    result.ast = ast
+    return
+
   if ast.hasIncludes.get(false):
     loadIncludes(ast, workingDir)
-  
+    
+  if until == psIncludes:
+    result.ast = ast
+    return
+
   if ast.hasTypeHints.get(false):
     resolveAst(ast)
+  
+  if until == psResolver:
+    result.ast = ast
+    return
 
-proc validateYumly*(ast: var YumNode) =
   validateConfig(ast)
+  if until == psValidator:
+    result.ast = ast
+    return
 
-proc evaluateYumly*(ast: YumNode): YumlyConf =
-  result = evaluateConfig(ast)
+  result.config = evaluateConfig(ast)
 
-proc dumpYumly*(config: YumlyConf): string =
-  result = encoder.dumpYumly(config)
+# Stream overloads
+proc loadYumly*(stream: Stream, until: PipelineStage, workingDir: string = "."): PipelineResult =
+  runPipeline(stream, until, workingDir)
 
-proc writeYumly*(config: YumlyConf, path: string) =
-  writeFile(path, encoder.dumpYumly(config))
+proc loadYumly*(stream: Stream, workingDir: string = "."): YumlyConf =
+  runPipeline(stream, psEvaluator, workingDir).config
 
-proc loadYumly*(path: string = "config.yumly"): YumlyConf =
-  var ast = parseFileToAST(path)
-  resolveYumly(ast, parentDir(path))
-  validateYumly(ast)
-  result = evaluateYumly(ast)
+# Content overloads
+proc loadYumlyContent*(content: string, until: PipelineStage, workingDir: string = "."): PipelineResult =
+  let stream = newStringStream(content)
+  runPipeline(stream, until, workingDir)
 
 proc loadYumlyContent*(content: string, workingDir: string = "."): YumlyConf =
-  var ast = parseContentToAST(content)
-  resolveYumly(ast, workingDir)
-  validateYumly(ast)
-  result = evaluateYumly(ast)
+  let stream = newStringStream(content)
+  runPipeline(stream, psEvaluator, workingDir).config
 
-proc validateContent*(content: string, workingDir: string = "."): bool =
+# File overloads
+proc loadYumly*(path: string, until: PipelineStage): PipelineResult =
+  let stream = newYumlyStream(path)
   try:
-    var ast = parseContentToAST(content)
-    resolveYumly(ast, workingDir)
-    validateYumly(ast)
+    result = runPipeline(stream, until, parentDir(path))
+    if result.stage in {psParser, psIncludes, psResolver, psValidator}:
+      result.ast.sourceFile = os.absolutePath(path)
+  finally:
+    stream.close()
+
+proc loadYumly*(path: string = "config.yumly"): YumlyConf =
+  let stream = newYumlyStream(path)
+  try:
+    let res = runPipeline(stream, psEvaluator, parentDir(path))
+    result = res.config
+  finally:
+    stream.close()
+
+func dumpYumly*(config: YumlyConf): string =
+  result = encoder.dumpYumly(config)
+
+proc writeYumly*(config: YumlyConf; path: string) =
+  writeFile(path, encoder.dumpYumly(config))
+
+proc validateContent*(content: string; workingDir: string = "."): bool =
+  try:
+    discard loadYumlyContent(content, psValidator, workingDir)
     return true
   except ValueError, IOError:
     return false
 
 proc validateFile*(path: string): bool =
   try:
-    var ast = parseFileToAST(path)
-    resolveYumly(ast, parentDir(path))
-    validateYumly(ast)
+    discard loadYumly(path, psValidator)
     return true
   except ValueError, IOError:
     return false
+
+proc parseContentToAST*(content: string): YumNode =
+  loadYumlyContent(content, psParser).ast
+
+proc parseFileToAST*(path: string): YumNode =
+  loadYumly(path, psParser).ast
+
+proc resolveYumly*(ast: YumNode, workingDir: string = ".") =
+  if ast.hasIncludes.get(false):
+    loadIncludes(ast, workingDir)
+  if ast.hasTypeHints.get(false):
+    resolveAst(ast)
+
+proc validateYumly*(ast: YumNode) =
+  validateConfig(ast)

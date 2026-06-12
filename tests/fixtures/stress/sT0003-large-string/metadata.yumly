@@ -1,0 +1,15 @@
+;> Stress test metadata for large string tokenizer buffer <;
+
+name ;string = "Stress Large String"
+valid ;bool = true, number ;int = 0003
+phase ;string = "T"
+
+cases ;list[string] = ["case1.yumly"]
+
+preSuiteEval ;string = """
+q = chr(34) * 3
+with open("case1.yumly", "w") as f:
+    f.write(f"text ;string = {q}\\n")
+    f.write("a" * 5000000 + "\\n")
+    f.write(f"{q}\\n")
+"""

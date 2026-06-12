@@ -1,0 +1,7 @@
+;> Test file metadata for include followed by comma <;
+
+name ;string = "Include Comma"
+valid ;bool = false, number ;int = 0008
+phase ;string = "P"
+
+cases ;list[string] = ["case1.yumly"]

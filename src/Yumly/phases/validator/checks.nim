@@ -1,0 +1,178 @@
+import os, options, sets
+import ../../types/[nodes, type_hints, ast, token]
+import ../../types/values_defs
+import ../../utils/loc
+import ../../error_messages
+
+func isEnvLiteralNode*(node: YumNode): bool =
+  node.kind == nkLiteral and node.token.kind == tkDollar
+
+proc literalValueKind*(node: YumNode): ValueKind =
+  if node.kind != nkLiteral:
+    literalValueKindError($node.kind)
+
+  case node.token.kind
+  of tkString:
+    result = vkString
+  of tkLiteral:
+    result = classifyLiteral(node.rawValue).kind
+  of tkDollar:
+    result = vkEnv
+  else:
+    invalidLiteralTokenError($node.token.kind)
+
+proc literalMatchesHint*(node: YumNode, hintKind: TypeHintKind): bool =
+  let valueKind = literalValueKind(node)
+  case hintKind
+  of thUnknown:
+    true
+  of thString:
+    valueKind == vkString
+  of thInt:
+    valueKind == vkInt
+  of thFloat:
+    valueKind == vkFloat
+  of thBool:
+    valueKind == vkBool
+  of thEnv:
+    valueKind == vkEnv
+  of thList:
+    false
+
+proc literalTypeName*(node: YumNode): string =
+  VALUES_DEF[literalValueKind(node)].typeHint
+
+func isEnvNode*(node: YumNode): bool =
+  isEnvLiteralNode(node)
+
+proc nodeTypeName*(node: YumNode): string =
+  if isEnvNode(node):
+    return VALUES_DEF[vkEnv].typeHint
+  case node.kind
+  of nkLiteral: literalTypeName(node)
+  of nkArray: VALUES_DEF[vkList].typeHint
+  of nkBlock: "block"
+  of nkPair: "pair"
+  of nkConfig: "config"
+  of nkInclude: "include"
+
+# maps a TypeHintKind to its corresponding ValueKind so we can look up VALUES_DEF.
+proc toValueKind*(hk: TypeHintKind): ValueKind =
+  case hk
+  of thString: result = vkString
+  of thInt: result = vkInt
+  of thFloat: result = vkFloat
+  of thBool: result = vkBool
+  of thEnv: result = vkEnv
+  of thList: result = vkList
+  else:
+    invalidTypeHintKindError()
+
+proc matchNodeToHint*(node: YumNode, hintKind: TypeHintKind): bool =
+  case hintKind
+  of thUnknown: true
+  of thEnv: isEnvNode(node)
+  of thList: node.kind == nkArray
+  else:
+    if node.kind != nkLiteral or isEnvNode(node):
+      return false
+    literalMatchesHint(node, hintKind)
+
+proc checkDuplicates*(nodes: seq[YumNode], path: string, errors: var seq[string]) =
+  var seenSymbols = initHashSet[string]()
+  let where = if path.len == 0: "root" else: "'" & path & "'"
+
+  for child in nodes:
+    case child.kind
+    of nkBlock:
+      if child.name in seenSymbols:
+        errors.add(
+          "Oh no! the symbol '" & child.name & "' is duplicated in " & where & "! (°ロ°)" &
+          loc(child.line, child.col) &
+          "\n  hint: pair keys and block names share the same scope; merge them or rename one."
+        )
+      else:
+        seenSymbols.incl(child.name)
+    of nkPair:
+      if child.key in seenSymbols:
+        errors.add(
+          "Oh no! the symbol '" & child.key & "' is duplicated in " & where & "! (°ロ°)" &
+          loc(child.line, child.col) &
+          "\n  hint: pair keys and block names share the same scope; choose one to prevail or rename it."
+        )
+      else:
+        seenSymbols.incl(child.key)
+    else:
+      discard
+
+proc validateArrayElements*(node: YumNode, hint: TypeHint, pairKey: string, errors: var seq[string]) =
+  if hint.kind != thList or hint.elementKind == thUnknown:
+    return
+  for i, child in node.children:
+    if isEnvNode(child):
+      continue # env references are resolved at runtime
+    if not matchNodeToHint(child, hint.elementKind):
+      errors.add(
+        "Mmm, element " & $i & " in list '" & pairKey & "' has the wrong type! >_<" &
+        loc(child.line, child.col) &
+        "\n  got " & nodeTypeName(child) & ", but expected " &
+        VALUES_DEF[toValueKind(hint.elementKind)].typeHint
+      )
+
+proc validateEnvExistence*(node: YumNode, errors: var seq[string]) =
+  if not os.existsEnv(node.rawValue):
+    errors.add(
+      "Kyaa~! the env variable '" & node.rawValue & "' does not exist! (；ω；)" &
+      loc(node.line, node.col) &
+      "\n  hint: make sure it's set in your terminal or loaded via include { \".env\" }"
+    )
+
+proc validatePair*(pairNode: YumNode, path: string, errors: var seq[string]) =
+  let position = loc(pairNode.line, pairNode.col)
+  let valNode = pairNode.valNode
+
+  # --- env existence (IO) ---
+  if isEnvNode(valNode):
+    validateEnvExistence(valNode, errors)
+  elif valNode.kind == nkArray:
+    for child in valNode.children:
+      if isEnvNode(child):
+        validateEnvExistence(child, errors)
+
+  # --- type-hint checks ---
+  if pairNode.typeHint.isNone:
+    return
+  let hint = pairNode.typeHint.get
+  if hint.kind == thUnknown:
+    return
+
+  # Env reference annotated with a non-env/non-list hint
+  if isEnvNode(valNode) and hint.kind notin {thEnv, thList}:
+    errors.add(
+      "Ehhh... '" & pairNode.key & "' in '" & path &
+      "' is an env reference but is annotated as ;" & hint.raw & "! >_<" &
+      position &
+      "\n  env values must be annotated with ;env (or remove the type hint)"
+    )
+    return
+
+  case hint.kind
+  of thList:
+    if valNode.kind != nkArray:
+      errors.add(
+        "Ehhh... '" & pairNode.key & "' in '" & path & "' has the wrong type! >_<" &
+        position &
+        "\n  value is " & nodeTypeName(valNode) & ", but the type hint is ;" &
+        VALUES_DEF[vkList].typeHint
+      )
+    else:
+      validateArrayElements(valNode, hint, pairNode.key, errors)
+
+  else:
+    if not matchNodeToHint(valNode, hint.kind) and not isEnvNode(valNode):
+      errors.add(
+        "Ehhh... '" & pairNode.key & "' in '" & path & "' has the wrong type! >_<" &
+        position &
+        "\n  value is " & nodeTypeName(valNode) & ", but the type hint is ;" &
+        VALUES_DEF[toValueKind(hint.kind)].typeHint
+      )

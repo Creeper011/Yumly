@@ -7,16 +7,16 @@ import ../types/type_hints
 
 type
   # NOTE: filled in by the evaluator
-  ValueKind* = enum 
-    vkString, vkInt, vkFloat, vkBool, vkList, vkTuple, vkEnv
+  ValueKind* = enum
+    vkString, vkInt, vkFloat, vkBool, vkList, vkEnv
 
   Value* = object
     case kind*: ValueKind
-    of vkString:    strVal*: string
-    of vkInt:       intVal*: int
-    of vkFloat:     floatVal*: float
-    of vkBool:      boolVal*: bool
-    of vkList, vkTuple:
+    of vkString: strVal*: string
+    of vkInt: intVal*: int
+    of vkFloat: floatVal*: float
+    of vkBool: boolVal*: bool
+    of vkList:
       elements*: seq[Value]
     of vkEnv:
       envName*: string
@@ -43,3 +43,20 @@ type
     blocks*: seq[Block]
     pairs*: seq[Pair]
     includes*: seq[Include]
+
+  YumlyElementKind* = enum
+    ekValue, ekBlock
+
+  YumlyElement* = object
+    case kind*: YumlyElementKind
+    of ekValue: val*: Value
+    of ekBlock: blk*: Block
+
+converter toValue*(elem: YumlyElement): Value =
+  if elem.kind == ekValue: elem.val
+  else: raise newException(ValueError, "not a value")
+
+converter toBlock*(elem: YumlyElement): Block =
+  if elem.kind == ekBlock: elem.blk
+  else: raise newException(ValueError, "not a block")
+

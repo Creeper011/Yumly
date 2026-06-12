@@ -4,54 +4,57 @@
 ##
 
 import ../types/ast
+import ../types/type_hints
 import strutils, sequtils, options
 import ../error_messages
 
-type 
+type
   EncodingStyle* = enum
     styleYumly,
     styleYumyumy # NOTE: yumyumy is a representative format
 
   ValueDef* = object
     typeHint*: string
-    decode*: proc (raw: string, line: int, col: int): Value
-    encode*: proc (val: Value, style: EncodingStyle): string
+    decode*: proc (raw: string, line: int, col: int): Value {.noSideEffect.}
+    encode*: proc (val: Value, style: EncodingStyle): string {.noSideEffect.}
 
-proc decodeEscapes(raw: string, line, col: int): string =
+func decodeEscapes(raw: string, line, col: int): string =
   var i = 0
   while i < raw.len:
     if raw[i] == '\\' and i + 1 < raw.len:
       case raw[i+1]:
-      of 'n':  result.add('\n'); i += 2
-      of 't':  result.add('\t'); i += 2
+      of 'n': result.add('\n'); i += 2
+      of 'r': result.add('\r'); i += 2
+      of 't': result.add('\t'); i += 2
       of '\\': result.add('\\'); i += 2
-      of '"':  result.add('"');  i += 2
+      of '"': result.add('"'); i += 2
       of '\'': result.add('\''); i += 2
       else: invalidEscapeError(raw[i+1], line, col)
     else:
       result.add(raw[i]); i += 1
 
-proc encodeEscapes(raw: string): string = 
+func encodeEscapes(raw: string): string =
   for ch in raw:
     case ch:
     of '\n': result.add("\\n")
+    of '\r': result.add("\\r")
     of '\t': result.add("\\t")
     of '\\': result.add("\\\\")
-    of '"':  result.add("\\\"")
-    else:    result.add(ch)
+    of '"': result.add("\\\"")
+    else: result.add(ch)
 
 # Decode Methods
 
-proc decodeString*(raw: string, line, col: int): Value = 
+func decodeString*(raw: string, line, col: int): Value =
   Value(kind: vkString, strVal: decodeEscapes(raw, line, col))
 
-proc decodeInt*(raw: string, line, col: int): Value = 
+func decodeInt*(raw: string, line, col: int): Value =
   Value(kind: vkInt, intVal: parseInt(raw))
 
-proc decodeFloat*(raw: string, line, col: int): Value = 
+func decodeFloat*(raw: string, line, col: int): Value =
   Value(kind: vkFloat, floatVal: parseFloat(raw))
 
-proc decodeBool*(raw: string, line, col: int): Value = 
+func decodeBool*(raw: string, line, col: int): Value =
   if raw == "true":
     result = Value(kind: vkBool, boolVal: true)
   elif raw == "false":
@@ -59,59 +62,49 @@ proc decodeBool*(raw: string, line, col: int): Value =
   else:
     invalidBooleanError(raw)
 
-proc decodeEnv*(raw: string, line, col: int): Value =
+func decodeEnv*(raw: string, line, col: int): Value =
   Value(kind: vkEnv, envName: raw, envVal: "")
 
-proc decodeList*(raw: string, line, col: int): Value = 
+func decodeList*(raw: string, line, col: int): Value =
   Value(kind: vkList, elements: @[])
-
-proc decodeTuple*(raw: string, line, col: int): Value = 
-  Value(kind: vkTuple, elements: @[])
 
 # Encode Methods
 
-proc encodeValue*(val: Value, style: EncodingStyle = styleYumly): string
+func encodeValue*(val: Value, style: EncodingStyle = styleYumly): string
 
-proc encodeString(val: Value, style: EncodingStyle): string =
+func encodeString(val: Value, style: EncodingStyle): string =
   case style
   of styleYumly: return "\"" & encodeEscapes(val.strVal) & "\""
-  of styleYumyumy: return val.strVal
+  of styleYumyumy: return encodeEscapes(val.strVal)
 
-proc encodeInt(val: Value, style: EncodingStyle): string = 
+func encodeInt(val: Value, style: EncodingStyle): string =
   $val.intVal
 
-proc encodeFloat(val: Value, style: EncodingStyle): string =
+func encodeFloat(val: Value, style: EncodingStyle): string =
   $val.floatVal
 
-proc encodeBool(val: Value, style: EncodingStyle): string = 
+func encodeBool(val: Value, style: EncodingStyle): string =
   if val.boolVal: "true" else: "false"
 
-proc encodeEnv(val: Value, style: EncodingStyle): string = 
+func encodeEnv(val: Value, style: EncodingStyle): string =
   case style
   of styleYumly: "$[\"" & val.envName & "\"]"
-  of styleYumyumy: "\"" & val.envVal & "\""
+  of styleYumyumy: "\"" & encodeEscapes(val.envVal) & "\""
 
-proc encodeList(val: Value, style: EncodingStyle): string =
+func encodeList(val: Value, style: EncodingStyle): string =
   let elements = val.elements.mapIt(encodeValue(it, style)).join(", ")
   "[" & elements & "]"
 
-proc encodeTuple(val: Value, style: EncodingStyle): string =
-  let elements = val.elements.mapIt(encodeValue(it, style)).join(", ")
-  case style
-  of styleYumly: "[" & elements & "]"
-  of styleYumyumy: "(" & elements & ")"
-
-proc encodeValue*(val: Value, style: EncodingStyle = styleYumly): string =
+func encodeValue*(val: Value, style: EncodingStyle = styleYumly): string =
   case val.kind
   of vkString: encodeString(val, style)
-  of vkInt:    encodeInt(val, style)
-  of vkFloat:  encodeFloat(val, style)
-  of vkBool:   encodeBool(val, style)
-  of vkEnv:    encodeEnv(val, style)
-  of vkList:   encodeList(val, style)
-  of vkTuple:  encodeTuple(val, style)
+  of vkInt: encodeInt(val, style)
+  of vkFloat: encodeFloat(val, style)
+  of vkBool: encodeBool(val, style)
+  of vkEnv: encodeEnv(val, style)
+  of vkList: encodeList(val, style)
 
-let VALUES_DEF*: array[ValueKind, ValueDef] = [
+const VALUES_DEF*: array[ValueKind, ValueDef] = [
   vkString: ValueDef(
     typeHint: "string",
     decode: decodeString,
@@ -137,11 +130,6 @@ let VALUES_DEF*: array[ValueKind, ValueDef] = [
     decode: decodeList,
     encode: encodeList
   ),
-  vkTuple: ValueDef(
-    typeHint: "tuple",
-    decode: decodeTuple,
-    encode: encodeTuple
-  ),
   vkEnv: ValueDef(
     typeHint: "env",
     decode: decodeEnv,
@@ -149,12 +137,63 @@ let VALUES_DEF*: array[ValueKind, ValueDef] = [
   ),
 ]
 
-proc tryDecode*(raw: string, vk: ValueKind, line = 0, col = 0): Option[Value] =
+func tryDecode*(raw: string, vk: ValueKind, line = 0, col = 0): Option[Value] =
   try: some(VALUES_DEF[vk].decode(raw, line, col))
   except: none(Value)
 
-proc classifyLiteral*(raw: string): Value =
+func classifyLiteral*(raw: string): Value =
   for vk in [vkBool, vkInt, vkFloat, vkString]:
     let response = tryDecode(raw, vk)
     if response.isSome: return response.get
   couldNotDecodeLiteralError(raw)
+
+# Type inference utilities
+
+func inferListElementString*(val: Value): string
+
+func inferTypeString*(val: Value): string =
+  ## Yumly-format type string: "string", "int", "list[string]".
+  case val.kind
+  of vkList:
+    let elem = inferListElementString(val)
+    if elem.len > 0: "list[" & elem & "]"
+    else: "list"
+  else:
+    VALUES_DEF[val.kind].typeHint
+
+func inferTypeKind*(val: Value): TypeHintKind =
+  ## Maps a ValueKind to its corresponding TypeHintKind.
+  case val.kind
+  of vkString: thString
+  of vkInt: thInt
+  of vkFloat: thFloat
+  of vkBool: thBool
+  of vkList: thList
+  of vkEnv: thEnv
+
+func inferListElementString*(val: Value): string =
+  ## Type name of the first list element via VALUES_DEF, or "" for empty lists.
+  if val.kind == vkList and val.elements.len > 0:
+    VALUES_DEF[val.elements[0].kind].typeHint
+  else: ""
+
+func inferListElementKind*(val: Value): TypeHintKind =
+  ## Type hint kind of the first list element, or thString for empty lists.
+  if val.kind == vkList and val.elements.len > 0:
+    inferTypeKind(val.elements[0])
+  else: thString
+
+func inferTypeHintObject*(val: Value): TypeHint =
+  ## Builds a TypeHint object inferred from a Value.
+  let raw = inferTypeString(val)
+  case val.kind
+  of vkList:
+    TypeHint(
+      raw: raw,
+      kind: thList,
+      elementKind: inferListElementKind(val),
+      elementRaw: inferListElementString(val)
+    )
+  else:
+    TypeHint(raw: raw, kind: inferTypeKind(val))
+

@@ -1,0 +1,3 @@
+[
+  text (string) -> \nfirst line\nsecond line with \n        quote and \" and \t tokens\n
+]

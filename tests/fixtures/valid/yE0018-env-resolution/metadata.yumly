@@ -1,0 +1,12 @@
+;> Test file metadata for evaluator env resolution <;
+
+name ;string = "Evaluator Env Resolution"
+valid ;bool = true, number ;int = 0018
+phase ;string = "E"
+
+(envs) {
+  MY_ENV_VAR = "abc123"
+  ANOTHER_ENV_VAR = "secret"
+}
+
+cases ;list[string] = ["case1.yumly", "case2.yumly"]

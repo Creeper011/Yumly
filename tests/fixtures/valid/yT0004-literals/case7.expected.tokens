@@ -1,0 +1,7 @@
+tkIdent "a"
+tkEquals
+tkLiteral "true"
+tkIdent "b"
+tkEquals
+tkLiteral "false"
+tkEOF

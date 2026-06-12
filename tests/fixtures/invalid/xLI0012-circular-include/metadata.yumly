@@ -1,0 +1,7 @@
+;> Test file metadata for load include circular import detection <;
+
+name ;string = "Load Include Circular Include"
+valid ;bool = false, number ;int = 0012
+phase ;string = "LI"
+
+cases ;list[string] = ["case1.yumly","case2.yumly"]

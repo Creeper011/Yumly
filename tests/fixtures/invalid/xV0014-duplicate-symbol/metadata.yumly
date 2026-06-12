@@ -1,0 +1,7 @@
+;> Test file metadata for validator duplicate pair/block symbols <;
+
+name ;string = "Validator Duplicate Symbol"
+valid ;bool = false, number ;int = 0014
+phase ;string = "V"
+
+cases ;list[string] = ["case1.yumly", "case2.yumly"]

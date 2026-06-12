@@ -1,0 +1,21 @@
+;> Stress test for deep includes <;
+
+name ;string = "Deep Include Nesting (1000 levels)"
+valid ;bool = true, number ;int = 0002
+phase ;string = "LI"
+
+cases ;list[string] = ["test.yumly"]
+
+preSuiteEval ;string = """
+import os
+
+os.makedirs("depth", exist_ok=True)
+
+for i in range(1, 1000):
+    with open(f"depth/d{i}.yumly", "w") as f:
+        f.write(f'include {{ "d{i+1}.yumly" }}')
+
+with open("depth/d1000.yumly", "w") as f:
+    f.write('deep ;string = "leaf"')
+
+"""

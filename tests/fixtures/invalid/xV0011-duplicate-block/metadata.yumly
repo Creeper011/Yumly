@@ -1,0 +1,7 @@
+;> Test file metadata for validator duplicate block detection <;
+
+name ;string = "Validator Duplicate Block"
+valid ;bool = false, number ;int = 0011
+phase ;string = "V"
+
+cases ;list[string] = ["case1.yumly","case2.yumly","case3.yumly"]

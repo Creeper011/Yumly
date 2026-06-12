@@ -1,0 +1,7 @@
+;> Test file metadata for cascading includes with evaluator assertion <;
+
+name ;string = "Load Include Cascading Includes"
+valid ;bool = true, number ;int = 0023
+phase ;string = "E"
+
+cases ;list[string] = ["case1.yumly"]

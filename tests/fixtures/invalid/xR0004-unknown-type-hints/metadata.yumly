@@ -1,0 +1,7 @@
+;> Test file metadata for unknown type hints <;
+
+name ;string = "Unknown Type Hints"
+valid ;bool = false, number ;int = 0004
+phase ;string = "R"
+
+cases ;list[string] = ["case1.yumly", "case2.yumly"]

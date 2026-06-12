@@ -1,0 +1,9 @@
+tkLParen
+tkIdent "s"
+tkRParen
+tkLBrace
+tkIdent "x"
+tkEquals
+tkLiteral "1"
+tkRBrace
+tkEOF

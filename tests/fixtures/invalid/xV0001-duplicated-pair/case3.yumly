@@ -1,0 +1,4 @@
+;> Duplicate key at root level with type hints <;
+
+key ;string = "v1"
+key ;string = "v2"

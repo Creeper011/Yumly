@@ -1,0 +1,7 @@
+;> Test file metadata for env vars parsing <;
+
+name ;string = "Env Vars Parsing"
+valid ;bool = true, number ;int = 0014
+phase ;string = "P"
+
+cases ;list[string] = ["case1.yumly", "case2.yumly"]

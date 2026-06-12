@@ -1,0 +1,39 @@
+(*
+ * Yumyumy ♡ Internal AST Representation — EBNF Specification
+ *)
+
+(* ===== TERMINALS ===== *)
+
+LETTER  = "A".."Z" | "a".."z" ;
+DIGIT   = "0".."9" ;
+WS      = " " | "\t" | "\n" | "\r" ;
+SYMBOL  = "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" |
+          "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" |
+          "=" | ">" | "?" | "@" | "[" | "]" | "^" | "_" | "`" |
+          "{" | "|" | "}" | "~" ;
+
+ANY     = LETTER | DIGIT | SYMBOL | WS ;
+
+ident   = LETTER, { LETTER | DIGIT | "_" } ;
+
+(* Yumyumy uses raw values for representation *)
+value-char = ANY - "\n" - "\r" - ")" - "]" ;
+value      = { value-char } ;
+
+(* ===== TYPES ===== *)
+
+primitive-type = "string" | "int" | "float" | "bool" | "env" ;
+type-hint      = "(", ( primitive-type | "list" | "tuple" | "list, " , primitive-type ), ")" ;
+
+(* ===== STRUCTURES ===== *)
+
+(* Assignment: key (type) -> value *)
+assignment = ident, [ WS ], type-hint, [ WS ], "->", [ WS ], value ;
+
+(* Block: [name] ( ... ) *)
+block = "[", ident, "]", [ WS ], "(", { (assignment | block | WS) }, ")" ;
+
+(* Root: [ ... ] *)
+yumyumy-root = "[", { (assignment | block | WS) }, "]" ;
+
+yumyumy-file = yumyumy-root ;
