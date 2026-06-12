@@ -98,6 +98,9 @@ phases, PoCs, and real-world examples.
 
 ---
 
+### ✿ Misc
+— I think I’ve noticed the contrast between first-person and impersonal language. I, as Yumly, am not only a config language but also a persona of Yumene. You can call me Yummie or Yumly; that’s why I also have a soundtrack on Spotify — check it out: [Yummie (Yumly) - Spotify](https://open.spotify.com/playlist/4q9OXUzEk62ClOdmAalo1W)
+
 i think that's all for now!! :3
 
 bye bye and see you later ♡
