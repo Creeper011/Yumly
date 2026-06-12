@@ -56,14 +56,14 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ vars.PYTHON_WHEEL_VERSION }}
+          python-version: ${{ vars.PYTHON_WHEEL_VERSION || '3.12' }}
           cache: pip
 
       - name: Setup Nim
         if: matrix.os != 'ubuntu-latest'
         uses: jiro4989/setup-nim-action@v2
         with:
-          nim-version: ${{ vars.NIM_VERSION }}
+          nim-version: ${{ vars.NIM_VERSION || '2.2.10' }}
 
       - name: Setup MSVC
         if: matrix.os == 'windows-latest'
@@ -83,12 +83,12 @@ jobs:
 
           CIBW_BEFORE_ALL_LINUX: >
             curl -sSfL
-            https://nim-lang.org/download/nim-${{ vars.NIM_VERSION }}-linux_x64.tar.xz
+            https://nim-lang.org/download/nim-${{ vars.NIM_VERSION || '2.2.10' }}-linux_x64.tar.xz
             -o /tmp/nim.tar.xz &&
             tar xf /tmp/nim.tar.xz -C /opt
 
           CIBW_ENVIRONMENT_LINUX: >
-            PATH="/opt/nim-${{ vars.NIM_VERSION }}/bin:$PATH"
+            PATH="/opt/nim-${{ vars.NIM_VERSION || '2.2.10' }}/bin:$PATH"
 
           CIBW_ENVIRONMENT_WINDOWS: >
             NIMFLAGS="--cc:vcc"

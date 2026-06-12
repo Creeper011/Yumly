@@ -30,7 +30,15 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Install dependencies
-        run: nimble install -y nimpy dotenv
+        shell: bash
+        run: |
+          nimble install -y nimpy dotenv
+
+          curl -fsSL https://github.com/flyx/NimYAML/archive/refs/tags/v2.2.1.tar.gz -o nimyaml.tar.gz
+          tar -xzf nimyaml.tar.gz
+          pushd NimYAML-2.2.1
+          nimble install -y
+          popd
 
       - name: Build CLI
         run: |
