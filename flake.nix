@@ -14,9 +14,13 @@
       url = "github:euantorano/dotenv.nim";
       flake = false;
     };
+    yaml-src = {
+      url = "github:flyx/NimYAML";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, nimpy-src, dotenv-src }:
+  outputs = { self, nixpkgs, flake-utils, nimpy-src, dotenv-src, yaml-src }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
@@ -35,13 +39,14 @@
             # Add dependencies to Nim path
             nim c -d:release --opt:size \
               --path:${nimpy-src} \
-              --path:${dotenv-src} \
-              -o:yumly utils/yumly_cli.nim
+              --path:${dotenv-src}/src \
+              --path:${yaml-src} \
+              -o:yumly-cli -d:yumlyJson -d:yumlyYaml utils/yumly_cli.nim
           '';
 
           installPhase = ''
             mkdir -p $out/bin
-            cp yumly $out/bin/
+            cp yumly-cli $out/bin/
           '';
         };
 

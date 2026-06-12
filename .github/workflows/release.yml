@@ -27,7 +27,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ vars.PYTHON_VERSION }}
+          python-version: ${{ vars.PYTHON_VERSION || '3.12' }}
           cache: pip
 
       - name: Install build dependencies
