@@ -96,7 +96,7 @@ proc parseOutput() =
     let args = commandLineParams()
 
     if args.len < 2:
-        error("usage: yumly-cli <check|load> <file|content> [-u <stage>] [-y] [-j] [--yaml]")
+        error("usage: yumly-cli <check|load> <file|content> [-u <stage>] [-yu] [-j] [--yaml]")
         quit(1)
 
     let cmd = args[0]
