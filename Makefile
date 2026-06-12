@@ -52,7 +52,7 @@ deps-full:
 
 tests: build-py
 	@echo "--- Running Python Runner ---"
-	-$(PYTHON) -m pytest tests/runners/python_runner.py
+	$(PYTHON) -m pytest tests/runners/python_runner.py
 	@echo "--- Running Nim Runner ---"
 	nim c -r tests/runners/nim_runner.nim
 

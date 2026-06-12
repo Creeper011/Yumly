@@ -58,6 +58,8 @@ proc parseListItems(parser: var Parser): seq[YumNode] =
     result.add(parser.parseValue())
     if parser.currentToken.kind == tkComma:
       parser.advance()
+    elif parser.currentToken.kind != tkRBracket:
+      expectedError(expComma, parser.currentToken)
   discard parser.expect(tkRBracket, expRBracket)
 
 proc parseValue(parser: var Parser): YumNode =

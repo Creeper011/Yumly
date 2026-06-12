@@ -35,9 +35,9 @@ jobs:
       - name: Build CLI
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            nim c -d:release --opt:size --cc:vcc -o:yumly.exe utils/yumly_cli.nim
+            nim c -d:release -d:yumlyJson -d:yumlyYaml --opt:size --cc:vcc -o:yumly.exe utils/yumly_cli.nim
           else
-            nim c -d:release --opt:size -o:yumly utils/yumly_cli.nim
+            nim c -d:release -d:yumlyJson -d:yumlyYaml --opt:size -o:yumly utils/yumly_cli.nim
           fi
         shell: bash
 
