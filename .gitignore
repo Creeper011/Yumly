@@ -21,6 +21,7 @@ tasks.yumly
 examples/.env
 
 #binaries
+libyumly
 waifuu
 test_write
 /Yumly
