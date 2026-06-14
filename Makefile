@@ -38,7 +38,7 @@ build-nim:
 	$(NIM) c $(NIM_FLAGS) $(SRC)
 
 build-cli:
-	$(NIM) c $(NIM_FLAGS) -d:yumlyJson -d:yumlyYaml -o:yumly-cli utils/yumly_cli.nim
+	$(NIM) c $(NIM_FLAGS) -d:yumlyJson -d:yumlyYaml -d:yumlySuggestions -o:yumly-cli utils/yumly_cli.nim
 
 $(OUT): $(SRC)
 	@mkdir -p $(OUT_DIR)

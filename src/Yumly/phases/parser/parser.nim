@@ -17,6 +17,12 @@ proc expect(parser: var Parser, kind: TokenKind, expected: Expected): Token =
   result = parser.currentToken
   parser.advance()
 
+proc expect(parser: var Parser, kind: TokenKind, expected: Expected, previousToken: Token): Token =
+  if parser.currentToken.kind != kind:
+    expectedError(expected, parser.currentToken, previousToken)
+  result = parser.currentToken
+  parser.advance()
+
 proc newParser*(puller: TokenPuller): Parser =
   result = Parser(
     puller: puller,
@@ -94,7 +100,7 @@ proc parseValue(parser: var Parser): YumNode =
 proc parsePair(parser: var Parser): YumNode =
   let keyToken = parser.expect(tkIdent, expIdentifier)
   let typeHint = parser.parseTypeHint()
-  discard parser.expect(tkEquals, expEquals)
+  discard parser.expect(tkEquals, expEquals, keyToken)
   let valueNode = parser.parseValue()
 
   return YumNode(kind: nkPair, key: keyToken.value, typeHint: typeHint, valNode: valueNode,

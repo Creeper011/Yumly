@@ -11,6 +11,27 @@ import cursor
 func isIdentContinue(character: char): bool =
   character in IdentChars or character in {'/', '.', '-'}
 
+func endCol(cursor: Cursor): int =
+  cursor.absPos() - cursor.lineStart + 1
+
+func token(cursor: Cursor, kind: TokenKind, line, col: int): Token =
+  case kind
+  of tkString, tkIdent, tkLiteral:
+    Token(kind: kind, line: line, col: col, endLine: cursor.line,
+        endCol: cursor.endCol(), value: "")
+  else:
+    Token(kind: kind, line: line, col: col, endLine: cursor.line,
+        endCol: cursor.endCol())
+
+func valueToken(cursor: Cursor, kind: TokenKind, line, col: int, value: string): Token =
+  case kind
+  of tkString, tkIdent, tkLiteral:
+    Token(kind: kind, line: line, col: col, endLine: cursor.line,
+        endCol: cursor.endCol(), value: value)
+  else:
+    Token(kind: kind, line: line, col: col, endLine: cursor.line,
+        endCol: cursor.endCol())
+
 proc tokenize*(stream: Stream, bufferSize: int = 4096): proc(): Token {.closure.} =
   var cursor = initCursor(stream, bufferSize)
 
@@ -18,7 +39,7 @@ proc tokenize*(stream: Stream, bufferSize: int = 4096): proc(): Token {.closure.
     while true:
       let ch = cursor.peekChar()
       if ch == '\0':
-        return Token(kind: tkEOF, line: cursor.line, col: cursor.absPos() - cursor.lineStart + 1)
+        return cursor.token(tkEOF, cursor.line, cursor.endCol())
 
       if ch in {' ', '\t', '\r', '\n'}:
         discard cursor.advanceChar()
@@ -31,7 +52,8 @@ proc tokenize*(stream: Stream, bufferSize: int = 4096): proc(): Token {.closure.
       # Comments: ;> ... <;
       if cursor.matchStr(";>"):
         while true:
-          if cursor.peekChar() == '\0': commentNotClosedError(line, col)
+          if cursor.peekChar() == '\0':
+            commentNotClosedError(line, col, cursor.line, cursor.endCol())
           if cursor.matchStr("<;"): break
           discard cursor.advanceChar()
         continue
@@ -49,22 +71,23 @@ proc tokenize*(stream: Stream, bufferSize: int = 4096): proc(): Token {.closure.
         if cursor.peekChar() in {'e', 'E'}:
           value.add(cursor.advanceChar())
           if cursor.peekChar() in {'+', '-'}: value.add(cursor.advanceChar())
-          if cursor.peekChar() notin {'0'..'9'}: invalidExponentError(line, col)
+          if cursor.peekChar() notin {'0'..'9'}:
+            invalidExponentError(line, col, cursor.line, cursor.endCol())
           while cursor.peekChar() in {'0'..'9'}: value.add(cursor.advanceChar())
 
-        return Token(kind: tkLiteral, line: line, col: col, value: value)
+        return cursor.valueToken(tkLiteral, line, col, value)
 
       case ch
-      of '(': discard cursor.advanceChar(); return Token(kind: tkLParen, line: line, col: col)
-      of ')': discard cursor.advanceChar(); return Token(kind: tkRParen, line: line, col: col)
-      of '{': discard cursor.advanceChar(); return Token(kind: tkLBrace, line: line, col: col)
-      of '}': discard cursor.advanceChar(); return Token(kind: tkRBrace, line: line, col: col)
-      of '[': discard cursor.advanceChar(); return Token(kind: tkLBracket, line: line, col: col)
-      of ']': discard cursor.advanceChar(); return Token(kind: tkRBracket, line: line, col: col)
-      of '=': discard cursor.advanceChar(); return Token(kind: tkEquals, line: line, col: col)
-      of ';': discard cursor.advanceChar(); return Token(kind: tkDeclaration, line: line, col: col)
-      of ',': discard cursor.advanceChar(); return Token(kind: tkComma, line: line, col: col)
-      of '$': discard cursor.advanceChar(); return Token(kind: tkDollar, line: line, col: col)
+      of '(': discard cursor.advanceChar(); return cursor.token(tkLParen, line, col)
+      of ')': discard cursor.advanceChar(); return cursor.token(tkRParen, line, col)
+      of '{': discard cursor.advanceChar(); return cursor.token(tkLBrace, line, col)
+      of '}': discard cursor.advanceChar(); return cursor.token(tkRBrace, line, col)
+      of '[': discard cursor.advanceChar(); return cursor.token(tkLBracket, line, col)
+      of ']': discard cursor.advanceChar(); return cursor.token(tkRBracket, line, col)
+      of '=': discard cursor.advanceChar(); return cursor.token(tkEquals, line, col)
+      of ';': discard cursor.advanceChar(); return cursor.token(tkDeclaration, line, col)
+      of ',': discard cursor.advanceChar(); return cursor.token(tkComma, line, col)
+      of '$': discard cursor.advanceChar(); return cursor.token(tkDollar, line, col)
 
       of '"', '\'':
         let quoteChar = cursor.peekChar()
@@ -74,7 +97,8 @@ proc tokenize*(stream: Stream, bufferSize: int = 4096): proc(): Token {.closure.
         if quoteChar == '"' and cursor.matchStr("\"\"\""):
           while true:
             let nextCh = cursor.peekChar()
-            if nextCh == '\0': unclosedStringAtEofError()
+            if nextCh == '\0':
+              unclosedStringAtEofError(line, col, cursor.line, cursor.endCol())
 
             # Escaped triple quote
             if cursor.matchStr("\\\"\"\""):
@@ -86,16 +110,18 @@ proc tokenize*(stream: Stream, bufferSize: int = 4096): proc(): Token {.closure.
 
             stringContent.add(cursor.advanceChar())
 
-          return Token(kind: tkString, line: line, col: col, value: stringContent)
+          return cursor.valueToken(tkString, line, col, stringContent)
 
         # Single-line String
         else:
           discard cursor.advanceChar() # skip opening quote
           while true:
             let nextCh = cursor.peekChar()
-            if nextCh == '\0': unclosedStringAtEofError()
+            if nextCh == '\0':
+              unclosedStringAtEofError(line, col, cursor.line, cursor.endCol())
             if nextCh == quoteChar: discard cursor.advanceChar(); break
-            if nextCh == '\n': unclosedStringError(line, col)
+            if nextCh == '\n':
+              unclosedStringError(line, col, cursor.line, cursor.endCol())
 
             if nextCh == '\\':
               stringContent.add(cursor.advanceChar()) # \
@@ -103,7 +129,7 @@ proc tokenize*(stream: Stream, bufferSize: int = 4096): proc(): Token {.closure.
             else:
               stringContent.add(cursor.advanceChar())
 
-          return Token(kind: tkString, line: line, col: col, value: stringContent)
+          return cursor.valueToken(tkString, line, col, stringContent)
 
       else:
         if ch in IdentStartChars:
@@ -111,9 +137,9 @@ proc tokenize*(stream: Stream, bufferSize: int = 4096): proc(): Token {.closure.
           while isIdentContinue(cursor.peekChar()): word.add(cursor.advanceChar())
 
           if word == "true" or word == "false":
-            return Token(kind: tkLiteral, line: line, col: col, value: word)
+            return cursor.valueToken(tkLiteral, line, col, word)
 
-          return Token(kind: tkIdent, line: line, col: col, value: word)
+          return cursor.valueToken(tkIdent, line, col, word)
 
-        unexpectedCharError($ch, line, col)
         discard cursor.advanceChar()
+        unexpectedCharError($ch, line, col, cursor.line, cursor.endCol())

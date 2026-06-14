@@ -7,6 +7,8 @@ proc tokenToPy*(t: Token, pyBuiltins: PyObject): PyObject =
   dict["kind"] = pyBuiltins.str($t.kind)
   dict["line"] = pyBuiltins.int(t.line)
   dict["col"] = pyBuiltins.int(t.col)
+  dict["endLine"] = pyBuiltins.int(t.endLine)
+  dict["endCol"] = pyBuiltins.int(t.endCol)
   if t.kind in {tkString, tkIdent, tkLiteral}:
     dict["value"] = pyBuiltins.str(t.value)
   return dict

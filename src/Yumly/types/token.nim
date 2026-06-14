@@ -22,6 +22,8 @@ type
   Token* = object
     line*: int
     col*: int
+    endLine*: int
+    endCol*: int
     case kind*: TokenKind
     of tkString, tkIdent, tkLiteral: value*: string
     else: discard

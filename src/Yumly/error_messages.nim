@@ -1,8 +1,15 @@
 ##
 # This module is responsible to maintain all error messages
 ##
+import std/options
 import types/[token, errors]
 import utils/loc
+
+when defined(yumlySuggestions):
+  import utils/suggestions
+
+func tokenError(message: string, token: Token, code: string): ref YumlyError =
+  newYumlyError(message, token.line, token.col, token.endLine, token.endCol, code)
 
 func getTokenValue(token: Token): string =
   case token.kind
@@ -21,37 +28,62 @@ func getTokenValue(token: Token): string =
 
 # Parser errors
 
-func expectedError*(expected: Expected, token: Token) =
-  raise newException(ValueError,
+func expectedMessage(expected: Expected, token: Token, previousToken: Option[Token]): string =
+  result =
     "Heyy, I expected " & $expected & ", but found " & getTokenValue(token) &
-    loc(token.line, token.col) & ".")
+    loc(token.line, token.col) & "."
 
-func expectedBlockError*(expected: Expected, blkName: string, blkLine,
-        blkCol: int, token: Token) =
-  raise newException(ValueError,
+  when defined(yumlySuggestions):
+    let suggestion = suggestExpected(expected, token, previousToken)
+    if suggestion.isSome:
+      result.add("\n  hint: " & suggestion.get)
+
+func expectedError*(expected: Expected, token: Token) =
+  raise tokenError(
+    expectedMessage(expected, token, none(Token)),
+    token, "parser.expected")
+
+func expectedError*(expected: Expected, token, previousToken: Token) =
+  raise tokenError(
+    expectedMessage(expected, token, some(previousToken)),
+    token, "parser.expected")
+
+func expectedBlockError*(expected: Expected, blkName: string, blkLine, blkCol: int, token: Token) =
+  var message =
     "Heyy i expected " & $expected & " for block '(" & blkName &
-            ")' opened at line " &
-    $blkLine & ", column " & $blkCol & ", but found " & getTokenValue(token) &
-    loc(token.line, token.col) & ".")
+    ")' opened at line " & $blkLine & ", column " & $blkCol &
+    ", but found " & getTokenValue(token) & loc(token.line, token.col) & "."
+
+  when defined(yumlySuggestions):
+    let suggestion = suggestExpected(expected, token)
+    if suggestion.isSome:
+      message.add("\n  hint: " & suggestion.get)
+
+  raise tokenError(
+    message,
+    token, "parser.expected")
 
 func expectedTopTokenError*(expected: Expected, token: Token) =
-  raise newException(ValueError,
+  raise tokenError(
       "Ehhh.. found an unexpected token at root: '" & getTokenValue(token) &
       "'" & loc(token.line, token.col) & ".\n" &
       "Valid root tokens: include, block, ident.\n" &
-      "Tip: make sure you're using commas correctly >,<")
+      "Tip: make sure you're using commas correctly >,<",
+      token, "parser.unexpected-root")
 
 func includeOrderError*(token: Token) =
-  raise newException(ValueError,
+  raise tokenError(
       "Ehhh... include statements must stay at the very top of the file! >_<\n" &
       loc(token.line, token.col) & "\n" &
-      "  hint: keep include { \"...\" } above all global symbols, pairs, and blocks")
+      "  hint: keep include { \"...\" } above all global symbols, pairs, and blocks",
+      token, "parser.include-order")
 
 func includeCommaError*(token: Token) =
-  raise newException(ValueError,
+  raise tokenError(
       "Ehhh... include statement should not be followed by a comma! >_<\n" &
       loc(token.line, token.col) & "\n" &
-      "  hint: remove the comma after include { \"...\" }")
+      "  hint: remove the comma after include { \"...\" }",
+      token, "parser.include-comma")
 
 # IO errors
 
@@ -65,43 +97,64 @@ func failedToLoadFile*(path: string, line: int, column: int, error: string) =
   )
 
 func recursionLimitError*(limit: int, line: int, col: int) =
-  raise newException(ValueError,
+  raise newYumlyError(
       "Kyaa~! My head is spinning! The nesting is way too deep! (x_x)\n" &
       "  recursion limit: " & $limit & "\n" &
       loc(line, col) & "\n" &
-      "  hint: try to flatten your configuration, it is way too deep for me to handle!")
+      "  hint: try to flatten your configuration, it is way too deep for me to handle!",
+      line, col, "parser.recursion-limit")
 
 func unknownTypeHintError*(hint: string, line: int, column: int) =
-  raise newException(ValueError,
-      "Ehhh... unknown type hint '" & hint & "'" & loc(line, column))
+  var message = "Ehhh... unknown type hint '" & hint & "'" & loc(line, column)
+
+  when defined(yumlySuggestions):
+    let suggestion = suggestTypeHint(hint)
+    if suggestion.isSome:
+      message.add("\n  hint: did you mean ';" & suggestion.get & "'?")
+
+  raise newYumlyError(
+      message,
+      line, column, "resolver.unknown-type-hint")
 
 func missingListTypeError*(line: int, column: int) =
-  raise newException(ValueError,
-      "Ehhh... the type hint 'list' must specify its element type, e.g. ';list[string]'" & loc(line, column))
+  raise newYumlyError(
+      "Ehhh... the type hint 'list' must specify its element type, e.g. ';list[string]'" & loc(line, column),
+      line, column, "resolver.missing-list-type")
 
 
 func missingEnvError*(envName: string, line: int, column: int) =
-  raise newException(ValueError,
+  raise newYumlyError(
       "Kyaa~! the env variable '" & envName & "' does not exist! (；ω；)" &
       loc(line, column) & "\n" &
-      "  hint: make sure '" & envName & "' is set in your terminal or loaded via include { \".env\" }")
+      "  hint: make sure '" & envName & "' is set in your terminal or loaded via include { \".env\" }",
+      line, column, "validator.missing-env")
 
 # Tokenizer errors
 
-func commentNotClosedError*(line, col: int) =
-  raise newException(ValueError, "Heyy, the comment doesn't close! Expected '<;'" & loc(line, col))
+func commentNotClosedError*(line, col, endLine, endCol: int) =
+  raise newYumlyError(
+    "Heyy, the comment doesn't close! Expected '<;'" & loc(line, col),
+    line, col, endLine, endCol, "tokenizer.unclosed-comment")
 
-func invalidExponentError*(line, col: int) =
-  raise newException(ValueError, "Heyy, invalid exponent" & loc(line, col))
+func invalidExponentError*(line, col, endLine, endCol: int) =
+  raise newYumlyError(
+    "Heyy, invalid exponent" & loc(line, col),
+    line, col, endLine, endCol, "tokenizer.invalid-exponent")
 
-func unclosedStringError*(line, col: int) =
-  raise newException(ValueError, "Heyy, the string doesn't close" & loc(line, col))
+func unclosedStringError*(line, col, endLine, endCol: int) =
+  raise newYumlyError(
+    "Heyy, the string doesn't close" & loc(line, col),
+    line, col, endLine, endCol, "tokenizer.unclosed-string")
 
-func unclosedStringAtEofError*() =
-  raise newException(ValueError, "Heyy the string doesn't close at the end of the file")
+func unclosedStringAtEofError*(line, col, endLine, endCol: int) =
+  raise newYumlyError(
+    "Heyy the string doesn't close at the end of the file",
+    line, col, endLine, endCol, "tokenizer.unclosed-string")
 
-func unexpectedCharError*(char: string, line, col: int) =
-  raise newException(ValueError, "Wow, an unexpected character '" & char & "'" & loc(line, col))
+func unexpectedCharError*(char: string, line, col, endLine, endCol: int) =
+  raise newYumlyError(
+    "Wow, an unexpected character '" & char & "'" & loc(line, col),
+    line, col, endLine, endCol, "tokenizer.unexpected-character")
 
 # File errors
 
@@ -138,12 +191,13 @@ func includeFileNotFoundError*(rawPath: string, absPath: string, line: int, col:
       "  hint: check if the path is correct and the file actually exists")
 
 func includeUnsupportedExtError*(filePath: string, ext: string, line: int, col: int) =
-  raise newException(ValueError,
+  raise newYumlyError(
       "Mmm, this file type isn't supported in include { \"\" } ;-; \n" &
       "  file: '" & filePath & "'\n" &
       "  got type: '" & ext & "'\n" &
       loc(line, col) & "\n" &
-      "  hint: only .env, .yumly, .yuy files are supported for now")
+      "  hint: only .env, .yumly, .yuy files are supported for now",
+      line, col, "include.unsupported-extension")
 
 func sandboxDirViolationError*(path: string, sandboxDir: string, line: int, col: int) =
   raise newException(IOError,
@@ -156,7 +210,9 @@ func sandboxDirViolationError*(path: string, sandboxDir: string, line: int, col:
 # Values defs errors
 
 func invalidEscapeError*(c: char, line: int, col: int) =
-  raise newException(ValueError, "Heyy, invalid escape: \\" & $c & " ;-;" & loc(line, col))
+  raise newYumlyError(
+    "Heyy, invalid escape: \\" & $c & " ;-;" & loc(line, col),
+    line, col, "evaluator.invalid-escape")
 
 func invalidBooleanError*(raw: string) =
   raise newException(ValueError, "Invalid boolean value: " & raw)

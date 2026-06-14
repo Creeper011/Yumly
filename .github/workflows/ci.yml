@@ -28,6 +28,13 @@ jobs:
         with:
           python-version: ${{ vars.PYTHON_VERSION || '3.12' }}
 
+      - name: Run suggestion tests
+        run: |
+          nim c -r --out:/tmp/test-suggestions-closest tests/test_suggestions_closest_match.nim
+          nim c -r --out:/tmp/test-suggestions-syntax tests/test_suggestions_expected_syntax.nim
+          nim c -r --out:/tmp/test-suggestions-errors tests/test_suggestions_structured_diagnostics.nim
+          nim c -r --out:/tmp/test-suggestions-ranges tests/test_suggestions_tokenizer_ranges.nim
+
       - name: Run tests
         run: make tests
 
