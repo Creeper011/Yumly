@@ -2,7 +2,6 @@
 
 name ;string = "Deep Include Nesting (1000 levels)"
 valid ;bool = true, number ;int = 0002
-phase ;string = "LI"
 
 cases ;list[string] = ["test.yumly"]
 

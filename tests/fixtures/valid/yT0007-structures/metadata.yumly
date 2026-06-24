@@ -2,6 +2,9 @@
 
 name ;string = "Structures"
 valid ;bool = true, number ;int = 0007
-phase ;string = "T"
+
+(envs) {
+  MY_VAR = "value"
+}
 
 cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly"]

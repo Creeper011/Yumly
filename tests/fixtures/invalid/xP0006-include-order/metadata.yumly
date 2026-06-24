@@ -2,6 +2,6 @@
 
 name ;string = "Include Order"
 valid ;bool = false, number ;int = 0006
-phase ;string = "P"
+expectedCode ;string = "parser.include-order"
 
 cases ;list[string] = ["case1.yumly", "case2.yumly"]

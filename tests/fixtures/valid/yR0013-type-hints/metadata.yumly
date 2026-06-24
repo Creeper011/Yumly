@@ -2,6 +2,9 @@
 
 name ;string = "Type Hints Parsing"
 valid ;bool = true, number ;int = 0013
-phase ;string = "R"
+
+(envs) {
+  V = "value"
+}
 
 cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly", "case5.yumly", "case6.yumly"]

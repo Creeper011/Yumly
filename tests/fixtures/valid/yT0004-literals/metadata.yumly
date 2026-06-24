@@ -2,6 +2,5 @@
 
 name ;string = "Literals"
 valid ;bool = true, number ;int = 0004
-phase ;string = "T"
 
 cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly", "case5.yumly", "case6.yumly", "case7.yumly"]

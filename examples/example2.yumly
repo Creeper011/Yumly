@@ -23,8 +23,8 @@ commentary
     variable3 ;list[int] = [1, 2, 3, 4, 5],
     variable4 ;list[string] = ["one", "two", "three", "four", "five"],
     variable5 = [1, "two", 3.3, "four", ["five"]],
-    variable6 ;string = "string with a \"quote\" inside and a \\ backslash inside"
+    variable6 ;string = "string with a \"quote\" inside and a \\ backslash inside",
     empty = [], ;> is a list[string] by default <;
-    emptyTyped ;list[int] = []
+    emptyTyped ;list[int] = [],
     emptyTypedWithNoType ;list = ["a", 1, "a"]
 }

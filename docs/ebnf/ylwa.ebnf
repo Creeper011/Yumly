@@ -15,7 +15,7 @@ SYMBOL  = "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" |
 
 ANY     = LETTER | DIGIT | SYMBOL | WS ;
 
-ident-char = ANY - ";" - "\n" - "\r" - "," ;
+ident-char = ANY - ";" - ":" - "\n" - "\r" - "," ;
 ident      = ident-char, { ident-char } ;
 
 (* Value in Ylwa is always a raw string until the comma *)
@@ -32,7 +32,7 @@ comment = ".>", { comment-char }, "<." ;
 field = "-", ident, ";", value, ",", { WS }, [ comment ] ;
 
 (* Block: ~ Name : ... : *)
-block = "~", ident, ":", { field | comment | WS }, ":" ;
+block = "~", ident, ":", { field | comment | block | WS }, ":" ;
 
 (* File Structure *)
 ylwa-item = comment | block | WS ;

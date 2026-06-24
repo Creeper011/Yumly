@@ -27,7 +27,7 @@ nix run github:Creeper011/Yumly -- load example.yumly
 ```sh
 make build-cli
 # or
-nim c -o:yumly-cli -d:yumlyJson -d:yumlyYaml utils/yumly_cli.nim
+nim c -o:yumly-cli -d:yumlyJson -d:yumlyYaml src/cli/yumly_cli.nim
 ```
 
 > ⟡ **Important:** The `-d:yumlyJson` and `-d:yumlyYaml` flags activate support for JSON and YAML output formats. Note that YAML support requires the `NimYAML`/`yaml` library (just run `make deps-full`).

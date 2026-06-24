@@ -1,8 +1,10 @@
-;> Test file metadata template for unit tests <;
+;> Test file metadata template for fixtures tests <;
 
 name ;string = "Test Name"
 valid ;bool = false, number ;int = 0000
-phase ;string = "T" ;> if is a full case, this pair doesn't exist <;
+
+;> Required for invalid fixtures <;
+expectedCode ;string = "tokenizer.unclosed-string"
 
 ;> for multiples levels of test<;
 cases ;list[string] = ["case1.yumly", "case2.yumly"]

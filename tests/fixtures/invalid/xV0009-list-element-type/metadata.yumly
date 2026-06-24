@@ -2,6 +2,6 @@
 
 name ;string = "Validator List Element Type"
 valid ;bool = false, number ;int = 0009
-phase ;string = "V"
+expectedCode ;string = "validator.list-element-type"
 
 cases ;list[string] = ["case1.yumly","case2.yumly","case3.yumly"]

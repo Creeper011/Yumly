@@ -2,8 +2,9 @@
 include { "example2.yumly" }
 
 (linux_system) {
-    path ;env = $["PATH"],
-    home ;env = $["HOME"],
-    shell ;env = $["SHELL"],
-    user ;env = $["USER"]
+    path ;env = $["PATH" ?? "mocked"],
+    home ;env = $["HOME" ?? "mocked"],
+    shell ;env = $["SHELL" ?? "mocked"],
+    user ;env = $["USER" ?? "mocked"],
+    uh ;env = $["UH" ?? "mocked"]
 }

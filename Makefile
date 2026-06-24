@@ -1,5 +1,7 @@
 MODULE_NAME := libyumly
-SRC := src/Yumly/libyumly.nim
+SRC := src/yumly/libyumly.nim
+NIM_SOURCES := $(shell find src -name '*.nim')
+NIM_TEST_RUNNER_SOURCES := $(shell find tests/runners/legacy/nim_runner -name '*.nim')
 OUT_DIR := lib/python/yumly
 
 # Detect environment: prefer .venv if it exists
@@ -9,7 +11,7 @@ PIP ?= $(VENV_BIN)pip
 NIM ?= nim
 NIMBLE ?= nimble
 NIM_FLAGS ?= -d:release --opt:size --debuginfo:off --passL:-Wl,--strip-all --lineTrace:off
-PYTHON_FLAGS ?= -d:python -d:release --app:lib --opt:size --debuginfo:off --passL:-Wl,--strip-all --lineTrace:off
+PYTHON_FLAGS ?= -d:python -d:release --app:lib --opt:size --debuginfo:off --passL:-Wl,--strip-all --lineTrace:off --nimcache:build/nimcache/python
 
 ifeq ($(OS),Windows_NT)
 	EXT := pyd
@@ -19,7 +21,7 @@ endif
 
 OUT := $(OUT_DIR)/$(MODULE_NAME).$(EXT)
 
-.PHONY: build build-nim build-py build-cli clean deps deps-full tests help
+.PHONY: build build-nim build-py build-cli clean deps deps-full tests tests-bench help
 
 help:
 	@echo "Yumly Makefile"
@@ -29,6 +31,7 @@ help:
 	@echo "  make build-nim   Build the Nim source for Nim use"
 	@echo "  make build-cli   Build the Yumly CLI (with JSON and YAML support)"
 	@echo "  make tests       Run integration and unit tests"
+	@echo "  make tests-bench Run fixture benchmarks"
 	@echo "  make clean       Remove build artifacts"
 
 build-py: $(OUT)
@@ -38,9 +41,9 @@ build-nim:
 	$(NIM) c $(NIM_FLAGS) $(SRC)
 
 build-cli:
-	$(NIM) c $(NIM_FLAGS) -d:yumlyJson -d:yumlyYaml -d:yumlySuggestions -o:yumly-cli utils/yumly_cli.nim
+	$(NIM) c $(NIM_FLAGS) -d:yumlyJson -d:yumlyYaml -d:yumlySuggestions -o:yumly-cli src/cli/yumly_cli.nim
 
-$(OUT): $(SRC)
+$(OUT): $(NIM_SOURCES) Makefile
 	@mkdir -p $(OUT_DIR)
 	$(NIM) c $(NIM_FLAGS) $(PYTHON_FLAGS) --out:$@ $(SRC)
 
@@ -51,17 +54,20 @@ deps-full:
 	$(NIMBLE) install -y nimpy dotenv yaml
 
 tests: build-py
+	@echo "--- Running Python Unit Tests ---"
+	PYTHONPATH=lib/python $(PYTHON) -m pytest tests/unit -q
 	@echo "--- Running Python Runner ---"
-	$(PYTHON) -m pytest tests/runners/python_runner.py
+	PYTHONPATH=lib/python $(PYTHON) -m pytest tests/runners/legacy/python_runner/fixtures.py -q
 	@echo "--- Running Nim Runner ---"
-	nim c -r tests/runners/nim_runner.nim
+	@mkdir -p build/tests
+	$(NIM) c --nimcache:build/nimcache/tests-runner --out:build/tests/nim_runner tests/runners/legacy/nim_runner/main.nim
+	build/tests/nim_runner
 
-
-tests-bench: build-py
-	@echo "--- Running Python Benchmark Runner ---"
-	$(PYTHON) -m pytest tests/runners/python_runner.py --benchmark
+tests-bench:
 	@echo "--- Running Nim Benchmark Runner ---"
-	nim c -r tests/runners/nim_runner.nim --benchmark
+	@mkdir -p build/tests
+	$(NIM) c $(NIM_FLAGS) --nimcache:build/nimcache/tests-runner-bench --out:build/tests/nim_runner_bench tests/runners/legacy/nim_runner/main.nim
+	build/tests/nim_runner_bench --fixtures-only --benchmark
 
 clean:
 	rm -rf $(OUT_DIR)/$(MODULE_NAME).so $(OUT_DIR)/$(MODULE_NAME).pyd

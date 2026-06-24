@@ -2,6 +2,6 @@
 
 name ;string = "Validator Missing Env"
 valid ;bool = false, number ;int = 0010
-phase ;string = "V"
+expectedCode ;string = "validator.missing-env"
 
 cases ;list[string] = ["case1.yumly","case2.yumly","case3.yumly"]

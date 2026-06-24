@@ -2,6 +2,5 @@
 
 name ;string = "Evaluator Nested Blocks"
 valid ;bool = true, number ;int = 0017
-phase ;string = "E"
 
 cases ;list[string] = ["case1.yumly","case2.yumly","case3.yumly"]

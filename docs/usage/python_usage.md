@@ -153,7 +153,7 @@ print(yumyumy_str)
 
 ## ✿ Error Handling
 
-All errors are raised as `YumlyError`:
+Parser errors are raised as `YumlyError` with a structured `Diagnostic`:
 
 ```python
 from yumly import Yumly, YumlyError
@@ -161,9 +161,16 @@ from yumly import Yumly, YumlyError
 yumly = Yumly()
 try:
     yumly.load("invalid.yumly")
-except YumlyError as e:
-    print(f"Yumly error: {e.message}")
+except YumlyError as error:
+    print(error.diagnostic)
+    print(error.code)
+    print(error.stage)
+    print(error.line, error.col)
 ```
+
+`code`, `stage`, `line`, `col`, `end_line`, and `end_col` are also exposed
+directly on the exception for convenience. The complete structured value is
+available as `error.diagnostic`.
 
 ---
 

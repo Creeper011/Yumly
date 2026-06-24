@@ -1,2 +1,2 @@
-include { "included.yumly" },
-name = "root"
+include { "included.yumly" }
+name = "included"

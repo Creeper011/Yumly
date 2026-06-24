@@ -2,6 +2,6 @@
 
 name ;string = "Unexpected Root Tokens"
 valid ;bool = false, number ;int = 0007
-phase ;string = "P"
+expectedCode ;string = "parser.unexpected-root"
 
 cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly"]

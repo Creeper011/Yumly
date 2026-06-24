@@ -2,6 +2,5 @@
 
 name ;string = "Evaluator Lists"
 valid ;bool = true, number ;int = 0016
-phase ;string = "E"
 
 cases ;list[string] = ["case1.yumly","case2.yumly","case3.yumly","case4.yumly","case5.yumly", "case6.yumly"]

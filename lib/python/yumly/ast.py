@@ -7,6 +7,8 @@ class Token:
     line: int
     col: int
     value: Optional[str] = None
+    end_line: Optional[int] = None
+    end_col: Optional[int] = None
 
 @dataclass(frozen=True)
 class YumNode:
@@ -18,6 +20,8 @@ class YumNode:
     
     # Specific fields based on kind
     raw_value: Optional[str] = None
+    env_name: Optional[str] = None
+    env_default: Optional[str] = None
     key: Optional[str] = None
     type_hint: Optional[str] = None
     val_node: Optional['YumNode'] = None

@@ -18,7 +18,8 @@ proc run(nsfwFlag: bool, limit: int) =
     echo "Aww... looks like you don't have permission to continue."
     quit(0)
 
-  echo "Haii~ Fetching ", limit, " images in category: '", (if config.category == "": "none" else: config.category), "'"
+  echo "Haii~ Fetching ", limit, " images in category: '", (
+    if config.category == "": "none" else: config.category), "'"
   echo "Rate limit active: 1 request per 100ms"
   echo "(NSFW: ", actualNsfw, ")"
   for i in 1..limit:
@@ -35,7 +36,7 @@ when isMainModule:
   var nsfwEnabled = false
   var limit = 1
   let args = commandLineParams()
-  
+
   for i in 0..<args.len:
     if args[i] == "--nsfw":
       nsfwEnabled = true

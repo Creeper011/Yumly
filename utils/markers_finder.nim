@@ -1,11 +1,11 @@
 import std/[os, strutils, strformat]
 
-const 
+const
   SEARCH_DIR = "./src"
   MARKERS = @["# TODO", "# FIXME", "# NOTE"]
   ALLOWED_EXTENSIONS = @[".nim"]
 
-const 
+const
   RESET = "\e[0m"
   BOLD = "\e[1m"
   DIM = "\e[2m"
@@ -17,7 +17,8 @@ type ArgsResponse = object
   markers: seq[string]
   directory: string
 
-proc parseLine(markers: seq[string], line: string, lineIndex: int, path: string) = 
+proc parseLine(markers: seq[string], line: string, lineIndex: int,
+    path: string) =
   # exclude all content before todo marker
   for marker in markers:
     let todoIndex = line.find(marker)
@@ -56,7 +57,7 @@ proc parseArgs(): ArgsResponse =
       case args[i]
       of "--help", "-h":
         echo fmt"{PURPLE}✧{RESET} Usage:"
-        echo fmt"  {BOLD}markers_finder -m \"# TODO\" \"# FIXME\" ./src{RESET}"
+        echo fmt"  {BOLD}markers_finder -m \" # TODO\" \"# FIXME\" ./src{RESET}"
         quit(0)
       of "--markers", "-m":
         if i + 1 < args.len:
@@ -69,7 +70,7 @@ proc parseArgs(): ArgsResponse =
           result.directory = args[i]
       inc i
   result
-              
+
 when isMainModule:
   let args = parseArgs()
   let displayDir = if args.directory == SEARCH_DIR: "Yumly" else: args.directory

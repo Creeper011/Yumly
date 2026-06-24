@@ -3,5 +3,4 @@
 name ;string = "comments"
 valid ;bool = true, number ;int = 0002
 
-phase ;string = "T"
 cases ;list[string] = ["case1.yumly", "case2.yumly"]

@@ -2,6 +2,6 @@
 
 name ;string = "Load Include Circular Include"
 valid ;bool = false, number ;int = 0012
-phase ;string = "LI"
+expectedCode ;string = "include.circular"
 
 cases ;list[string] = ["case1.yumly","case2.yumly"]

@@ -1,0 +1,21 @@
+;> Stress test metadata for a wide block tree <;
+
+name ;string = "Stress Wide Block Tree"
+valid ;bool = true, number ;int = 0010
+
+cases ;list[string] = ["case1.yumly"]
+
+preSuiteEval ;string = """
+lines = []
+
+for block_index in range(100):
+    lines.append(f"(block{block_index}) {{")
+    for pair_index in range(100):
+        comma = "," if pair_index < 99 else ""
+        value = block_index * 100 + pair_index
+        lines.append(f"  key{pair_index} ;int = {value}{comma}")
+    lines.append("}")
+
+with open("case1.yumly", "w") as f:
+    f.write("\\n".join(lines) + "\\n")
+"""

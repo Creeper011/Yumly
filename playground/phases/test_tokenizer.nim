@@ -19,7 +19,8 @@ multiple line
 commentary
 <;
 
-multiline_string ;string = """ & q & """
+multiline_string ;string = """ & q &
+    """
 Hello, this is a multiline string.
 It can contain "quotes" and backslashes \\.
 It can also contain newlines.

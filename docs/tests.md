@@ -1,59 +1,97 @@
-# ⋆˚.♪ Yumly Fixture Test System ♪.˚⋆
+# ⋆˚.♪ Yumly Test System ♪.˚⋆
 ⊹˚. ♡.𖥔 ݁ ˖
 
 yooooo!! welcome to the testing arena!! 🥀 ⸜(｡˃ ᵕ ˂ )⸝♡
 
-The testing system focuses on fixtures, which in turn are file-based, thus allowing tests that are not tied to any specific language. It's a way to decouple tests and also centralize them through identifiers.
-
-There are Runners, which consist of searching the fixture architecture for tests and running them. Runners will try to execute every test in the suite (failing fast on the first error encountered), providing a cute summary of the results at the very end.
+I, as Yumly, the test system has two complementary sides:
+- Unit tests for isolated behavior
+- Fixtures for the complete parsing pipeline.
 
 ---
 
-## ✿ Architecture
+## ✿ Architecture ‧₊˚
 
-Every test lives inside its own little folder. Here's how it looks:
+Every test lives inside its own little folder:
 
-```
+```text
 tests/
+  unit/
+    U0001[value_defs]-classify-literal/
+      test_classify_literal.nim
+    U0010[bridge]-map-values/
+      test_map_values.py
   fixtures/
-    valid/                         ← tests that must parse successfully
+    valid/
       yE0015-basic-types/
         metadata.yumly
-        test.yumly
-        test.expected.yumyumy      ← optional: asserts evaluator output
-    invalid/                       ← tests that must fail
-      xV0001-duplicated-pair/
+        case1.yumly
+        case1.expected.yumyumy
+    invalid/
+      xP0005-missing-tokens/
         metadata.yumly
         case1.yumly
-        case2.yumly
-    stress/                        ← stress/performance tests
+    stress/
       sV0001-deep-nesting/
         metadata.yumly
         test.yumly
   runners/
-    nim_runner.nim                 ← the one that makes it all happen!
+    nim_runner/
+    python_runner/
   utils/
-    create_new_test.nim            ← your best friend for new tests
+    create_new_test.nim
 ```
 
-### ✿ How to name tests
+The runners are intentionally separated from the test data. Fixtures describe
+the language behavior once, then Nim and Python verify the same cases.
 
-You might be wondering, what are these strange folder names (like `xV002`)? They are identifiers!
+---
 
-For my cute test system, every folder follows this pattern:
+## ✿ Unit Tests ‧₊˚
 
+They exercise one module or behavior directly, and don't need `metadata.yumly`.
+
+But, for that, discovery rules are simple:
+
+- ⟡ Nim unit files must be named `test_*.nim`.
+- ⟡ Python unit files must be named `test_*.py`.
+- ⟡ Filesystem and complete-pipeline behavior belong in fixtures.
+- ⟡ Nim unit binaries are generated under `build/tests/unit`.
+
+Run all unit tests:
+
+```bash
+make test-unit
 ```
-{identifier}{phase}{number}-{name}
+
+Or choose a runner:
+
+```bash
+make test-unit-nim
+make test-unit-python
+```
+
+Python units are collected directly by pytest, so each test function appears
+as an individual result. The Nim runner recursively discovers and compiles
+every `test_*.nim` source.
+
+---
+
+## ✿ Fixture Identifiers ‧₊˚
+
+Fixture folders use this pattern:
+
+```text
+{kind}{phase}{number}-{name}
 ```
 
 | Field        | Description                                          |
 |--------------|------------------------------------------------------|
-| `identifier` | `y` = valid, `x` = invalid, `s` = stress             |
+| `kind` | `y` = valid, `x` = invalid, `s` = stress             |
 | `phase`      | Pipeline stage to run up to (optional)               |
 | `number`     | Global 4-digit counter, e.g. `0001`                  |
 | `name`       | Lowercase with hyphens (kebab-case), e.g. `multiline-string` |
 
-> **Note:** The number is **global per identifier** — it keeps incrementing 
+> **Note:** The number is **global per kind** — it keeps incrementing
 > across all tests regardless of which phase they target!
 
 ## ✿ Test Metadata ‧₊˚
@@ -61,16 +99,19 @@ For my cute test system, every folder follows this pattern:
 Every test folder MUST have a `metadata.yumly` file. This tells the runner exactly what to do. **Runners do never infer from the folder name!!**
 
 ```yumly
-;> Test file metadata template for unit tests <;
+;> Test file metadata template for fixtures tests <;
 
 name ;string = "Test Name"
 valid ;bool = false, number ;int = 0000
-phase ;string = "T" ;> if is a full case, this pair doesn't exist <;
+phase ;string = "T"
 
-;> For multiples levels of test<;
+;> Required for invalid fixtures <;
+expectedCode ;string = "tokenizer.unclosed-string"
+
+;> for multiples levels of test<;
 cases ;list[string] = ["case1.yumly", "case2.yumly"]
 
-;> Set environment variables for the test case (optional) <;
+;> set environment variables for the test case <;
 (envs) {
     VAR1 ;string = "Value",
     VAR2 ;string = "Value",
@@ -79,7 +120,6 @@ cases ;list[string] = ["case1.yumly", "case2.yumly"]
 }
 
 ;> Executes Python code inside an isolated sandbox before the test suite runs <;
-
 preSuiteEval ;string = """
 # your python code here
 """
@@ -100,7 +140,7 @@ Template: [tests/utils/template/metadata.yumly](../tests/utils/template/metadata
 
 ---
 
-## ✿ Making Assertions ‧₊˚
+## ✿ Making Assertions (for fixtures) ‧₊˚
 
 Assertions are **optional** but highly recommended!! Without an expected file, the runner only checks if the test passes or fails. 
 
@@ -123,33 +163,30 @@ yE0015-basic-types/
   case2.yumly              ← pass/fail only
 ```
 
-### ⟡ Tokenizer assertions (`.expected.tokens`)
+### ⟡ Tokenizer assertions
 
-The runner compares the serialized token stream.
+The runner serializes the token stream and compares it with
+`case1.expected.tokens`:
 
-```
+```text
 tkIdent "name"
-tkDeclaration
-tkIdent "string"
 tkEquals
 tkString "Yumly"
 tkEOF
 ```
 
-The runner serializes the token stream produced by the tokenizer and compares it as a string against this file.
+### ⟡ Evaluator assertions
 
-### ⟡ Evaluator assertions (`.expected.yumyumy`)
+For `case1.yumly`:
 
-The runner serializes the result with `toYumyumy`.
-
-`test.yumly`:
 ```yumly
 name ;string = "Yumly"
 (database) { host = "localhost" }
 ```
 
-`test.expected.yumyumy`:
-```
+The matching `case1.expected.yumyumy` may contain:
+
+```text
 [
   name (string) -> Yumly
   [database] (
@@ -158,74 +195,109 @@ name ;string = "Yumly"
 ]
 ```
 
-Env vars are shown as their **resolved values** in yumyumy ♡, so assertions 
-implicitly verify env resolution too!! ✧
+Env vars appear as resolved values, so evaluator assertions verify resolution
+too!! ✧
 
-> ⟡ If you don't know what is Yumyumy ♡, check [docs/yumyumy.md](../yumyumy.md)
-
----
-
-## ✿ Testing for failures ‧₊˚
-
-Invalid tests don't use expected files. An invalid test, for example, passes if it **fails** at or before the targeted phase.
-
-The failure message is not asserted — error messages are intentionally not 
-part of the contract, as they may change over time (hopefully getting cuter!). ✿
+> ⟡ If you don't know what is Yumyumy ♡, check [docs/yumyumy.md](yumyumy.md)
 
 ---
 
-## ✿ Creating a new test ‧₊˚
+## ✿ Running The Suite ‧₊˚
 
-Don't do it manually!! Use this utility:
+Run unit and functional fixture tests:
+
+```bash
+make test-all
+```
+
+Run only functional fixtures:
+
+```bash
+make test-fixtures
+make test-fixtures-nim
+make test-fixtures-python
+```
+
+`test-all` intentionally excludes stress fixtures and benchmarks. The normal
+loop should stay quick enough to run constantly.
+
+---
+
+## ✿ Stress And Benchmarks ‧₊˚
+
+Stress fixtures exercise large inputs, deep nesting, and include depth:
+
+```bash
+make test-stress
+```
+
+Benchmarks measure every valid, invalid, and stress fixture with release builds:
+
+```bash
+make test-bench
+```
+
+Results are written to:
+
+- ⟡ `benchmark.ylwa` for Nim.
+- ⟡ `benchmark_python.ylwa` for Python.
+
+The benchmark reports are nested Ylwa documents. Measurements are grouped by
+runner, fixture kind (`valid`, `invalid`, `stress`), fixture case, and operation,
+so stress results can be inspected without digging through the full fixture list.
+Nim fixture memory uses `getOccupiedMem()` inside an isolated worker process,
+so previous test cases do not inflate later measurements.
+Learn more about the wa wa wa format in [docs/ylwa.md](ylwa.md).
+
+---
+
+## ✿ Creating A New Test ‧₊˚
+
+Don't create all those folders manually!! Use the super-test-generator-2000:
 
 ```bash
 nim c -r tests/utils/create_new_test.nim
 ```
 
-It will guide you through:
-1. Naming your test
-2. Choosing valid/invalid and the target phase
-3. Automatically assigning the next global number scanning all fixtures
-4. Creating all the folders and files for you!! ✧
+It can create:
 
----
-
-## ✿ Running the tests ‧₊˚
-
-To run everything and see the magic:
-
-```bash
-nim c -r tests/runners/nim_runner.nim
-```
-
-You'll get a cute summary like this:
-```
-=== Yumly Test Runner (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ ===
-
-  [YAY!] y0001 - Multiline String (test.yumly)
-  [YAY!] x0002 - Duplicated Pair (case1.yumly)
-  [KYAA] y0005 - Basic Types (test.yumly)
-         assertion failed
-         expected: port (int) -> 9090
-         got:      port (int) -> 8080
-
-✨ Summary: 3/4 passed! :3
-```
-
-Additionally, the runners can generate benchmark results! Just add `--benchmark` to the end of the command. This will generate a cute `.ylwa` file (wa wa wa) for you to analyze performance, which you can check out in [docs/ylwa.md](../docs/ylwa.md).
+1. Discoverable Nim or Python unit tests.
+2. Valid, invalid, or stress fixtures.
+3. Metadata with the selected phase and expected diagnostic code.
+4. One or more case files with the next available identifier.
 
 ---
 
 ## ✿ Best Practices ‧₊˚
 
-- ⟡ **One concern per folder.** Keep it focused!!
-- ⟡ **Self-explanatory cases.** A reviewer should understand the test just by 
-  reading the `.yumly` file.
-- ⟡ **Minimal invalid cases.** Only include what triggers the failure.
-- ⟡ **Verify before you assert.** Make sure your `.expected` files are actually 
-  correct before committing them!
-- ⟡ **Don't assert what you don't care about.** If you only care that parsing 
-  succeeds, skip the expected file.
+- ⟡ **One behavior per folder.** Different diagnostic codes mean different fixtures.
+- ⟡ **Prefer unit tests for isolated logic.** They are faster and easier to debug.
+- ⟡ **Use fixtures for pipeline behavior.** Especially files, includes, env vars, and diagnostics.
+- ⟡ **Keep invalid cases minimal.** Include only what triggers the expected failure.
+- ⟡ **Never accept an arbitrary exception.** Assert the phase and diagnostic code.
+- ⟡ **Don't assert what you don't care about.** Successful completion may be enough.
+- ⟡ **Keep stress explicit.** Big cases should not slow down normal development.
+
+## ✿ Make Reference ‧₊˚
+
+Okay, too many commands to memorize... so here's the cheat sheet!! ദ്ദി •⩊• )
+
+### ⟡ Test commands
+
+| Command | What it does |
+|---------|--------------|
+| `make test` | Alias for `make test-all` |
+| `make test-all` | Runs unit tests and functional fixtures in both languages |
+| `make test-unit` | Runs all Nim and Python unit tests |
+| `make test-unit-nim` | Runs only Nim unit tests |
+| `make test-unit-python` | Runs only Python unit tests |
+| `make test-fixtures` | Runs valid and invalid fixtures in both languages |
+| `make test-fixtures-nim` | Runs valid and invalid fixtures with the Nim runner |
+| `make test-fixtures-python` | Runs valid and invalid fixtures with pytest |
+| `make test-stress` | Runs stress fixtures in both languages |
+| `make test-stress-nim` | Runs stress fixtures with the Nim runner |
+| `make test-stress-python` | Runs stress fixtures with pytest |
+| `make test-bench` | Benchmarks all valid, invalid, and stress fixtures |
 
 ---
 

@@ -2,15 +2,25 @@
 
 name ;string = "Deep Nesting Stress Test"
 valid ;bool = true, number ;int = 0001
-phase ;string = "V"
 
 cases ;list[string] = ["test.yumly"]
 
 preSuiteEval ;string = """
+from pathlib import Path
+
+constants_path = Path("../../../..") / "src" / "Yumly" / "constants.nim"
+for line in constants_path.read_text().splitlines():
+    if line.startswith("const MaxRecursionDepth*"):
+        max_depth = int(line.rsplit("=", 1)[1].strip())
+        break
+else:
+    raise RuntimeError("MaxRecursionDepth not found")
+
+levels = max_depth - 1
 body = ""
-for i in range(1, 501):
+for i in range(1, levels + 1):
     body += f"(d{i}) {{\\n"
-for i in range(1, 501):
+for i in range(1, levels + 1):
     body += "}\\n"
 with open("test.yumly", "w") as f:
     f.write(body)

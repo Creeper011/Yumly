@@ -2,6 +2,5 @@
 
 name ;string = "Pairs"
 valid ;bool = true, number ;int = 0003
-phase ;string = "T"
 
 cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly"]

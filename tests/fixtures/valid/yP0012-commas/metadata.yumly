@@ -2,6 +2,5 @@
 
 name ;string = "Commas Parsing"
 valid ;bool = true, number ;int = 0012
-phase ;string = "P"
 
 cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly"]

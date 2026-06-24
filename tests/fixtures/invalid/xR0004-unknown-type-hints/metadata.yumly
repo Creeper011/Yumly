@@ -2,6 +2,6 @@
 
 name ;string = "Unknown Type Hints"
 valid ;bool = false, number ;int = 0004
-phase ;string = "R"
+expectedCode ;string = "resolver.unknown-type-hint"
 
 cases ;list[string] = ["case1.yumly", "case2.yumly"]

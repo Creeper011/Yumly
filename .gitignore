@@ -1,6 +1,7 @@
 # Virtual Environments
 .venv
 .vscode
+.ymka/
 
 # Build Artifacts
 build
@@ -37,11 +38,11 @@ test_parser
 test_encoder
 
 # test binaries
-nim_runner
 create_new_test
+tests/unit/**/test
 
 # tests
 tests/fixtures/stress/**/*.yumly
 !tests/fixtures/stress/**/metadata.yumly
 tests/fixtures/stress/sLI0002-deep-include-nesting/depth/
-tests/fixtures/invalid/xV0002-recursion-limit/case1.yumly
+tests/fixtures/invalid/xP0002-recursion-limit/case1.yumly

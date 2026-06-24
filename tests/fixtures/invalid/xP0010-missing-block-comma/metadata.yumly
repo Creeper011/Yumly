@@ -1,0 +1,7 @@
+;> Test file metadata for missing commas inside blocks <;
+
+name ;string = "Missing Block Comma"
+valid ;bool = false, number ;int = 0010
+expectedCode ;string = "parser.expected"
+
+cases ;list[string] = ["case1.yumly", "case2.yumly"]

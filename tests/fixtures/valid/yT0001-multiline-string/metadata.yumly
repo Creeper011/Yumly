@@ -2,6 +2,5 @@
 
 name ;string = "Multiline String"
 valid ;bool = true, number ;int = 0001
-phase ;string = "T"
 
 cases ;list[string] = ["test.yumly"]

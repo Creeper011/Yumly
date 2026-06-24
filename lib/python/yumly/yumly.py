@@ -1,34 +1,54 @@
 """
 Yumly is a cute, declarative config language with fail-fast behavior and optional type safety.
-Python Library for parsing and validating yumly files and content strings.
+Python library for parsing and validating yumly files and content strings.
 """
 
 from enum import Enum
 from pathlib import Path
-from typing import Any, Union, IO, overload, Literal
-from . import libyumly  # type: ignore
-from .yumly_error import YumlyError
-from .ast import Token, YumNode
-from .bridge import map_token, map_node
+from typing import Any, IO, Literal, Union, overload
+try:
+    from . import libyumly  # type: ignore
+except ImportError:
+    libyumly = None  # type: ignore[assignment]
 
-__all__ = ["Yumly", "YumlyError", "PipelineStage", "PipelineResult"]
+from .ast import Token, YumNode
+from .bridge import map_node, map_token
+from .diagnostic import Diagnostic
+from .yumly_error import YumlyError
+
+__all__ = [
+    "Diagnostic",
+    "PipelineResult",
+    "PipelineStage",
+    "Yumly",
+    "YumlyError",
+    "YumlyData",
+]
 
 FALLBACK_MESSAGE = "Oh no.. an unexpected error occurred.. :( the Yumly parser failed"
-FALLBACK_VALUE_MESSAGE = (
-    "Oh no.. an unexpected error occurred.. :( invalid result structure"
-)
 
+
+# NOTE: These values should be in sync with PipelineStage in the native pipeline.
 class PipelineStage(Enum):
     Tokenizer = 0
     Parser = 1
     Load_Includes = 2
     Resolver = 3
-    Validator = 4
-    Evaluator = 5
+    Evaluator = 4
+    Validator = 5
 
-PipelineResult = Union[list[Token], YumNode, dict[str, Any]]
+
+PipelineResult = Union[list[Token], list[YumNode], "YumlyData"]
+
+
+def _native():
+    if libyumly is None:
+        raise RuntimeError("Yumly's core extension is not installed. Build the Python package before using parser or serializer operations.")
+    return libyumly
 
 class YumlyData(dict[str, Any]):
+    """Dictionary returned by Yumly loaders with its original Yumyumy snapshot."""
+
     __slots__ = ("_snapshot", "_yumyumy")
 
     def __init__(self, data: dict[str, Any], yumyumy: str | None = None):
@@ -37,8 +57,10 @@ class YumlyData(dict[str, Any]):
         self._snapshot = repr(dict(self))
 
     def original_yumyumy(self) -> str | None:
+        # If this value did not come from the native loader, there is no original rendering.
         if self._yumyumy is None:
             return None
+        # If the dict changed after load, regenerate instead of reusing the old rendering.
         if repr(dict(self)) != self._snapshot:
             return None
         return self._yumyumy
@@ -46,148 +68,134 @@ class YumlyData(dict[str, Any]):
 class Yumly:
     """
     Yumly is a cute, declarative config language with fail-fast behavior and optional type safety.
-    Python Library for parsing and validating yumly files and content strings.
+    Python library for parsing and validating yumly files and content strings.
     """
 
-    def load(self, path: Union[str, Path]) -> dict[str, Any]:
-        """Load data from a yumly file"""
-        path_obj = Path(path)
-        return self._parse_file(path_obj, PipelineStage.Evaluator)
+    def load(self, path: Union[str, Path]) -> YumlyData:
+        """Load a Yumly file."""
+        return self.load_until(path, PipelineStage.Validator)
 
     @overload
     def load_until(self, path: Union[str, Path], until: Literal[PipelineStage.Tokenizer]) -> list[Token]: ...
-    
+
     @overload
-    def load_until(self, path: Union[str, Path], until: Literal[PipelineStage.Parser, PipelineStage.Load_Includes, PipelineStage.Resolver, PipelineStage.Validator]) -> YumNode: ...
-    
+    def load_until(self, path: Union[str, Path], until: Literal[PipelineStage.Parser, PipelineStage.Load_Includes, PipelineStage.Resolver]) -> list[YumNode]: ...
+
     @overload
-    def load_until(self, path: Union[str, Path], until: Literal[PipelineStage.Evaluator]) -> dict[str, Any]: ...
-    
+    def load_until(self, path: Union[str, Path], until: Literal[PipelineStage.Evaluator, PipelineStage.Validator]) -> YumlyData: ...
+
     @overload
     def load_until(self, path: Union[str, Path], until: PipelineStage) -> PipelineResult: ...
 
     def load_until(self, path: Union[str, Path], until: PipelineStage) -> PipelineResult:
-        """Load data from a yumly file up to a specific pipeline stage"""
-        path_obj = Path(path)
-        return self._parse_file(path_obj, until)
+        """Load a Yumly file up to a specific pipeline stage."""
+        return self._parse_file(Path(path), until)
 
-    def loads(self, yumly_data: str, working_dir: str = ".") -> dict[str, Any]:
-        """Load data from a yumly content string"""
-        return self._parse_content(yumly_data, working_dir, PipelineStage.Evaluator)
+    def loads(self, yumly_data: str, working_dir: str = ".") -> YumlyData:
+        """Load Yumly content."""
+        return self.loads_until(yumly_data, PipelineStage.Validator, working_dir)
 
     @overload
     def loads_until(self, yumly_data: str, until: Literal[PipelineStage.Tokenizer], working_dir: str = ".") -> list[Token]: ...
 
     @overload
-    def loads_until(self, yumly_data: str, until: Literal[PipelineStage.Parser, PipelineStage.Load_Includes, PipelineStage.Resolver, PipelineStage.Validator], working_dir: str = ".") -> YumNode: ...
+    def loads_until(self, yumly_data: str, until: Literal[PipelineStage.Parser, PipelineStage.Load_Includes, PipelineStage.Resolver], working_dir: str = ".") -> list[YumNode]: ...
 
     @overload
-    def loads_until(self, yumly_data: str, until: Literal[PipelineStage.Evaluator], working_dir: str = ".") -> dict[str, Any]: ...
-    
+    def loads_until(self, yumly_data: str, until: Literal[PipelineStage.Evaluator, PipelineStage.Validator], working_dir: str = ".") -> YumlyData: ...
+
     @overload
     def loads_until(self, yumly_data: str, until: PipelineStage, working_dir: str = ".") -> PipelineResult: ...
 
     def loads_until(self, yumly_data: str, until: PipelineStage, working_dir: str = ".") -> PipelineResult:
-        """Load data from a yumly content string up to a specific pipeline stage"""
+        """Load Yumly content up to a specific pipeline stage."""
         return self._parse_content(yumly_data, working_dir, until)
 
     def to_yumyumy(self, data: dict[str, Any]) -> str:
         """Convert a Yumly dictionary into its internal yumyumy representation"""
         if isinstance(data, YumlyData):
             original = data.original_yumyumy()
+            # If the loaded data is unchanged, keep the exact native Yumyumy snapshot.
             if original is not None:
                 return original
 
         try:
-            return libyumly.dictToYumyumyPy(data)
+            return _native().dictToYumyumyPy(data)
         except Exception as exc:
-            raise YumlyError(str(exc) or FALLBACK_MESSAGE) from exc
+            raise self._wrap_error(exc) from exc
 
-    def validate_content(self, yumly_data: str) -> bool:
-        """Validate raw yumly content string (this skips the resolving of env vars and includes)"""
-        try:
-            msg = libyumly.validateContentMsg(yumly_data)
-            if msg:
-                raise YumlyError(msg)
-        except YumlyError:
-            raise
-        except Exception as exc:
-            msg = str(exc).strip() or FALLBACK_MESSAGE
-            raise YumlyError(msg) from exc
-
+    def validate_content(self, yumly_data: str, working_dir: str = ".") -> bool:
+        """Validate Yumly content"""
+        self._parse_content(yumly_data, working_dir)
         return True
 
     def validate_file(self, path: Union[str, Path]) -> bool:
-        """Validate a yumly file (this skips the resolving of env vars and includes)"""
-        path_str = str(Path(path).resolve())
-        try:
-            msg = libyumly.validateFileMsg(path_str)
-            if msg:
-                raise YumlyError(msg)
-        except YumlyError:
-            raise
-        except Exception as exc:
-            msg = str(exc).strip() or FALLBACK_MESSAGE
-            raise YumlyError(msg) from exc
-
+        """Validate a Yumly file"""
+        self._parse_file(Path(path))
         return True
 
-    def _wrap_error(self, exc: Exception) -> YumlyError:
-        msg = str(exc).strip() or FALLBACK_MESSAGE
-        return YumlyError(msg)
-
-    def _parse_file(self, path: Path, until: PipelineStage) -> PipelineResult:
-        path_str = str(Path(path).resolve())
-        try:
-            if until == PipelineStage.Evaluator:
-                bundle = libyumly.loadYumlyEvaluatorPy(path_str)
-                return YumlyData(bundle["data"], bundle["yumyumy"])
-
-            value = libyumly.loadYumlyPy(path_str, until.value)
-        except Exception as exc:
-            raise self._wrap_error(exc) from exc
-
-        if value is None:
-            raise YumlyError(FALLBACK_VALUE_MESSAGE)
-
-        if until == PipelineStage.Tokenizer:
-            return [map_token(t) for t in value]
-        elif until in (PipelineStage.Parser, PipelineStage.Load_Includes, PipelineStage.Resolver, PipelineStage.Validator):
-            return map_node(value)  # type: ignore
-        return value
-
-    def _parse_content(self, yumly_data: str, working_dir: str, until: PipelineStage) -> PipelineResult:
-        try:
-            if until == PipelineStage.Evaluator:
-                bundle = libyumly.loadYumlyContentEvaluatorPy(yumly_data, working_dir)
-                return YumlyData(bundle["data"], bundle["yumyumy"])
-
-            value = libyumly.loadYumlyContentPy(yumly_data, working_dir, until.value)
-        except Exception as exc:
-            raise self._wrap_error(exc) from exc
-
-        if value is None:
-            raise YumlyError(FALLBACK_VALUE_MESSAGE)
-
-        if until == PipelineStage.Tokenizer:
-            return [map_token(t) for t in value]
-        elif until in (PipelineStage.Parser, PipelineStage.Load_Includes, PipelineStage.Resolver, PipelineStage.Validator):
-            return map_node(value)  # type: ignore
-        return value
-
     def dumps(self, data: dict[str, Any]) -> str:
-        """Dump data to a yumly content string"""
+        """Dump data to a Yumly content string."""
         try:
-            return libyumly.dumpPy(data)
+            return _native().dumpPy(data)
         except Exception as exc:
             raise self._wrap_error(exc) from exc
 
     def dump(self, data: dict[str, Any], stream: IO[str]) -> None:
         """
-        Dump data to a yumly content stream
-        WARNING: Yumly by design/archquiteture does not support streaming, so we have to dump the whole content at once.
+        Dump data to a Yumly content stream.
+        WARNING: dumping serializes the whole document at once.
         """
         try:
-            stream.write(libyumly.dumpPy(data))
+            stream.write(_native().dumpPy(data))
+        except Exception as exc:
+            raise self._wrap_error(exc) from exc
+
+    def _wrap_error(self, exc: Exception) -> YumlyError:
+        """Mounts a structured YumlyError with Diagnostics"""
+        msg = str(exc).strip() or FALLBACK_MESSAGE
+        return YumlyError(Diagnostic(message=msg), cause=exc)
+
+    def _diagnostic_from_raw(self, raw: Any) -> Diagnostic:
+        diagnostic = dict(raw)
+        return Diagnostic(
+            code=diagnostic["code"] or None,
+            message=diagnostic["message"] or None,
+            line=diagnostic["line"] or None,
+            col=diagnostic["col"] or None,
+            end_line=diagnostic["endLine"] or None,
+            end_col=diagnostic["endCol"] or None,
+            source_file=diagnostic.get("sourceFile") or None,
+        )
+
+    def _unwrap_result(self, raw: Any) -> Any:
+        result = dict(raw)
+        # If native returned a diagnostic envelope, expose it as a typed YumlyError.
+        if "diagnostic" in result:
+            raise YumlyError(self._diagnostic_from_raw(result["diagnostic"]))
+        return result["value"]
+
+    def _map_pipeline_result(self, value: Any, until: PipelineStage) -> PipelineResult:
+        if until == PipelineStage.Tokenizer:
+            return [map_token(token) for token in value]
+        if until in (PipelineStage.Parser, PipelineStage.Load_Includes, PipelineStage.Resolver):
+            return [map_node(node) for node in value]
+        return YumlyData(value["data"], value["yumyumy"])
+
+    def _parse_file(self, path: Path, until: PipelineStage = PipelineStage.Validator) -> PipelineResult:
+        try:
+            value = self._unwrap_result(_native().loadYumlyPy(str(path.resolve()), until.value))
+            return self._map_pipeline_result(value, until)
+        except YumlyError:
+            raise
+        except Exception as exc:
+            raise self._wrap_error(exc) from exc
+
+    def _parse_content(self, yumly_data: str, working_dir: str, until: PipelineStage = PipelineStage.Validator) -> PipelineResult:
+        try:
+            value = self._unwrap_result(_native().loadYumlyContentPy(yumly_data, working_dir, until.value))
+            return self._map_pipeline_result(value, until)
+        except YumlyError:
+            raise
         except Exception as exc:
             raise self._wrap_error(exc) from exc

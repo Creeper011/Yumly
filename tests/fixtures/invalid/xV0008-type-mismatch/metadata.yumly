@@ -2,6 +2,10 @@
 
 name ;string = "Validator Type Mismatch"
 valid ;bool = false, number ;int = 0008
-phase ;string = "V"
+expectedCode ;string = "validator.type-mismatch"
 
 cases ;list[string] = ["case1.yumly","case2.yumly","case3.yumly","case4.yumly","case5.yumly"]
+
+(envs) {
+  VAR ;string = "defined-for-type-check"
+}

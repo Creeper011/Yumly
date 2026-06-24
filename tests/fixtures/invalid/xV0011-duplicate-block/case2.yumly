@@ -1,7 +1,7 @@
 (parent) {
     (child) {
         x = 1
-    }
+    },
     (child) {
         x = 2
     }

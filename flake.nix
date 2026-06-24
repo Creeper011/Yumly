@@ -41,7 +41,7 @@
               --path:${nimpy-src} \
               --path:${dotenv-src}/src \
               --path:${yaml-src} \
-              -o:yumly-cli -d:yumlyJson -d:yumlyYaml utils/yumly_cli.nim
+              -o:yumly-cli -d:yumlySuggestions -d:yumlyJson -d:yumlyYaml src/cli/yumly_cli.nim
           '';
 
           installPhase = ''
