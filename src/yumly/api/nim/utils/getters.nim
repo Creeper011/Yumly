@@ -3,7 +3,7 @@
 ##
 
 import ../../../types/ast
-import ../../../error_messages
+import ../../../errors/exceptions/apierrors
 
 func getStr*(val: Value): string =
   if val.kind != vkString:
@@ -41,11 +41,11 @@ func getBool*(val: Value, default: bool): bool =
   if val.kind != vkBool: return default
   return val.boolVal
 
-func getList*(val: Value): seq[Value] =
+func getList*(val: Value): seq[Item] =
   if val.kind != vkList:
     expectedTypeError("list", $val.kind)
   return val.elements
 
-func getList*(val: Value, default: seq[Value]): seq[Value] =
+func getList*(val: Value, default: seq[Item]): seq[Item] =
   if val.kind != vkList: return default
   return val.elements

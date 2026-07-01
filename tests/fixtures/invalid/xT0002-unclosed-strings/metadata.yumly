@@ -1,7 +1,0 @@
-;> Test file metadata for unclosed strings <;
-
-name ;string = "Unclosed Strings"
-valid ;bool = false, number ;int = 0002
-expectedCode ;string = "tokenizer.unclosed-string"
-
-cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly"]

@@ -1,6 +1,0 @@
-;> Test file metadata for strings tokenization <;
-
-name ;string = "Strings"
-valid ;bool = true, number ;int = 0005
-
-cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly", "case5.yumly"]

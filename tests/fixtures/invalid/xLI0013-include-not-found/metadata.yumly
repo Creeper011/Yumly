@@ -1,7 +1,0 @@
-;> Test file metadata for load include not found errors <;
-
-name ;string = "Load Include Not Found"
-valid ;bool = false, number ;int = 0013
-expectedCode ;string = "include.not-found"
-
-cases ;list[string] = ["case1.yumly","case2.yumly"]

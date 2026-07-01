@@ -1,7 +1,0 @@
-;> Test file metadata for unclosed comments <;
-
-name ;string = "Unclosed Comment"
-valid ;bool = false, number ;int = 0003
-expectedCode ;string = "tokenizer.unclosed-comment"
-
-cases ;list[string] = ["case1.yumly"]

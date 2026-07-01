@@ -1,11 +1,12 @@
 import os, dotenv
-import ../../error_messages
+import ../../errors/exceptions/parser/ioerrors
+import ../../types/source
 
-proc loadEnvFile*(resolvedPath: string, line, col: int) =
+proc loadEnvFile*(resolvedPath: string, source: SourceSpan) =
   try:
     let sfEnv = os.splitFile(resolvedPath)
     let envDir = if sfEnv.dir.len == 0: "." else: sfEnv.dir
     let envFile = sfEnv.name & sfEnv.ext
     load(envDir, envFile)
   except CatchableError as error:
-    failedToLoadFile(resolvedPath, line, col, error.msg)
+    failedToLoadFile(resolvedPath, source, error.msg)

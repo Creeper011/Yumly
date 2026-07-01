@@ -1,0 +1,24 @@
+;> Language Stats configuration <;
+
+[custom-language] {
+  name ;string
+  extensions ;list[string]
+}
+
+(scan) {
+  include-hidden = true
+  percentage-decimal-places ;int = 2 ;> [0..6] when parser supports <;
+  ignored-directories ;list[string] = [".mypy_cache", ".pytest_cache"]
+  ignored-files ;list[string] = ["*.min.js", "*.map"]
+}
+
+customs ;list[custom-language] = [
+  {
+    name = "Dotenv"
+    extensions = [".env", ".env.example"]
+  }
+  {
+    name = "TextMate Grammar"
+    extensions = [".tmlanguage.json"]
+  }
+]

@@ -4,9 +4,10 @@
 .ymka/
 
 # Build Artifacts
-build
-nimcache
-yumly.egg-info
+/build/
+/dist/
+/nimcache/
+/*.egg-info/
 lib/python/yumly/yumly_core.so
 .nimble
 .cache
@@ -26,11 +27,9 @@ libyumly
 waifuu
 test_write
 /Yumly
-change_version
 yumly_cli
-yumly-cli
+/yumly-cli
 cafe
-markers_finder
 
 # playground binaries
 test_tokenizer

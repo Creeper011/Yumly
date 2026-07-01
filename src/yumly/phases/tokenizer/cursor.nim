@@ -1,7 +1,9 @@
 import streams
+import ../../types/source
 
 type Cursor* = object
   stream*: Stream
+  source*: SourceFile
   buf*: string
   pos*: int
   len*: int
@@ -10,8 +12,10 @@ type Cursor* = object
   line*: int
   lineStart*: int
 
-func initCursor*(stream: Stream, bufferSize: int = 4096): Cursor =
+func initCursor*(stream: Stream, bufferSize: int = 4096,
+    source: SourceFile = nil): Cursor =
   result.stream = stream
+  result.source = source
   result.buf = newString(max(1, bufferSize))
   result.pos = 0
   result.len = 0
@@ -20,7 +24,23 @@ func initCursor*(stream: Stream, bufferSize: int = 4096): Cursor =
   result.line = 1
   result.lineStart = 0
 
-func absPos*(cursor: Cursor): int =
+func initCursor*(content: sink string, source: SourceFile = nil): Cursor =
+  ## Creates a cursor over content that is already resident in memory.
+  ##
+  ## It deliberately uses the same cursor representation as the streaming
+  ## path. `eof = true` tells the scanner that the complete input is already in
+  ## `buf`, so no refill or `StringStream` layer is involved.
+  result.stream = nil
+  result.source = source
+  result.buf = content
+  result.pos = 0
+  result.len = result.buf.len
+  result.basePos = 0
+  result.eof = true
+  result.line = 1
+  result.lineStart = 0
+
+func absPos*(cursor: Cursor): int {.inline.} =
   cursor.basePos + cursor.pos
 
 proc ensureCapacity(cursor: var Cursor, minCapacity: int) =
@@ -31,8 +51,8 @@ proc ensureCapacity(cursor: var Cursor, minCapacity: int) =
     newSize = max(newSize + 1, newSize * 2)
 
   var grown = newString(newSize)
-  for i in 0..<cursor.len:
-    grown[i] = cursor.buf[i]
+  if cursor.len > 0:
+    copyMem(addr grown[0], addr cursor.buf[0], cursor.len)
   cursor.buf = grown
 
 proc refill*(cursor: var Cursor, minBuffered: int = 1) =
@@ -42,8 +62,7 @@ proc refill*(cursor: var Cursor, minBuffered: int = 1) =
   let remaining = cursor.len - cursor.pos
 
   if remaining > 0 and oldPos > 0:
-    for i in 0..<remaining:
-      cursor.buf[i] = cursor.buf[oldPos + i]
+    moveMem(addr cursor.buf[0], addr cursor.buf[oldPos], remaining)
 
   cursor.basePos += oldPos
   cursor.pos = 0
@@ -56,7 +75,7 @@ proc refill*(cursor: var Cursor, minBuffered: int = 1) =
   if n <= 0: cursor.eof = true
   else: cursor.len += n
 
-proc peekChar*(cursor: var Cursor, offset: int = 0): char =
+proc peekChar*(cursor: var Cursor, offset: int = 0): char {.inline.} =
   if offset < 0: return '\0'
 
   var idx = cursor.pos + offset
@@ -66,16 +85,30 @@ proc peekChar*(cursor: var Cursor, offset: int = 0): char =
   if idx < cursor.len: result = cursor.buf[idx]
   else: result = '\0'
 
-proc advanceChar*(cursor: var Cursor): char =
-  result = cursor.peekChar()
-  if result == '\0': return
+proc advanceBuffered*(cursor: var Cursor, character: char) {.inline.} =
+  ## Advances over a character already read from `buf`.
   inc cursor.pos
-  if result == '\n':
+  if character == '\n':
     inc cursor.line
     cursor.lineStart = cursor.basePos + cursor.pos
 
-proc matchStr*(cursor: var Cursor, s: string): bool =
+proc advanceBufferedTo*(cursor: var Cursor, afterLast: int) {.inline.} =
+  ## Advances across a range that has already been scanned in the active
+  ## buffer, updating line bookkeeping once without another `peekChar` pass.
+  for i in cursor.pos..<afterLast:
+    if cursor.buf[i] == '\n':
+      inc cursor.line
+      cursor.lineStart = cursor.basePos + i + 1
+  cursor.pos = afterLast
+
+proc advanceChar*(cursor: var Cursor): char {.inline.} =
+  result = cursor.peekChar()
+  if result == '\0': return
+  cursor.advanceBuffered(result)
+
+proc matchStr*(cursor: var Cursor, s: string): bool {.inline.} =
   for i, character in s:
     if cursor.peekChar(i) != character: return false
-  for _ in 0..<s.len: discard cursor.advanceChar()
+  for character in s:
+    cursor.advanceBuffered(character)
   return true

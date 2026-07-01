@@ -1,7 +1,0 @@
-;> Test file metadata for invalid exponents <;
-
-name ;string = "Invalid Exponent"
-valid ;bool = false, number ;int = 0005
-expectedCode ;string = "tokenizer.invalid-exponent"
-
-cases ;list[string] = ["case1.yumly", "case2.yumly"]

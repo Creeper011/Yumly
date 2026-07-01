@@ -30,25 +30,22 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Install dependencies
-        run: nimble install -y nimpy dotenv
+        run: nimble --nimbleDir:build/nimble install -y nimpy dotenv yaml
 
       - name: Build CLI
-        run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            nim c -d:release -d:yumlyJson -d:yumlyYaml --opt:size --cc:vcc -o:yumly.exe utils/yumly_cli.nim
-          else
-            nim c -d:release -d:yumlyJson -d:yumlyYaml --opt:size -o:yumly utils/yumly_cli.nim
-          fi
+        run: nimble --nimbleDir:build/nimble buildCli
         shell: bash
+        env:
+          YUMLY_NIM_FLAGS: ${{ matrix.os == 'windows-latest' && '--cc:vcc' || '' }}
 
       - name: Rename binaries
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            mv yumly yumly-cli-linux-x64
+            mv build/bin/yumly-cli build/bin/yumly-cli-linux-x64
           elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-            mv yumly yumly-cli-macos-x64
+            mv build/bin/yumly-cli build/bin/yumly-cli-macos-x64
           elif [ "${{ matrix.os }}" == "windows-latest" ]; then
-            mv yumly.exe yumly-cli-windows-x64.exe
+            mv build/bin/yumly-cli.exe build/bin/yumly-cli-windows-x64.exe
           fi
         shell: bash
 
@@ -56,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cli-${{ matrix.os }}
-          path: yumly-*
+          path: build/bin/yumly-*
 
   github_release:
     name: Create GitHub Release

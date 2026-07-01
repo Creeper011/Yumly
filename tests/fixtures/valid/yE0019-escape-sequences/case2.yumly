@@ -1,4 +1,0 @@
-text ;string = """
-first line
-second line with \n        quote and " and 	 tokens
-"""

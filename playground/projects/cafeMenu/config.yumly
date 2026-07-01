@@ -1,2 +1,69 @@
-include { "menu.yuy" }
-custumerName ;string = "Yumene"
+;> Cafe configuration <;
+
+[item] {
+  name ;string
+  type ;string
+  price ;float[>0.0]
+  description ;string
+  ingredients ;list[string]
+}
+
+customer-name = "Miki"
+menu ;list[item] = [
+  {
+    name = "Coffee"
+    type = "drink"
+    price = 2.5
+    description = "Hot coffee"
+    ingredients = ["Coffee", "Water"]
+  }
+  {
+    name = "Tea"
+    type = "drink"
+    price = 2.0
+    description = "Hot tea"
+    ingredients = ["Tea", "Water"]
+  }
+  {
+    name = "Juice"
+    type = "drink"
+    price = 3.0
+    description = "Fresh juice"
+    ingredients = ["Juice", "Water"]
+  }
+  {
+    name = "Snack"
+    type = "food"
+    price = 1.5
+    description = "Snack"
+    ingredients = ["Snack", "Water"]
+  }
+  {
+    name = "Cake"
+    type = "food"
+    price = 2.5
+    description = "Cake"
+    ingredients = ["Cake", "Water"]
+  }
+  {
+    name = "Burrito"
+    type = "food"
+    price = 5.0
+    description = "Burrito"
+    ingredients = ["Burrito", "Water"]
+  }
+  {
+    name = "Burguer"
+    type = "food"
+    price = 6.0
+    description = "Burguer"
+    ingredients = ["Burguer", "Water"]
+  }
+  {
+    name = "Pizza"
+    type = "food"
+    price = 7.0
+    description = "Pizza"
+    ingredients = ["Pizza", "Water"]
+  }
+]

@@ -1,23 +1,59 @@
-##
-# This module defines structured errors used while processing Yumly input.
-##
+#
+# Defines structured errors used while processing Yumly config.
+#
+
+import source
 
 type
-  YumlyError* = object of ValueError
-    line*: int
-    col*: int
-    endLine*: int
-    endCol*: int
-    code*: string
-    sourceFile*: string
-
-  YumlyIOError* = object of IOError
-    line*: int
-    col*: int
-    endLine*: int
-    endCol*: int
-    code*: string
-    sourceFile*: string
+  ErrorCode* = enum
+    ecNone
+    ecParserExpected
+    ecParserUnexpectedRoot
+    ecParserIncludeOrder
+    ecParserSchemaOrder
+    ecParserSchemaFile
+    ecParserSchemaFieldType
+    ecParserObjectContext
+    ecParserIncludeComma
+    ecParserEnvDisabled
+    ecParserRecursionLimit
+    ecResolverUnknownTypeHint
+    ecResolverEnvDisabled
+    ecValidatorDuplicatePair
+    ecValidatorDuplicateBlock
+    ecValidatorDuplicateSchema
+    ecValidatorListElementType
+    ecValidatorMissingEnv
+    ecValidatorMultipleErrors
+    ecValidatorTypeMismatch
+    ecValidatorUnknownSchema
+    ecValidatorSchemaMissingField
+    ecValidatorSchemaUnknownField
+    ecValidatorSchemaMissingBlock
+    ecValidatorSchemaBlockValueType
+    ecValidatorRecursionLimit
+    ecValidatorInvalidItemContext
+    ecIncludeLoadFailed
+    ecIncludeCircularImport
+    ecIncludeNotFound
+    ecIncludeDotenvDisabled
+    ecIncludeUnsupportedExtension
+    ecIncludeSandboxViolation
+    ecFileInvalidExtension
+    ecFileNotFound
+    ecFileTooLarge
+    ecFileOpenFailed
+    ecTokenizerUnclosedComment
+    ecTokenizerInvalidExponent
+    ecTokenizerUnclosedString
+    ecTokenizerUnexpectedCharacter
+    ecEvaluatorInvalidEscape
+    ecEvaluatorEnvCoerceFailed
+    ecEvaluatorInvalidLiteralToken
+    ecEvaluatorInvalidNodeKind
+    ecValueInvalidInteger
+    ecValueInvalidFloat
+    ecValueInvalidBoolean
 
   Expected* = enum
     expValue = "a value"
@@ -38,32 +74,29 @@ type
     expQuestion = "'?'"
     expEOF = "end of file"
 
-proc newYumlyError*(message: string, line: int, col: int, code: string,
-    sourceFile: string = ""): ref YumlyError =
-  result = newException(YumlyError, message)
-  result.line = line
-  result.col = col
-  result.endLine = line
-  result.endCol = col + 1
-  result.code = code
-  result.sourceFile = sourceFile
+  YumlyError* = object of ValueError
+    code*: ErrorCode
+    source*: seq[SourceSpan] # Primary span first; related spans follow.
 
-proc newYumlyError*(message: string, line: int, col: int, endLine: int,
-    endCol: int, code: string, sourceFile: string = ""): ref YumlyError =
-  result = newException(YumlyError, message)
-  result.line = line
-  result.col = col
-  result.endLine = endLine
-  result.endCol = endCol
-  result.code = code
-  result.sourceFile = sourceFile
+  YumlyDefect* = object of Defect
+    code*: ErrorCode
+    source*: seq[SourceSpan] # Primary span first; related spans follow.
 
-proc newYumlyIOError*(message: string, line, col: int, code: string,
-    sourceFile: string = ""): ref YumlyIOError =
+  YumlyIOError* = object of IOError
+    code*: ErrorCode
+    source*: seq[SourceSpan] # Primary span first; related spans follow.
+
+proc newYumlyError*(message: string, code: ErrorCode, source: sink seq[SourceSpan] = @[]): ref YumlyError =
+  result = newException(YumlyError, message)
+  result.code = code
+  result.source = source
+
+proc newYumlyIOError*(message: string, code: ErrorCode, source: sink seq[SourceSpan] = @[]): ref YumlyIOError =
   result = newException(YumlyIOError, message)
-  result.line = line
-  result.col = col
-  result.endLine = line
-  result.endCol = col + 1
   result.code = code
-  result.sourceFile = sourceFile
+  result.source = source
+
+proc newYumlyDefect*(message: string, code: ErrorCode, source: sink seq[SourceSpan] = @[]): ref YumlyDefect =
+  result = newException(YumlyDefect, message)
+  result.code = code
+  result.source = source

@@ -1,8 +1,9 @@
 import ../constants
-import ../error_messages
+import ../errors/exceptions/parser/parsererrors
+import ../types/source
 import ../types/token
 
-template withRecursionGuard*(depth: var int, line, col: int, body: untyped) =
+template withRecursionGuard*(depth: var int, line, col: SourcePos, body: untyped) =
   if depth >= MaxRecursionDepth:
     recursionLimitError(MaxRecursionDepth, line, col)
 
@@ -13,4 +14,4 @@ template withRecursionGuard*(depth: var int, line, col: int, body: untyped) =
     depth -= 1
 
 template withRecursionGuard*(depth: var int, token: Token, body: untyped) =
-  withRecursionGuard(depth, token.line, token.col, body)
+  withRecursionGuard(depth, token.source.line, token.source.col, body)

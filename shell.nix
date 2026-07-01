@@ -15,9 +15,12 @@ pkgs.mkShell {
 
     # Build tools
     gcc
-    gnumake
     pkg-config
     openssl
+
+    # Benchmark tools
+    hyperfine
+    perf
 
     # Versionament tools
     git
@@ -28,11 +31,12 @@ pkgs.mkShell {
     postShellHook = ''
     # Automated dependency setup
     echo "Checking dependencies..."
+    export NIMBLE_DIR="$PWD/build/nimble"
     
     # 1. Nim dependencies
-    if [ ! -d "$HOME/.nimble/pkgs" ]; then
+    if [ ! -d "$NIMBLE_DIR/pkgs2" ]; then
       echo "Installing Nim dependencies..."
-      nimble install -y nimpy dotenv --silent
+      nimble install -y nimpy dotenv yaml --silent
     fi
 
     # 2. Python dependencies (auto-installs in .venv via venvShellHook)
@@ -44,12 +48,19 @@ pkgs.mkShell {
     # 3. Project install (editable mode)
     pip install -e . --silent
 
-    export PATH="$PATH:$HOME/.nimble/bin"
+    export PATH="$PATH:$NIMBLE_DIR/bin"
     
     clear
-    echo "✧*･ﾟ Yumly Development Shell Loaded ･ﾟ*✧"
+    echo "✧*･ﾟ Yumly Cute Development Shell Loaded >,< ･ﾟ*✧"
     echo "Python: $(python --version)"
     echo "Nim:    $(nim --version | head -n 1)"
-    echo "Environment: .venv is active and dependencies are ready."
+    echo "yeaaaahh :3"
+    echo "Available tools: $(
+      for tool in nim nimble python pip gcc pkg-config openssl hyperfine perf git; do
+        if command -v "$tool" >/dev/null 2>&1; then
+          printf '%s ' "$tool;"
+        fi
+      done
+    )"
   '';
 }

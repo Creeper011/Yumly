@@ -2,7 +2,7 @@ import os, strutils, osproc
 
 const
   files = @[
-      "Yumly.nimble",
+      "yumly.nimble",
       "pyproject.toml",
   ]
 

@@ -43,6 +43,15 @@ A simple task manager demonstrating Yumly's integration with Python.
   cd playground/projects/tasks && python tasks.py
   ```
 
+### 🐾 Yumagotchi (C)
+A tiny terminal pet whose stats, actions, reactions, and moods come from Yumly.
+- **Highlights:** A real consumer of the read-only C API, including owned
+  documents, borrowed values, lists of typed objects, and explicit cleanup.
+- **Run it:**
+  ```sh
+  cd playground/projects/yumagotchi && make run
+  ```
+
 ## ✿ Casual Debugging 🔬
 
 Curious about how the data is made? The `playground/phases/` directory has standalone scripts to test individual pipeline stages:

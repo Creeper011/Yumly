@@ -6,12 +6,6 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      benchmarks:
-        description: Run benchmarks
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -29,29 +23,4 @@ jobs:
           python-version: ${{ vars.PYTHON_VERSION || '3.12' }}
 
       - name: Run tests
-        run: make tests
-
-  benchmarks:
-    name: Benchmarks
-    runs-on: ubuntu-latest
-    needs: tests
-    if: github.event.inputs.benchmarks == 'true'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup environment
-        uses: ./.github/actions/setup-yumly
-        with:
-          python-version: ${{ vars.PYTHON_VERSION || '3.12' }}
-
-      - name: Run benchmarks
-        run: make tests-bench
-
-      - name: Upload benchmark artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: yumly-benchmarks
-          path: |
-            benchmark.ylwa
-            benchmark_python.ylwa
-          if-no-files-found: ignore
+        run: nimble --nimbleDir:build/nimble checkSources

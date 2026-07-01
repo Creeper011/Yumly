@@ -23,13 +23,13 @@ runs:
     - name: Cache Nimble packages
       uses: actions/cache@v4
       with:
-        path: ~/.nimble
+        path: build/nimble
         key: ${{ runner.os }}-nimble-${{ hashFiles('*.nimble') }}
         restore-keys: |
           ${{ runner.os }}-nimble-
 
     - name: Install Nim dependencies
-      run: nimble install -y nimpy dotenv
+      run: nimble --nimbleDir:build/nimble install -y nimpy dotenv yaml
       shell: bash
 
     - name: Install Python dependencies

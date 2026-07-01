@@ -1,4 +1,0 @@
-;> Duplicate key at root level <;
-
-key = "v1"
-key = "v2"

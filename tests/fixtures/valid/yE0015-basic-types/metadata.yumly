@@ -1,6 +1,0 @@
-;> Test file metadata for evaluator basic type outputs <;
-
-name ;string = "Evaluator Basic Types"
-valid ;bool = true, number ;int = 0015
-
-cases ;list[string] = ["case1.yumly","case2.yumly","case3.yumly","case4.yumly","case5.yumly"]

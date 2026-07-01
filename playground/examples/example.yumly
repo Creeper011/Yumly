@@ -1,0 +1,56 @@
+;> A yumly example file for a ficticial project: Big Cid, 
+the main example config. env + schemas + blocks, all together :3 <;
+
+include { ".env", "dependency.yu" }
+
+@PROJECT_NAME = "BIG CID"
+
+(application) {
+  name = *PROJECT_NAME
+  version = "1.5.6", valid = true
+
+  description = !"""
+  #{PROJECT_NAME} is a big project about Cid.
+  Forget Alexa. Forget humanoid robots.
+  Forget everything else.
+  JUST #{PROJECT_NAME}!!
+  """
+
+  dependencies ;list[dependency] = [ 
+    ;> objects can follow schemas imported from .yu files <;
+    {
+      name = "Yumene"
+      description = "yu core"
+      optional = false
+    }, 
+    {
+      name = "none"
+      description = "none"
+      optional = true
+    }
+  ]
+  
+  others ;list = [
+    ;> mixed lists can hold tagged objects, plain objects and raw values <;
+    <dependency> {
+      name = "Yumene"
+      description = "yu core"
+      optional = false
+    },
+    {
+      hello = "hello"
+    },
+    "a value",
+    {
+      hello = "Hello, World!"
+      cid = [
+        "cid"
+        11
+      ]
+    }
+  ]
+  
+  (services) {
+    main-token = $["MAIN_TOKEN"; int ?? 0]
+  }
+}

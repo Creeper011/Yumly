@@ -1,3 +1,0 @@
-[
-  values (list, env) -> ["abc123", "secret"]
-]

@@ -1,8 +1,0 @@
-;> Test file metadata for duplicated keys <;
-
-name ;string = "Duplicated Pair"
-valid ;bool = false, number ;int = 0001
-expectedCode ;string = "validator.duplicate-symbol"
-
-cases ;list[string] = ["case1.yumly", "case2.yumly", 
-  "case3.yumly", "case4.yumly", "case5.yumly", "case6.yumly"]

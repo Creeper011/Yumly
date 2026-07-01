@@ -1,0 +1,3 @@
+    include yumly.nimble
+    recursive-include src/yumly *.nim
+    global-exclude libyumly.so libyumly.pyd

@@ -1,5 +1,0 @@
-multiline = """
-    This is a multiline string
-    that spans multiple lines
-    and tests the tokenizer!
-"""

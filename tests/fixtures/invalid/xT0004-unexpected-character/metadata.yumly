@@ -1,7 +1,0 @@
-;> Test file metadata for unexpected characters <;
-
-name ;string = "Unexpected Character"
-valid ;bool = false, number ;int = 0004
-expectedCode ;string = "tokenizer.unexpected-character"
-
-cases ;list[string] = ["case1.yumly", "case2.yumly"]

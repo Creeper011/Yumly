@@ -1,2 +1,0 @@
-host = "localhost",
-port ;int = 5432

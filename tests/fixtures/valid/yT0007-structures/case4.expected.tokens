@@ -1,9 +1,0 @@
-tkIdent "t"
-tkDeclaration
-tkIdent "env"
-tkEquals
-tkDollar
-tkLBracket
-tkString "MY_VAR"
-tkRBracket
-tkEOF

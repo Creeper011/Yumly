@@ -1,0 +1,63 @@
+;> Template fixture metadata <;
+
+include { "../../schemas/case.yu" }
+
+name = "Template test"
+number = "0001"
+until-stage = "validator"
+tags ;list[string] = ["regression", "boundary"]
+
+;> Base profile. Variants may enable or disable flags from this set. <;
+compile-flags ;list[string] = [
+  "yumlyEnv", "yumlyDotenv"
+  "yumlyJson", "yumlyYaml"
+  "yumly32", "yumlyTrivia"
+  "yumlySuggestions", "yumlyCuteErrors"
+]
+
+pre-eval-code = """
+# your Python setup code here
+"""
+
+;> Environment shared by every case. <;
+(envs) {
+  VAR1 = "Value"
+  VAR2 = "Shared value"
+}
+
+cases ;list[test-case] = [
+  {
+    name = "Feature behavior across compile profiles"
+    file = "case1.yumly"
+    a =1
+    tags = ["feature:env", "integration"]
+
+    (envs) {
+      VAR1 = "Case value"
+      VAR3 = "Case-only value"
+    }
+
+    variants ;list = [
+      <valid-variant> {
+        name = "Environment support enabled"
+        expected-file = "case1.expected.yumyumy"
+      }
+
+      <invalid-variant> {
+        name = "Environment support disabled"
+        tags = ["feature-disabled"]
+        disable-flags = ["yumlyEnv", "yumlyDotenv"]
+        expected-stage = "parser"
+        expected-code = "parser.env-disabled"
+
+        (expected-span) {
+          file = "case1.yumly"
+          line = 1
+          col = 1
+          end-line = 1
+          end-col = 10
+        }
+      }
+    ]
+  }
+]

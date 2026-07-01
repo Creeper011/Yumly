@@ -6,7 +6,11 @@
 import yaml
 import ../../types/ast
 
+proc toYamlNode*(blk: Block): YamlNode
+
 proc toYamlNode*(val: Value): YamlNode =
+  when not defined(yumlyEnv):
+    {.push warning[UnreachableElse]: off.}
   case val.kind
   of vkString:
     result = newYamlNode(val.strVal)
@@ -16,28 +20,86 @@ proc toYamlNode*(val: Value): YamlNode =
     result = newYamlNode($val.floatVal)
   of vkBool:
     result = newYamlNode(if val.boolVal: "true" else: "false")
-  of vkEnv:
-    result = newYamlNode(val.envVal)
   of vkList:
     var elems: seq[YamlNode] = @[]
-    for el in val.elements:
-      elems.add(toYamlNode(el))
+    for item in val.elements:
+      case item.kind
+      of ikPair:
+        elems.add(newYamlNode(@[(newYamlNode(item.pair.key),
+            toYamlNode(item.pair.value))]))
+      of ikValue:
+        elems.add(toYamlNode(item.value))
+      of ikBlock:
+        elems.add(newYamlNode(@[(newYamlNode(item.blk.name),
+            toYamlNode(item.blk))]))
+      of ikSchema:
+        discard
     result = newYamlNode(elems)
+  of vkObject:
+    var onlyNamedItems = true
+    for item in val.items:
+      if item.kind == ikValue:
+        onlyNamedItems = false
+        break
+    if onlyNamedItems:
+      var fields: seq[(YamlNode, YamlNode)] = @[]
+      for item in val.items:
+        case item.kind
+        of ikPair:
+          fields.add((newYamlNode(item.pair.key), toYamlNode(item.pair.value)))
+        of ikBlock:
+          fields.add((newYamlNode(item.blk.name), toYamlNode(item.blk)))
+        of ikValue:
+          discard
+        of ikSchema:
+          discard
+      result = newYamlNode(fields)
+    else:
+      var elems: seq[YamlNode] = @[]
+      for item in val.items:
+        case item.kind
+        of ikPair:
+          elems.add(newYamlNode(@[(newYamlNode(item.pair.key),
+              toYamlNode(item.pair.value))]))
+        of ikValue:
+          elems.add(toYamlNode(item.value))
+        of ikBlock:
+          elems.add(newYamlNode(@[(newYamlNode(item.blk.name),
+              toYamlNode(item.blk))]))
+        of ikSchema:
+          discard
+      result = newYamlNode(elems)
+  else:
+    when defined(yumlyEnv):
+      if val.kind == vkEnv:
+        result = newYamlNode(val.envVal)
+      else:
+        discard # TODO: throw a error here
+  when not defined(yumlyEnv):
+    {.pop.}
 
 proc toYamlNode*(blk: Block): YamlNode =
   var fields: seq[(YamlNode, YamlNode)] = @[]
-  for pair in blk.pairs:
-    fields.add((newYamlNode(pair.key), toYamlNode(pair.value)))
-  for sub in blk.subBlocks:
-    fields.add((newYamlNode(sub.name), toYamlNode(sub)))
+  for item in blk.items:
+    case item.kind
+    of ikPair:
+      fields.add((newYamlNode(item.pair.key), toYamlNode(item.pair.value)))
+    of ikBlock:
+      fields.add((newYamlNode(item.blk.name), toYamlNode(item.blk)))
+    of ikValue, ikSchema:
+      discard
   result = newYamlNode(fields)
 
 proc toYamlNode*(config: YumlyConf): YamlNode =
   var fields: seq[(YamlNode, YamlNode)] = @[]
-  for pair in config.pairs:
-    fields.add((newYamlNode(pair.key), toYamlNode(pair.value)))
-  for blk in config.blocks:
-    fields.add((newYamlNode(blk.name), toYamlNode(blk)))
+  for item in config.items:
+    case item.kind
+    of ikPair:
+      fields.add((newYamlNode(item.pair.key), toYamlNode(item.pair.value)))
+    of ikBlock:
+      fields.add((newYamlNode(item.blk.name), toYamlNode(item.blk)))
+    of ikValue, ikSchema:
+      discard
   result = newYamlNode(fields)
 
 proc toYaml*(config: YumlyConf): string =

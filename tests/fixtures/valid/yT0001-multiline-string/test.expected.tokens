@@ -1,8 +1,0 @@
-tkIdent "multiline"
-tkEquals
-tkString "
-    This is a multiline string
-    that spans multiple lines
-    and tests the tokenizer!
-"
-tkEOF

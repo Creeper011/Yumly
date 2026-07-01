@@ -1,7 +1,0 @@
-;> Test file metadata for validator missing env variables <;
-
-name ;string = "Validator Missing Env"
-valid ;bool = false, number ;int = 0010
-expectedCode ;string = "validator.missing-env"
-
-cases ;list[string] = ["case1.yumly","case2.yumly","case3.yumly"]

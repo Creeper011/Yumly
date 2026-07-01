@@ -1,6 +1,0 @@
-;> Duplicate key with different types inside a block with type hints <;
-
-(my_block) {
-    key ;string = "v1",
-    key ;int = 67
-}

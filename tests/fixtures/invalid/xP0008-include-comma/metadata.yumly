@@ -1,7 +1,0 @@
-;> Test file metadata for include followed by comma <;
-
-name ;string = "Include Comma"
-valid ;bool = false, number ;int = 0008
-expectedCode ;string = "parser.include-comma"
-
-cases ;list[string] = ["case1.yumly"]

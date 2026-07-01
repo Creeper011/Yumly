@@ -1,0 +1,23 @@
+;>
+Third example, now with the cute .yuy extension!!
+A .yuy is cute too!!
+It imports another config and reads common shell envs.
+( On Windows, some Unix-like env names may be missing,
+so it will fall back to "mocked" :3 )
+<;
+
+include { "example2.yumly" }
+
+(system) {
+  path = $["PATH" ?? "mocked"]
+  home = $["HOME" ?? "mocked"]
+  shell = $["SHELL" ?? "mocked"]
+  user = $["USER" ?? "mocked"]
+  missing-with-default = $["YUMMY_MISSING_ENV" ?? "mocked"]
+
+  (runtime) {
+    debug = false
+    ;> `; int` reads the env value as an int, or throws if it cannot >_< <;
+    workers ;int = $["YUMLY_WORKERS"; int ?? 2]
+  }
+}

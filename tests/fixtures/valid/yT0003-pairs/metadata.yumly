@@ -1,6 +1,0 @@
-;> Test file metadata for basic pairs tokenization <;
-
-name ;string = "Pairs"
-valid ;bool = true, number ;int = 0003
-
-cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly"]

@@ -1,6 +1,0 @@
-(database) {
-    host = "a"
-}
-(database) {
-    host = "b"
-}

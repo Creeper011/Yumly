@@ -1,6 +1,0 @@
-;> Test file metadata for multiline strings <;
-
-name ;string = "Multiline String"
-valid ;bool = true, number ;int = 0001
-
-cases ;list[string] = ["test.yumly"]

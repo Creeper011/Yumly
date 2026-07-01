@@ -4,10 +4,8 @@
 
 import std/tables
 import ../../../types/ast
-import ../../../types/values_defs
-import ../../../core/builders
-import ../../../core/pipeline
-import ../../../serializers/yumyumy/yumyumy_encoder
+import ../../../core/[builders, pipeline]
+import ../../../serializers/yumyumy/yumyumyencoder
 import modifications
 
 func toYumly*(config: YumlyConf): string =
@@ -22,8 +20,8 @@ func toYumly*(pairs: openArray[(string, Value)],
     inferType: bool = false): string =
   var cfg = newYumly()
   for (key, value) in pairs:
-    let hint = if inferType: inferTypeString(value) else: ""
-    cfg.addPair(key, value, hint)
+    if inferType: cfg.addPair(key, value, typeHintFor(value))
+    else: cfg.addPair(key, value)
   return dumpYumly(cfg)
 
 func toYumly*(pairs: openArray[(string, Value, string)]): string =
@@ -35,9 +33,9 @@ func toYumly*(pairs: openArray[(string, Value, string)]): string =
 func toYumly*(t: Table[string, Value], inferType: bool = false): string =
   var cfg = newYumly()
   for key, value in t.pairs:
-    let hint = if inferType: inferTypeString(value) else: ""
-    cfg.addPair(key, value, hint)
+    if inferType: cfg.addPair(key, value, typeHintFor(value))
+    else: cfg.addPair(key, value)
   return dumpYumly(cfg)
 
 func toYumyumy*(config: YumlyConf): string =
-  yumyumy_encoder.toYumyumy(config)
+  yumyumyencoder.toYumyumy(config)

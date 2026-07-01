@@ -3,23 +3,28 @@
 ##
 
 import os, strutils, sets, streams
+import ../../errors/exceptions/parser/ioerrors
+import ../../types/errors
+import ../../types/document
+import ../../types/source
 import ../../utils/file
 import ../../types/nodes
-import ../../types/errors
 import ../tokenizer/tokenizer, ../parser/parser
-import ../../error_messages
-import path_resolver, env_loader
+import path_resolver
+when defined(yumlyDotenv):
+  when not defined(yumlyEnv):
+    {.error: "-d:yumlyDotenv requires -d:yumlyEnv".}
+  import env_loader
 
-const allowedIncludeExts = [".env", ".yumly", ".yuy"]
+const allowedIncludeExts = [".env", ".yumly", ".yuy", ".yu"]
 
 type
   IncludeSource = ref object
     puller: NodePuller
     stream: Stream
     baseDir: string
-    sourceFile: string
-    includeLine: int
-    includeCol: int
+    sourceFile: SourceFile
+    includeSource: SourceSpan
 
 proc includeExt(resolvedPath: string): string =
   let fileExt = os.splitFile(resolvedPath).ext.toLowerAscii()
@@ -28,26 +33,40 @@ proc includeExt(resolvedPath: string): string =
   else:
     fileExt
 
-proc markSourceFile(node: YumNode, sourceFile: string) =
-  if node == nil or sourceFile.len == 0:
+proc markSourceFile(node: YumNode, sourceFile: SourceFile) =
+  if node == nil or sourceFile == nil:
     return
 
   # If the included parser did not tag the node, inherit the active source file.
-  if node.sourceFile == "":
+  if node.sourceFile == nil:
     node.sourceFile = sourceFile
+  if node.token.source.source == nil:
+    node.token.source.source = sourceFile
 
-proc attachSourceFile(error: ref YumlyError, sourceFile: string) =
-  if error.sourceFile.len == 0:
-    error.sourceFile = sourceFile
+proc attachSourceFile(error: ref YumlyError, sourceFile: SourceFile) =
+  if sourceFile == nil:
+    return
+  if error.source.len == 0:
+    error.source.add(sourceSpan(sourceFile, SourcePos(0), SourcePos(0)))
+  else:
+    for span in error.source.mitems:
+      if span.source == nil:
+        span.source = sourceFile
 
-proc attachSourceFile(error: ref YumlyIOError, sourceFile: string) =
-  if error.sourceFile.len == 0:
-    error.sourceFile = sourceFile
+proc attachSourceFile(error: ref YumlyIOError, sourceFile: SourceFile) =
+  if sourceFile == nil:
+    return
+  if error.source.len == 0:
+    error.source.add(sourceSpan(sourceFile, SourcePos(0), SourcePos(0)))
+  else:
+    for span in error.source.mitems:
+      if span.source == nil:
+        span.source = sourceFile
 
-proc actualBaseDir(baseDir, sourceFile: string): string =
-  if sourceFile.len > 0:
+proc actualBaseDir(baseDir: string, sourceFile: SourceFile): string =
+  if sourceFile != nil:
     try:
-      return parentDir(os.expandFilename(sourceFile))
+      return parentDir(os.expandFilename(sourceFile.path))
     except OSError:
       discard
 
@@ -63,17 +82,17 @@ proc actualBaseDir(baseDir, sourceFile: string): string =
     return baseDir
 
 proc loadIncludes*(upstream: NodePuller; baseDir: string = ".";
-    sourceFile: string = ""): NodePuller =
+    sourceFile: SourceFile = nil): NodePuller =
   var visited = initHashSet[string]()
   var stack = @[IncludeSource(puller: upstream, stream: nil,
       baseDir: actualBaseDir(baseDir, sourceFile), sourceFile: sourceFile,
-      includeLine: 0, includeCol: 0)]
+      includeSource: sourceSpan(sourceFile, SourcePos(0), SourcePos(0)))]
 
-  if sourceFile.len > 0:
+  if sourceFile != nil:
     try:
-      visited.incl(os.expandFilename(sourceFile))
+      visited.incl(os.expandFilename(sourceFile.path))
     except OSError:
-      visited.incl(sourceFile)
+      visited.incl(sourceFile.path)
 
   return proc(): YumNode {.closure.} =
     while stack.len > 0:
@@ -83,17 +102,13 @@ proc loadIncludes*(upstream: NodePuller; baseDir: string = ".";
       try:
         node = source.puller()
       except YumlyError as error:
-        if source.stream == nil:
-          raise
-
-        source.stream.close()
+        if source.stream != nil:
+          source.stream.close()
         error.attachSourceFile(source.sourceFile)
         raise error
       except YumlyIOError as error:
-        if source.stream == nil:
-          raise
-
-        source.stream.close()
+        if source.stream != nil:
+          source.stream.close()
         error.attachSourceFile(source.sourceFile)
         raise error
       except CatchableError as error:
@@ -102,15 +117,15 @@ proc loadIncludes*(upstream: NodePuller; baseDir: string = ".";
           raise
 
         source.stream.close()
-        failedToLoadFile(source.sourceFile, source.includeLine,
-            source.includeCol, error.msg)
+        failedToLoadFile(source.sourceFile.path, source.includeSource,
+            error.msg)
 
       if node.kind == nkEOF:
         # If an included stream ended, close it and resume the parent stream.
         if source.stream != nil:
           source.stream.close()
-        if source.sourceFile.len > 0 and stack.len > 1:
-          visited.excl(source.sourceFile)
+        if source.sourceFile != nil and stack.len > 1:
+          visited.excl(source.sourceFile.path)
         discard stack.pop()
 
         if stack.len == 0:
@@ -123,39 +138,58 @@ proc loadIncludes*(upstream: NodePuller; baseDir: string = ".";
       if node.kind != nkInclude:
         return node
 
-      let resolvedPath = getCanonicalPath(node.includePath, source.baseDir,
-          node.line, node.col)
-      checkSandbox(resolvedPath, node.line, node.col)
+      let includeSource = node.token.source
 
-      let ext = includeExt(resolvedPath)
-      # If the include extension is unknown, fail before opening the file.
-      if ext notin allowedIncludeExts:
-        includeUnsupportedExtError(resolvedPath, ext, node.line, node.col)
+      var newSources: seq[IncludeSource] = @[]
+      for includePath in node.includesPath:
+        when not (defined(yumlyEnv) and defined(yumlyDotenv)):
+          if includeExt(includePath) == ".env":
+            dotenvIncludeDisabledError(includePath, includeSource)
 
-      # If the resolved path is already active, the include chain is circular.
-      if resolvedPath in visited:
-        circularIncludeError(resolvedPath, node.line, node.col)
+        let resolvedPath = getCanonicalPath(includePath, source.baseDir,
+            includeSource)
+        checkSandbox(resolvedPath, includeSource)
 
-      case ext:
-      of ".env":
-        visited.incl(resolvedPath)
-        loadEnvFile(resolvedPath, node.line, node.col)
-        visited.excl(resolvedPath)
-        return node
+        let ext = includeExt(resolvedPath)
+        # If the include extension is unknown, fail before opening the file.
+        if ext notin allowedIncludeExts:
+          includeUnsupportedExtError(resolvedPath, ext, includeSource)
 
-      of ".yumly", ".yuy":
-        try:
-          let stream = newYumlyStream(resolvedPath)
-          let puller = parseNodes(tokenize(stream))
-          visited.incl(resolvedPath)
-          stack.add(IncludeSource(puller: puller, stream: stream,
-              baseDir: parentDir(resolvedPath), sourceFile: resolvedPath,
-              includeLine: node.line, includeCol: node.col))
-          return node
-        except CatchableError as error:
-          failedToLoadFile(resolvedPath, node.line, node.col, error.msg)
+        # If the resolved path is already active, the include chain is circular.
+        if resolvedPath in visited:
+          circularIncludeError(resolvedPath, includeSource)
 
-      else:
-        discard
+        case ext:
+        of ".env":
+          when defined(yumlyEnv) and defined(yumlyDotenv):
+            visited.incl(resolvedPath)
+            loadEnvFile(resolvedPath, includeSource)
+            visited.excl(resolvedPath)
+          else:
+            dotenvIncludeDisabledError(resolvedPath, includeSource)
+
+        of ".yumly", ".yuy", ".yu":
+          try:
+            let stream = newYumlyStream(resolvedPath)
+            let includedSource = SourceFile(path: resolvedPath)
+            let puller = parseNodes(tokenize(stream,
+                sourceFile = includedSource),
+                if ext == ".yu": dkSchema else: dkConfig)
+            visited.incl(resolvedPath)
+            newSources.add(IncludeSource(puller: puller, stream: stream,
+                baseDir: parentDir(resolvedPath),
+                sourceFile: includedSource,
+                includeSource: includeSource))
+          except CatchableError as error:
+            failedToLoadFile(resolvedPath, includeSource, error.msg)
+
+        else:
+          discard
+
+      if newSources.len > 0:
+        for i in countdown(newSources.high, 0):
+          stack.add(newSources[i])
+
+      return node
 
     YumNode(kind: nkEOF)

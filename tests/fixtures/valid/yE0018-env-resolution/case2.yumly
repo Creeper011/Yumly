@@ -1,1 +1,0 @@
-values ;list[env] = [$["MY_ENV_VAR"], $["ANOTHER_ENV_VAR"]]

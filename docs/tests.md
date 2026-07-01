@@ -1,78 +1,52 @@
 # ⋆˚.♪ Yumly Test System ♪.˚⋆
 ⊹˚. ♡.𖥔 ݁ ˖
 
-yooooo!! welcome to the testing arena!! 🥀 ⸜(｡˃ ᵕ ˂ )⸝♡
+yooooo!! welcome to my testing arena!! 🥀 ⸜(｡˃ ᵕ ˂ )⸝♡
 
-I, as Yumly, the test system has two complementary sides:
-- Unit tests for isolated behavior
-- Fixtures for the complete parsing pipeline.
+My test suite is built from fixtures. Each fixture describes an input, the
+compile profiles in which it runs, and the exact result or diagnostic expected
+from each execution.
+
+The runners collect the same fixtures, expand their compile-flag combinations,
+build the required profiles, and execute every variant assigned to each
+profile. Test behavior is written once in the fixture instead of being copied
+into each runner.
 
 ---
 
 ## ✿ Architecture ‧₊˚
 
-Every test lives inside its own little folder:
-
 ```text
 tests/
-  unit/
-    U0001[value_defs]-classify-literal/
-      test_classify_literal.nim
-    U0010[bridge]-map-values/
-      test_map_values.py
   fixtures/
-    valid/
-      yE0015-basic-types/
-        metadata.yumly
-        case1.yumly
-        case1.expected.yumyumy
-    invalid/
-      xP0005-missing-tokens/
-        metadata.yumly
-        case1.yumly
-    stress/
-      sV0001-deep-nesting/
-        metadata.yumly
-        test.yumly
+    yT0001-unclosed-string/
+      metadata.yumly
+      case1.yumly
+
+    y0002-env-feature/
+      metadata.yumly
+      case1.yumly
+      case1.expected.yumyumy
+
   runners/
-    nim_runner/
-    python_runner/
-  utils/
-    create_new_test.nim
+    nim/
+    python/
+    c/
+
+  schemas/
+    case.yu
+
+  template/
+    y0001-test-template/
+      metadata.yumly
 ```
 
-The runners are intentionally separated from the test data. Fixtures describe
-the language behavior once, then Nim and Python verify the same cases.
+Every fixture owns a folder under `tests/fixtures/`. Its `metadata.yumly` uses
+the shared schemas in
+[`tests/schemas/case.yu`](../tests/schemas/case.yu).
 
----
-
-## ✿ Unit Tests ‧₊˚
-
-They exercise one module or behavior directly, and don't need `metadata.yumly`.
-
-But, for that, discovery rules are simple:
-
-- ⟡ Nim unit files must be named `test_*.nim`.
-- ⟡ Python unit files must be named `test_*.py`.
-- ⟡ Filesystem and complete-pipeline behavior belong in fixtures.
-- ⟡ Nim unit binaries are generated under `build/tests/unit`.
-
-Run all unit tests:
-
-```bash
-make test-unit
-```
-
-Or choose a runner:
-
-```bash
-make test-unit-nim
-make test-unit-python
-```
-
-Python units are collected directly by pytest, so each test function appears
-as an individual result. The Nim runner recursively discovers and compiles
-every `test_*.nim` source.
+The runners contain execution and interface-specific code. They do not own
+copies of the language cases.
 
 ---
 
@@ -81,224 +55,399 @@ every `test_*.nim` source.
 Fixture folders use this pattern:
 
 ```text
-{kind}{phase}{number}-{name}
+y{phase?}{number}-{name}
 ```
 
-| Field        | Description                                          |
-|--------------|------------------------------------------------------|
-| `kind` | `y` = valid, `x` = invalid, `s` = stress             |
-| `phase`      | Pipeline stage to run up to (optional)               |
-| `number`     | Global 4-digit counter, e.g. `0001`                  |
-| `name`       | Lowercase with hyphens (kebab-case), e.g. `multiline-string` |
+| Field | Meaning |
+|-------|---------|
+| `y` | My fixture symbol. It does not mean valid or invalid. |
+| `phase` | Optional short form of `until-stage`. |
+| `number` | One global and immutable four-digit fixture number. |
+| `name` | A lowercase kebab-case description of the behavior. |
 
-> **Note:** The number is **global per kind** — it keeps incrementing
-> across all tests regardless of which phase they target!
+Pipeline phases use these short forms:
 
-## ✿ Test Metadata ‧₊˚
+| Short form | Stage |
+|------------|-------|
+| `T` | Tokenizer |
+| `P` | Parser |
+| `LI` | Load Includes |
+| `R` | Resolver |
+| `E` | Evaluator |
+| `V` | Validator |
 
-Every test folder MUST have a `metadata.yumly` file. This tells the runner exactly what to do. **Runners do never infer from the folder name!!**
+The phase may be present or omitted:
 
-```yumly
-;> Test file metadata template for fixtures tests <;
-
-name ;string = "Test Name"
-valid ;bool = false, number ;int = 0000
-phase ;string = "T"
-
-;> Required for invalid fixtures <;
-expectedCode ;string = "tokenizer.unclosed-string"
-
-;> for multiples levels of test<;
-cases ;list[string] = ["case1.yumly", "case2.yumly"]
-
-;> set environment variables for the test case <;
-(envs) {
-    VAR1 ;string = "Value",
-    VAR2 ;string = "Value",
-    VAR3 ;string = "Value",
-    VAR4 ;string = "Value"
-}
-
-;> Executes Python code inside an isolated sandbox before the test suite runs <;
-preSuiteEval ;string = """
-# your python code here
-"""
+```text
+yT0001-unclosed-string
+y0002-env-feature
+yLI0003-circular-include
 ```
 
-Template: [tests/utils/template/metadata.yumly](../tests/utils/template/metadata.yumly)
+Only `y` plus the number forms the permanent identity. The optional phase and
+descriptive name may change without creating a new fixture identity.
 
-### ✿ Pipeline Phases ‧₊˚
-
-| Value | Stage        | Description |
-|-------|--------------|-------------|
-| `T`   | Tokenizer    | Raw token stream |
-| `P`   | Parser       | AST construction |
-| `R`   | Resolver     | Type & Env resolution |
-| `LI`  | Load Includes | Including external files |
-| `V`   | Validator    | Structural checks |
-| `E`   | Evaluator    | Final value generation |
+The runner rejects duplicate numbers. When a folder contains a phase, it must
+match `until-stage` in its metadata. The `number` field must also match the
+folder number.
 
 ---
 
-## ✿ Making Assertions (for fixtures) ‧₊˚
+## ✿ Metadata ‧₊˚
 
-Assertions are **optional** but highly recommended!! Without an expected file, the runner only checks if the test passes or fails. 
+Every fixture contains one `metadata.yumly`. It declares fixture-wide settings
+and a typed list of cases.
 
-Expected files verify that the result produced by the parser is indeed the expected result. It is important to note that the error message is ignored, and if the program fails during execution, the assertion will not be made and the test will be marked as failed.
-
-
-| Phase | Expected file            | Format       |
-|-------|--------------------------|--------------|
-| `T`   | `case1.expected.tokens`  | token stream |
-| `E`   | `case1.expected.yumyumy` | yumyumy ♡    |
-| other | —                        | pass/fail only |
-
-If a test has multiple cases, each case can have its own assertion:
-
-```
-yE0015-basic-types/
-  metadata.yumly
-  case1.yumly
-  case1.expected.yumyumy   ← asserts output
-  case2.yumly              ← pass/fail only
-```
-
-### ⟡ Tokenizer assertions
-
-The runner serializes the token stream and compares it with
-`case1.expected.tokens`:
-
-```text
-tkIdent "name"
-tkEquals
-tkString "Yumly"
-tkEOF
-```
-
-### ⟡ Evaluator assertions
-
-For `case1.yumly`:
+The complete template lives at
+[`tests/template/y0001-test-template/metadata.yumly`](../tests/template/y0001-test-template/metadata.yumly).
 
 ```yumly
-name ;string = "Yumly"
-(database) { host = "localhost" }
-```
+include { "../../schemas/case.yu" }
 
-The matching `case1.expected.yumyumy` may contain:
+name = "Environment feature"
+number = "0002"
+until-stage = "validator"
+tags ;list[string] = ["boundary", "feature:env"]
 
-```text
-[
-  name (string) -> Yumly
-  [database] (
-    host (string) -> localhost
-  )
+compile-flags ;list[string] = [
+  "yumlyEnv"
+  "yumlyDotenv"
+  "yumly32"
+]
+
+(envs) {
+  TOKEN = "root value"
+}
+
+cases ;list[test-case] = [
+  {
+    name = "Environment expression"
+    file = "case1.yumly"
+    tags = ["integration"]
+
+    (envs) {
+      TOKEN = "case value"
+    }
+
+    variants ;list = [
+      <valid-variant> {
+        name = "Environment support enabled"
+        expected-file = "case1.expected.yumyumy"
+      }
+
+      <invalid-variant> {
+        name = "Environment support disabled"
+        disable-flags = ["yumlyEnv", "yumlyDotenv"]
+        expected-stage = "parser"
+        expected-code = "parser.env-disabled"
+
+        (expected-span) {
+          file = "case1.yumly"
+          line = 1
+          col = 9
+          end-line = 1
+          end-col = 20
+        }
+      }
+    ]
+  }
 ]
 ```
 
-Env vars appear as resolved values, so evaluator assertions verify resolution
-too!! ✧
+### ⟡ Root fields
 
-> ⟡ If you don't know what is Yumyumy ♡, check [docs/yumyumy.md](yumyumy.md)
+| Field | Meaning |
+|-------|---------|
+| `name` | Human-readable fixture name. |
+| `number` | Four-digit identity matching the folder. |
+| `until-stage` | Furthest pipeline stage executed by the fixture. |
+| `tags` | Tags shared by its cases and variants. |
+| `compile-flags` | Base compile profile. |
+| `pre-eval-code` | Optional isolated setup code. |
+| `(envs)` | Environment shared by every case. |
+| `cases` | List of inputs and their variants. |
 
----
-
-## ✿ Running The Suite ‧₊˚
-
-Run unit and functional fixture tests:
-
-```bash
-make test-all
-```
-
-Run only functional fixtures:
-
-```bash
-make test-fixtures
-make test-fixtures-nim
-make test-fixtures-python
-```
-
-`test-all` intentionally excludes stress fixtures and benchmarks. The normal
-loop should stay quick enough to run constantly.
+If `pre-eval-code` fails, fixture setup fails. Setup code does not replace an
+expected result and must not depend on the execution order of cases.
 
 ---
 
-## ✿ Stress And Benchmarks ‧₊˚
+## ✿ Cases ‧₊˚
 
-Stress fixtures exercise large inputs, deep nesting, and include depth:
+A case identifies one input file and the settings shared by every execution of
+that input:
 
-```bash
-make test-stress
+```yumly
+{
+  name = "Environment expression"
+  file = "case1.yumly"
+  tags = ["feature:env"]
+
+  (envs) {
+    TOKEN = "case value"
+  }
+
+  variants = [
+    ;> one or more variants <;
+  ]
+}
 ```
 
-Benchmarks measure every valid, invalid, and stress fixture with release builds:
+Every case declares `(envs)`, even when it is empty. Case values override equal
+names from the fixture root and add names that exist only for that case.
 
-```bash
-make test-bench
-```
-
-Results are written to:
-
-- ⟡ `benchmark.ylwa` for Nim.
-- ⟡ `benchmark_python.ylwa` for Python.
-
-The benchmark reports are nested Ylwa documents. Measurements are grouped by
-runner, fixture kind (`valid`, `invalid`, `stress`), fixture case, and operation,
-so stress results can be inspected without digging through the full fixture list.
-Nim fixture memory uses `getOccupiedMem()` inside an isolated worker process,
-so previous test cases do not inflate later measurements.
-Learn more about the wa wa wa format in [docs/ylwa.md](ylwa.md).
+Case names must be unique inside a fixture. The input path is relative to the
+fixture folder and must refer to an existing file.
 
 ---
 
-## ✿ Creating A New Test ‧₊˚
+## ✿ Variants ‧₊˚
 
-Don't create all those folders manually!! Use the super-test-generator-2000:
+A variant describes one result for one compile profile. The same input may have
+successful and invalid variants when compile-time features change its behavior.
 
-```bash
-nim c -r tests/utils/create_new_test.nim
+Reports identify an execution by fixture, case, and variant:
+
+```text
+y0002 / Environment expression / Environment support disabled
 ```
 
-It can create:
+### ⟡ Successful variants
 
-1. Discoverable Nim or Python unit tests.
-2. Valid, invalid, or stress fixtures.
-3. Metadata with the selected phase and expected diagnostic code.
-4. One or more case files with the next available identifier.
+`<valid-variant>` requires an expected file:
+
+```yumly
+<valid-variant> {
+  name = "Environment support enabled"
+  expected-file = "case1.expected.yumyumy"
+}
+```
+
+Finishing without an error is not enough. The result from `until-stage` must
+match the declared expected file.
+
+### ⟡ Invalid variants
+
+`<invalid-variant>` requires the stage, stable diagnostic code, and complete
+primary span expected from the failure:
+
+```yumly
+<invalid-variant> {
+  name = "Environment support disabled"
+  expected-stage = "parser"
+  expected-code = "parser.env-disabled"
+
+  (expected-span) {
+    file = "case1.yumly"
+    line = 1
+    col = 1
+    end-line = 1
+    end-col = 12
+  }
+}
+```
+
+A crash, timeout, unrelated exception, different diagnostic, or matching code
+at the wrong span does not satisfy the expected result.
+
+Variant names must be unique inside their case. Every case must contain at
+least one variant.
 
 ---
 
-## ✿ Best Practices ‧₊˚
+## ✿ Pipeline Stages ‧₊˚
 
-- ⟡ **One behavior per folder.** Different diagnostic codes mean different fixtures.
-- ⟡ **Prefer unit tests for isolated logic.** They are faster and easier to debug.
-- ⟡ **Use fixtures for pipeline behavior.** Especially files, includes, env vars, and diagnostics.
-- ⟡ **Keep invalid cases minimal.** Include only what triggers the expected failure.
-- ⟡ **Never accept an arbitrary exception.** Assert the phase and diagnostic code.
-- ⟡ **Don't assert what you don't care about.** Successful completion may be enough.
-- ⟡ **Keep stress explicit.** Big cases should not slow down normal development.
+| Value | Stage | Result |
+|-------|-------|--------|
+| `tokenizer` | Tokenizer | Token stream |
+| `parser` | Parser | Parser node stream |
+| `includes` | Load Includes | Node stream with includes expanded |
+| `resolver` | Resolver | Resolved node stream |
+| `evaluator` | Evaluator | Evaluated configuration |
+| `validator` | Validator | Validated configuration |
 
-## ✿ Make Reference ‧₊˚
+The pipeline order is:
 
-Okay, too many commands to memorize... so here's the cheat sheet!! ദ്ദി •⩊• )
+```text
+tokenizer → parser → includes → resolver → evaluator → validator
+```
 
-### ⟡ Test commands
-
-| Command | What it does |
-|---------|--------------|
-| `make test` | Alias for `make test-all` |
-| `make test-all` | Runs unit tests and functional fixtures in both languages |
-| `make test-unit` | Runs all Nim and Python unit tests |
-| `make test-unit-nim` | Runs only Nim unit tests |
-| `make test-unit-python` | Runs only Python unit tests |
-| `make test-fixtures` | Runs valid and invalid fixtures in both languages |
-| `make test-fixtures-nim` | Runs valid and invalid fixtures with the Nim runner |
-| `make test-fixtures-python` | Runs valid and invalid fixtures with pytest |
-| `make test-stress` | Runs stress fixtures in both languages |
-| `make test-stress-nim` | Runs stress fixtures with the Nim runner |
-| `make test-stress-python` | Runs stress fixtures with pytest |
-| `make test-bench` | Benchmarks all valid, invalid, and stress fixtures |
+`until-stage` tells a successful variant which result to compare and sets the
+furthest stage the fixture executes. An invalid variant may expect a failure at
+any stage up to that point.
 
 ---
 
-#### yeah, you're a testing pro now!! (๑˃ᴗ˂)ﻭ
+## ✿ Expected Files ‧₊˚
+
+Expected files use a suffix appropriate for `until-stage`:
+
+| Stage | Suffix | Compared result |
+|-------|--------|-----------------|
+| Tokenizer | `.expected.tokens` | Token stream |
+| Parser | `.expected.nodes` | Parser node stream |
+| Includes | `.expected.nodes` | Expanded node stream |
+| Resolver | `.expected.nodes` | Resolved node stream |
+| Evaluator | `.expected.yumyumy` | Evaluated configuration |
+| Validator | `.expected.yumyumy` | Validated configuration |
+
+The runner rejects missing expected files, suffixes incompatible with
+`until-stage`, and expected files that no variant references. Expected files
+are committed test data; the runner does not silently rewrite them after a
+failure.
+
+---
+
+## ✿ Compile Profiles ‧₊˚
+
+The runners create profiles from every compile-flag combination declared by
+all fixtures.
+
+`compile-flags` defines a fixture's base combination. A variant derives another
+combination with `enable-flags` and `disable-flags`:
+
+```yumly
+<invalid-variant> {
+  name = "Dotenv support disabled"
+  disable-flags = ["yumlyDotenv"]
+  expected-stage = "includes"
+  expected-code = "include.dotenv-disabled"
+
+  (expected-span) {
+    file = "case1.yumly"
+    line = 1
+    col = 1
+    end-line = 1
+    end-col = 19
+  }
+}
+```
+
+Before compiling or executing cases, each runner:
+
+1. Discovers every fixture.
+2. Expands every case and variant.
+3. Applies each variant's enabled and disabled flags to its fixture base.
+4. Rejects contradictory or invalid combinations.
+5. Normalizes the resulting flag sets.
+6. Deduplicates equal profiles across the entire fixture collection.
+7. Compiles one runner binary or library for each unique profile it needs.
+8. Executes each variant with its assigned profile.
+
+The runners create only combinations declared by fixtures and variants. They do
+not generate an automatic power set of every known flag.
+
+Two combinations with the same normalized flags share one compiled profile,
+even when they came from different fixtures. A flag listed in both
+`enable-flags` and `disable-flags` is a metadata error.
+
+---
+
+## ✿ Runners ‧₊˚
+
+The Nim, Python, and C runners consume the complete discovered fixture plan.
+They share fixture identities, cases, variants, tags, environments, expected
+results, and normalized profile definitions.
+
+Each runner remains responsible for its own build and interface behavior:
+
+- The Nim runner compiles and executes the native pipeline profiles.
+- The Python runner builds the native extension profiles and verifies their
+  Python mappings.
+- The C runner builds the ABI profiles and verifies C status, values, and
+  diagnostics.
+
+A build failure fails its profile and every execution assigned to it. One
+runner failing does not turn another runner's result into success.
+
+---
+
+## ✿ Tags ‧₊˚
+
+Tags classify fixtures and allow focused runs:
+
+```yumly
+tags = [
+  "regression"
+  "boundary"
+  "integration"
+  "feature:env"
+  "interface:python"
+  "stress"
+]
+```
+
+Fixture, case, and variant tags are combined for reporting and filtering. Tags
+do not imply a stage, compile flag, validity, or expected result.
+
+Useful tags include:
+
+- `regression` for a defect that must not return;
+- `boundary` for limits, EOF positions, overflow, and recursion depth;
+- `integration` for behavior crossing stages or external resources;
+- `feature:*` for compile-time capabilities;
+- `interface:*` for runner-specific behavior;
+- `stress` and `performance` for expensive cases.
+
+---
+
+## ✿ Environment Isolation ‧₊˚
+
+The fixture `(envs)` block provides shared string values. The case `(envs)`
+block overrides or adds values for that case. An empty case block means that it
+uses only the fixture environment.
+
+Cases execute with isolated environments. Their values and modifications must
+not leak into another case, variant, profile, or runner process.
+
+---
+
+## ✿ Regression, Integration, And Boundary Cases ‧₊˚
+
+A regression fixture keeps the smallest input that reproduces the failure and
+the precise result expected after the fix.
+
+Integration fixtures cover interactions such as includes plus validation,
+environment loading plus coercion, or native results crossing a runner's public
+interface.
+
+Boundary fixtures cover behavior such as:
+
+- EOF after partial tokens;
+- stream refills across token boundaries;
+- empty and maximum-size values;
+- numeric overflow and malformed exponents;
+- Unicode and escape sequences;
+- recursion and include-depth limits;
+- missing, empty, and uncoercible environment values;
+- duplicate symbols across included files;
+- compile-time features enabled and disabled.
+
+These are ordinary fixtures selected with tags. They do not use separate
+identifier formats or directory trees.
+
+---
+
+## ✿ Discovery Failures ‧₊˚
+
+Discovery fails before any case executes when it finds:
+
+- malformed or duplicate fixture identifiers;
+- a metadata number different from its folder number;
+- an encoded folder phase different from `until-stage`;
+- missing schema, input, or expected files;
+- duplicate case or variant names;
+- an empty case or variant list;
+- an expected suffix incompatible with `until-stage`;
+- contradictory or invalid compile flags;
+- an expected failure stage beyond `until-stage`;
+- an invalid variant without its complete diagnostic expectation;
+- a successful variant without an expected file;
+- an expected file that no variant references.
+
+Broken test data must fail loudly. It must never look like a successful Yumly
+execution!! ദ്ദി •⩊• )
+
+---
+
+#### yeah, now you're actually testing me!! (๑˃ᴗ˂)ﻭ

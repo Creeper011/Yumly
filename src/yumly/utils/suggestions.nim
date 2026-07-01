@@ -5,8 +5,17 @@
 import std/[editdistance, options, strutils]
 import ../types/[errors, token]
 
-const TypeHintCandidates = ["string", "int", "float", "bool", "env", "list"]
+when defined(yumlyEnv):
+  const TypeHintCandidates = ["string", "int", "float", "bool", "env", "list"]
+else:
+  const TypeHintCandidates = ["string", "int", "float", "bool", "list"]
 const KeywordCandidates = ["include"]
+
+const TypeHintHelp =
+  when defined(yumlyEnv):
+    ";string, ;int, ;float, ;bool, ;env, or ;list"
+  else:
+    ";string, ;int, ;float, ;bool, or ;list"
 
 func defaultMaxDistance(value: string): int =
   case value.len
@@ -14,7 +23,8 @@ func defaultMaxDistance(value: string): int =
   of 4 .. 8: 2
   else: 3
 
-func suggestClosest*(value: string, candidates: openArray[string], maxDistance = -1): Option[string] =
+func suggestClosest*(value: string, candidates: openArray[string],
+    maxDistance = -1): Option[string] =
   if value.len == 0:
     return none(string)
 
@@ -48,15 +58,19 @@ func knownTypeHint(hint: string): Option[string] =
 
   suggestTypeHint(hint)
 
-func suggestExpected*(expected: Expected, token: Token, previousToken: Option[Token]): Option[string] =
+func suggestExpected*(expected: Expected, token: Token, previousToken: Option[
+    Token]): Option[string] =
   let atEof = token.kind == tkEOF
 
   case expected
   of expValue:
-    some("values can be strings, numbers, booleans, env references, lists, or blocks")
+    when defined(yumlyEnv):
+      some("values can be strings, numbers, booleans, env references, lists, or blocks")
+    else:
+      some("values can be strings, numbers, booleans, lists, or blocks")
   of expIdentifier:
-    if previousToken.isSome and previousToken.get.kind == tkDeclaration:
-      return some("type hints need a name after ';': use ;string, ;int, ;float, ;bool, ;env, or ;list")
+    if previousToken.isSome and previousToken.get.kind == tkSemiColon:
+      return some("type hints need a name after ';': use " & TypeHintHelp)
     some("identifiers must start with a letter or underscore")
   of expString:
     some("wrap the value in single or double quotes")

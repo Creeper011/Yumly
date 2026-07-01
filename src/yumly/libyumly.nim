@@ -1,3 +1,10 @@
+#
+# Yumly Config Language :3
+# 
+# Copyright © 2026 Yumene. All rights reserved.
+# Use of this source code is governed by the LICENSE file.
+#
+
 import api/nim/api
 export api
 

@@ -8,8 +8,9 @@ import nimpy
 import sets, strutils, options
 import ../../types/ast
 import ../../types/nodes
+import ../../types/source
 import ../../types/token
-import ../../types/values_defs
+import ../../types/typehints
 import ../../core/builders
 
 type
@@ -52,7 +53,14 @@ proc ensureUniqueKey(seen: var HashSet[string], key, scope: string) =
       key & "' in " & scope & ".")
   seen.incl(key)
 
+proc valueToPy(value: Value, pyBuiltins: PyObject): PyObject
+proc blockToPyDict(blk: Block, pyBuiltins: PyObject): PyObject
+
 proc valueToPy(value: Value, pyBuiltins: PyObject): PyObject =
+  when defined(yumlyEnv):
+    if value.kind == vkEnv:
+      return pyBuiltins.str(value.envVal)
+
   case value.kind
   of vkString:
     result = pyBuiltins.str(value.strVal)
@@ -62,14 +70,62 @@ proc valueToPy(value: Value, pyBuiltins: PyObject): PyObject =
     result = pyBuiltins.int(value.intVal)
   of vkFloat:
     result = pyBuiltins.float(value.floatVal)
-  of vkEnv:
-    result = pyBuiltins.str(value.envVal)
-
   of vkList:
     let pyList = pyBuiltins.list()
-    for it in value.elements:
-      discard pyList.append(valueToPy(it, pyBuiltins))
+    for item in value.elements:
+      case item.kind
+      of ikPair:
+        let dict = pyBuiltins.dict()
+        dict[item.pair.key] = valueToPy(item.pair.value, pyBuiltins)
+        discard pyList.append(dict)
+      of ikValue:
+        discard pyList.append(valueToPy(item.value, pyBuiltins))
+      of ikBlock:
+        let dict = pyBuiltins.dict()
+        dict[item.blk.name] = blockToPyDict(item.blk, pyBuiltins)
+        discard pyList.append(dict)
+      of ikSchema:
+        discard
     result = pyList
+  of vkObject:
+    var onlyNamedItems = true
+    for item in value.items:
+      if item.kind == ikValue:
+        onlyNamedItems = false
+        break
+
+    if onlyNamedItems:
+      let dict = pyBuiltins.dict()
+      for item in value.items:
+        case item.kind
+        of ikPair:
+          dict[item.pair.key] = valueToPy(item.pair.value, pyBuiltins)
+        of ikBlock:
+          dict[item.blk.name] = blockToPyDict(item.blk, pyBuiltins)
+        of ikValue:
+          discard
+        of ikSchema:
+          discard
+      result = dict
+    else:
+      let pyList = pyBuiltins.list()
+      for item in value.items:
+        case item.kind
+        of ikPair:
+          let dict = pyBuiltins.dict()
+          dict[item.pair.key] = valueToPy(item.pair.value, pyBuiltins)
+          discard pyList.append(dict)
+        of ikValue:
+          discard pyList.append(valueToPy(item.value, pyBuiltins))
+        of ikBlock:
+          let dict = pyBuiltins.dict()
+          dict[item.blk.name] = blockToPyDict(item.blk, pyBuiltins)
+          discard pyList.append(dict)
+        of ikSchema:
+          discard
+      result = pyList
+  else:
+    discard
 
 proc insertValue(dict: PyObject, key: string, value: Value,
     pyBuiltins: PyObject) =
@@ -78,33 +134,43 @@ proc insertValue(dict: PyObject, key: string, value: Value,
 proc blockToPyDict(blk: Block, pyBuiltins: PyObject): PyObject =
   let dict = pyBuiltins.dict()
   var seen = initHashSet[string]()
-  for pair in blk.pairs:
-    ensureUniqueKey(seen, pair.key, "block '" & blk.name & "'")
-    insertValue(dict, pair.key, pair.value, pyBuiltins)
-  for subBlock in blk.subBlocks:
-    ensureUniqueKey(seen, subBlock.name, "block '" & blk.name & "'")
-    dict[subBlock.name] = blockToPyDict(subBlock, pyBuiltins)
+  for item in blk.items:
+    case item.kind
+    of ikPair:
+      ensureUniqueKey(seen, item.pair.key, "block '" & blk.name & "'")
+      insertValue(dict, item.pair.key, item.pair.value, pyBuiltins)
+    of ikBlock:
+      ensureUniqueKey(seen, item.blk.name, "block '" & blk.name & "'")
+      dict[item.blk.name] = blockToPyDict(item.blk, pyBuiltins)
+    of ikValue, ikSchema:
+      discard
   return dict
 
 proc toPython*(config: YumlyConf): PyObject =
   let pyBuiltins = pyBuiltinsModule()
   let root = pyBuiltins.dict()
   var seen = initHashSet[string]()
-  for pair in config.pairs:
-    ensureUniqueKey(seen, pair.key, "root")
-    insertValue(root, pair.key, pair.value, pyBuiltins)
-  for blk in config.blocks:
-    ensureUniqueKey(seen, blk.name, "root")
-    root[blk.name] = blockToPyDict(blk, pyBuiltins)
+  for item in config.items:
+    case item.kind
+    of ikPair:
+      ensureUniqueKey(seen, item.pair.key, "root")
+      insertValue(root, item.pair.key, item.pair.value, pyBuiltins)
+    of ikBlock:
+      ensureUniqueKey(seen, item.blk.name, "root")
+      root[item.blk.name] = blockToPyDict(item.blk, pyBuiltins)
+    of ikValue, ikSchema:
+      discard
   return root
 
 proc tokenToPy*(token: Token, pyBuiltins: PyObject): PyObject =
   result = pyBuiltins.dict()
   result["kind"] = pyBuiltins.str($token.kind)
-  result["line"] = pyBuiltins.int(token.line)
-  result["col"] = pyBuiltins.int(token.col)
-  result["endLine"] = pyBuiltins.int(token.endLine)
-  result["endCol"] = pyBuiltins.int(token.endCol)
+  result["line"] = pyBuiltins.int(int(token.source.line))
+  result["col"] = pyBuiltins.int(int(token.source.col))
+  result["endLine"] = pyBuiltins.int(int(token.source.endLine))
+  result["endCol"] = pyBuiltins.int(int(token.source.endCol))
+  if token.source.source != nil:
+    result["sourceFile"] = pyBuiltins.str(token.source.source.path)
   if token.kind in {tkString, tkIdent, tkLiteral}:
     result["value"] = pyBuiltins.str(token.value)
 
@@ -117,25 +183,41 @@ proc nodeToPy*(node: YumNode, pyBuiltins: PyObject): PyObject =
   result = pyBuiltins.dict()
   result["kind"] = pyBuiltins.str($node.kind)
   result["name"] = pyBuiltins.str(node.name)
-  result["line"] = pyBuiltins.int(node.line)
-  result["col"] = pyBuiltins.int(node.col)
-  if node.sourceFile != "":
-    result["sourceFile"] = pyBuiltins.str(node.sourceFile)
+  result["line"] = pyBuiltins.int(int(node.line))
+  result["col"] = pyBuiltins.int(int(node.col))
+  if node.sourceFile != nil:
+    result["sourceFile"] = pyBuiltins.str(node.sourceFile.path)
+
+  when defined(yumlyEnv):
+    if node.kind == nkEnv:
+      result["envName"] = pyBuiltins.str(node.envName)
+      if node.coerceType.isSome:
+        result["coerceType"] = pyBuiltins.str(node.coerceType.get.raw)
+      if node.envDefault.isSome:
+        result["envDefault"] = pyBuiltins.str(node.envDefault.get())
+      return
 
   case node.kind:
   of nkLiteral:
     result["rawValue"] = pyBuiltins.str(node.rawValue)
-  of nkEnv:
-    result["envName"] = pyBuiltins.str(node.envName)
-    if node.envDefault.isSome:
-      result["envDefault"] = pyBuiltins.str(node.envDefault.get())
   of nkPairStart:
     result["key"] = pyBuiltins.str(node.key)
     if node.typeHint.isSome:
       result["typeHint"] = pyBuiltins.str(node.typeHint.get().raw)
+  of nkSchemaBlockStart:
+    result["required"] = pyBuiltins.bool(node.required)
+  of nkSchemaTypedBlock:
+    result["blockType"] = pyBuiltins.str(node.blockType.raw)
   of nkInclude:
-    result["includePath"] = pyBuiltins.str(node.includePath)
-  of nkArrayStart, nkArrayEnd, nkBlockStart, nkBlockEnd, nkPairEnd, nkEOF:
+    let paths = pyBuiltins.list()
+    for path in node.includesPath:
+      discard paths.append(pyBuiltins.str(path))
+    result["includesPath"] = paths
+  of nkListStart, nkListEnd, nkObjectStart, nkObjectEnd, nkSchemaStart,
+      nkSchemaEnd, nkSchemaBlockEnd, nkBlockStart, nkBlockEnd, nkPairEnd,
+      nkEOF:
+    discard
+  else:
     discard
 
 proc nodesToPy*(nodes: openArray[YumNode], pyBuiltins: PyObject): PyObject =
@@ -162,11 +244,21 @@ proc parseValue(value: PyObject, pyTypes: PyTypes,
 
   if pyBuiltins.callMethod("isinstance", value, pyTypes.list).to(bool) or
      pyBuiltins.callMethod("isinstance", value, pyTypes.`tuple`).to(bool):
-    var elems: seq[Value] = @[]
+    var elems: seq[Item] = @[]
     for item in value:
-      elems.add(parseValue(item, pyTypes, pyBuiltins))
+      elems.add(Item(kind: ikValue, value: parseValue(item, pyTypes, pyBuiltins)))
 
     return Value(kind: vkList, elements: elems)
+
+  if pyBuiltins.callMethod("isinstance", value, pyTypes.dict).to(bool):
+    var items: seq[Item] = @[]
+    for item in value.callMethod("items"):
+      let keyStr = parseDictKey(item[0], pyTypes, pyBuiltins, "object value")
+      let pair = Pair(key: keyStr, value: parseValue(item[1], pyTypes,
+          pyBuiltins), typeHint: none(TypeHint),
+          source: sourceSpan(nil, SourcePos(0), SourcePos(0)))
+      items.add(Item(kind: ikPair, pair: pair))
+    return Value(kind: vkObject, schema: none(Schema), items: items)
 
   raise newException(ValueError, "Oh no.. failed to parse Python value, it's an unsupported Python type: " & $value)
 
@@ -181,6 +273,31 @@ proc parseBlock(name: string, data: PyObject, pyTypes: PyTypes,
       result.addSubBlock(parseBlock(keyStr, val, pyTypes, pyBuiltins))
     else:
       result.addPair(keyStr, parseValue(val, pyTypes, pyBuiltins))
+
+proc inferPythonItemHints(items: var seq[Item])
+
+proc inferPythonValueHints(value: var Value) =
+  case value.kind
+  of vkList:
+    inferPythonItemHints(value.elements)
+  of vkObject:
+    inferPythonItemHints(value.items)
+  else:
+    discard
+
+proc inferPythonItemHints(items: var seq[Item]) =
+  for item in items.mitems:
+    case item.kind
+    of ikPair:
+      if item.pair.typeHint.isNone:
+        item.pair.typeHint = some(typeHintFor(item.pair.value))
+      inferPythonValueHints(item.pair.value)
+    of ikValue:
+      inferPythonValueHints(item.value)
+    of ikBlock:
+      inferPythonItemHints(item.blk.items)
+    of ikSchema:
+      discard
 
 proc dictToYumlyConf*(data: PyObject): YumlyConf =
   let pyBuiltins = nimpy.pyBuiltinsModule()
@@ -220,16 +337,4 @@ proc dictToYumlyConf*(data: PyObject): YumlyConf =
           isRootPair = true)
       result.addPair(keyStr, parseValue(val, pyTypes, pyBuiltins))
 
-  for pair in result.pairs.mitems:
-    if pair.typeHint.isNone:
-      pair.typeHint = some(inferTypeHintObject(pair.value))
-
-  for blk in result.blocks.mitems:
-    for pair in blk.pairs.mitems:
-      if pair.typeHint.isNone:
-        pair.typeHint = some(inferTypeHintObject(pair.value))
-
-    for sub in blk.subBlocks.mitems:
-      for pair in sub.pairs.mitems:
-        if pair.typeHint.isNone:
-          pair.typeHint = some(inferTypeHintObject(pair.value))
+  inferPythonItemHints(result.items)

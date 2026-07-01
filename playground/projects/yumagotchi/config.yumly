@@ -1,0 +1,58 @@
+;> Main configuration yumagotchi <;
+
+[action] {
+  name ;string
+  key ;string
+  fullness ;int
+  happiness ;int
+  energy ;int
+  messages ;list[string]
+}
+
+[mood] {
+  threshold ;int
+  message ;string
+}
+
+(pet) {
+  name = "Yummie"
+
+  (initial-stats) {
+    fullness ;int = 72
+    happiness ;int = 80
+    energy ;int = 64
+  }
+}
+
+actions ;list[action] = [
+  {
+    name = "feed"
+    key = "f"
+    fullness = 24
+    happiness = 5
+    energy = 0
+    messages = ["yummy yummy!! ♡", "nham nham :3"]
+  }
+  {
+    name = "play"
+    key = "p"
+    fullness = -8
+    happiness = 22
+    energy = -14
+    messages = ["wonderhoyy!!", "hehehe >:3"]
+  }
+  {
+    name = "sleep"
+    key = "s"
+    fullness = -6
+    happiness = 2
+    energy = 34
+    messages = ["sleepy... zzz", "five more minutes..."]
+  }
+]
+
+moods ;list[mood] = [
+  {threshold = 75, message = "Yummie is glowing! ♡"}
+  {threshold = 40, message = "Yummie wants a little attention..."}
+  {threshold = 0, message = "Yummie is devastated 🥀"}
+]

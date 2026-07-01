@@ -1,11 +1,19 @@
 import os, strutils, streams
-import ../error_messages
+import ../errors/exceptions/parser/ioerrors
+import ../types/[document, source]
 
 const defaultMaxBytes = 52_428_800
 
 proc checkFileExtension*(path: string) =
-  if not (path.endsWith(".yumly") or path.endsWith(".yuy")):
+  if not (path.endsWith(".yumly") or path.endsWith(".yuy") or path.endsWith(".yu")):
     invalidFileExtensionError(path)
+
+func documentKindFor*(sourceFile: SourceFile): DocumentKind =
+  if sourceFile != nil and
+      splitFile(sourceFile.path).ext.toLowerAscii() == ".yu":
+    dkSchema
+  else:
+    dkConfig
 
 proc openFileContent*(filePath: string): string =
   if not fileExists(filePath):

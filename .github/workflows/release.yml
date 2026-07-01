@@ -45,6 +45,7 @@ jobs:
 
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
+    needs: build_sdist
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -52,6 +53,18 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download sdist
+        uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: sdist
+
+      - name: Extract sdist source
+        shell: bash
+        run: |
+          mkdir sdist-source
+          tar -xzf sdist/*.tar.gz -C sdist-source --strip-components=1
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -71,13 +84,15 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22
+        with:
+          package-dir: ./sdist-source
         env:
           # wheels are built targeting cp310; nimpy links against the Python C API,
           # so runtime compatibility with 3.11+ depends on ABI stability.
           CIBW_BUILD: "cp310-*"
           CIBW_SKIP: "*-musllinux* *-win32 *-manylinux_i686"
 
-          CIBW_BEFORE_BUILD: nimble install -y nimpy dotenv
+          CIBW_BEFORE_BUILD: nimble --nimbleDir:build/nimble install -y nimpy dotenv yaml
 
           CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
 
@@ -91,7 +106,7 @@ jobs:
             PATH="/opt/nim-${{ vars.NIM_VERSION }}/bin:$PATH"
 
           CIBW_ENVIRONMENT_WINDOWS: >
-            NIMFLAGS="--cc:vcc"
+            YUMLY_NIM_FLAGS="--cc:vcc"
 
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
             python -c "import os, shutil;

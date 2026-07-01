@@ -1,0 +1,7 @@
+;> Schema-only file. .yu keeps reusable shapes cozy and separate :3 <;
+
+[dependency] {
+  name ;string
+  description ;string
+  optional ;bool = false
+}

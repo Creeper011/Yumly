@@ -1,22 +1,20 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=77.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "yumly"
-version = "0.9.0"
+version = "0.10.0"
 description = "A cute, declarative config language with fail-fast behavior and optional type safety."
-readme = "README.md"
+readme = "README.MD"
 authors = [{ name = "Yumene", email = "yumene@yume.dev.br" }]
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 
 [tool.setuptools]
 packages = ["yumly"]
-package-dir = {"" = "lib/python"}
-
-[tool.setuptools.package-data]
-yumly = ["libyumly.so", "libyumly.pyd"]
+package-dir = {"" = "src/lib/python"}
 
 [project.urls]
 "Homepage" = "https://github.com/Creeper011/Yumly"

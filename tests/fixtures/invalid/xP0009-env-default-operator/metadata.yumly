@@ -1,7 +1,0 @@
-;> Test file metadata for env default operator <;
-
-name ;string = "Env Default Operator"
-valid ;bool = false, number ;int = 0009
-expectedCode ;string = "parser.expected"
-
-cases ;list[string] = ["case1.yumly"]

@@ -7,6 +7,7 @@ when defined(yumlyJson):
 
 when not defined(yumlyJson) or not defined(yumlyYaml):
   import ./display
+  import ./cli_errors
 
 type OutputFormat* = enum
   ofmtYumyumy, # Default
@@ -38,14 +39,18 @@ proc formatResult*(res: PipelineResult, format: OutputFormat = ofmtYumyumy): str
       when defined(yumlyJson):
         return $toJson(res.config)
       else:
-        error("Ehhh... JSON support was not enabled at compile time! (>_<)")
+        cliError(cliMessage(
+          "Ehhh... JSON support was not enabled at compile time! (>_<)",
+          "JSON support was not enabled at compile time"), ceFormatDisabled)
         info("hint: recompile with -d:yumlyJson")
         quit(1)
     of ofmtYaml:
       when defined(yumlyYaml):
         return toYaml(res.config)
       else:
-        error("Ehhh... YAML support was not enabled at compile time! (>_<)")
+        cliError(cliMessage(
+          "Ehhh... YAML support was not enabled at compile time! (>_<)",
+          "YAML support was not enabled at compile time"), ceFormatDisabled)
         info("hint: recompile with -d:yumlyYaml")
         quit(1)
     of ofmtYumly:

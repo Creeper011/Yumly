@@ -1,6 +1,0 @@
-(settings) {
-    debug ;bool = true
-}
-(settings) {
-    port ;int = 8080
-}

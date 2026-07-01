@@ -1,0 +1,33 @@
+;> Schemas for fixture test cases and their compile-profile variants <;
+
+[test-case] {
+  name ;string
+  file ;string
+  tags ;list[string] = []
+  envs ;blk[string]
+  variants ;list
+}
+
+[valid-variant] {
+  name ;string
+  tags ;list[string] = []
+  enable-flags ;list[string] = []
+  disable-flags ;list[string] = []
+  expected-file ;string
+}
+
+[invalid-variant] {
+  name ;string
+  tags ;list[string] = []
+  enable-flags ;list[string] = []
+  disable-flags ;list[string] = []
+  expected-stage ;string
+  expected-code ;string
+  expected-span ;blk {
+    file ;string
+    line ;int
+    col ;int
+    end-line ;int
+    end-col ;int
+  }
+}

@@ -8,13 +8,12 @@ elements from many configuration formats and some ideas from my head.
 
 Here's what Yumly brings to the table:
 
-- **No indentation** — blocks delimited by `{ }`, flexible organization
-- **Optional type hints** — declare intent when you want to `;)`
-- **Fail-fast** — syntax and validation errors raised immediately
-- **No overwriting** — duplicate keys are not allowed, ever
-- **Native env vars** — `$["VAR"]` and `include { ".env" }` are first-class
-- **Readable** — easy to read and understand ^_^
-- **Two extensions** — `.yumly` and `.yuy` (the second one is so cute!!)
+- **Optional type hints** — you can declare intent and some behaviors — uwu
+- **Fail-fast** — syntax and validation errors are raised immediately with cute cute messages (you can disable the cute errors, ok? :c )
+- **No overwriting** — duplicate pairs (keys) and blocks are not allowed!!
+- **Native env vars** — `$["VAR"]` and `include { ".env" }` ;)
+- **Cute** — it's easy to read and understand :3
+- **Cute Extensions** `.yumly` and `.yuy` (it's so cute!!)
 
 I'll guide you through Yumly's features, syntax, and project structure — and 
 honestly... i hope you'll enjoy it because ts was hard to make 🥀
@@ -47,6 +46,17 @@ import Yumly
 let config = loadYumly("config.yumly")
 ```
 
+### C
+
+```c
+#include <yumly.h>
+
+yumly_document *document = NULL;
+yumly_error *error = NULL;
+yumly_status status =
+    yumly_document_load_file("config.yumly", &document, &error);
+```
+
 ---
 
 ### ✿ Learn the basics ‧₊˚
@@ -65,6 +75,8 @@ let config = loadYumly("config.yumly")
   real-world examples.
 - [Nim Usage](usage/nim_usage.md) — Installation, API reference, and 
   advanced usage.
+- [C Usage](usage/c_usage.md) — Building, ownership, errors, and read-only
+  document traversal.
 
 ### ✿ Want to see it in action?
 

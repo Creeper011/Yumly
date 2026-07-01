@@ -68,10 +68,28 @@ block-item = pair | block ;
 block-body = [ block-item, { ",", block-item }, [ "," ] ] ;
 block = block-name, "{", [ block-body ], "}" ;
 
+schema-value-field = ident, type-hint, [ "=", value ] ;
+
+(* Block fields exist only inside schemas.
+ * `=` makes an inline-shaped block optional; without it the block is required.
+ * `blk[type]` is a required open block whose pair values share one type.
+ *)
+schema-inline-block-field = ident, ";", "blk", [ "=" ],
+                            "{", [ schema-body ], "}" ;
+schema-typed-block-field  = ident, ";", "blk", "[", type-name, "]" ;
+schema-block-field = schema-inline-block-field | schema-typed-block-field ;
+
+schema-field = schema-value-field | schema-block-field ;
+schema-body = [ schema-field, { ",", schema-field }, [ "," ] ] ;
+schema = "[", ident, "]", "{", [ schema-body ], "}" ;
+
 include-stmt = "include", "{", string-lit, "}" ;
 
 root-item = pair | block ;
 root-seq  = root-item, { ",", root-item }, [ "," ] ;
 
-(* Includes must come first, then root items, optionally comma-separated *)
-yumly-file = { include-stmt }, [ root-seq ] ;
+(* Includes come first, schemas second, then the configuration body. *)
+yumly-file = { include-stmt }, { schema }, [ root-seq ] ;
+
+(* `.yu` selects this start rule and contains schema declarations only. *)
+schema-file = { schema } ;

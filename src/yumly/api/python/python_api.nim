@@ -10,47 +10,64 @@ when not defined(python):
 import nimpy
 import ../../types/ast
 import ../../types/errors
+import ../../types/source
 import ../../core/pipeline
 import ../../serializers/python/parser_python
 import ../../serializers/yumly/encoder
-import ../../serializers/yumyumy/yumyumy_encoder
+import ../../serializers/yumyumy/yumyumyencoder
 
-proc diagnosticToPy(code, message: string, line, col, endLine, endCol: int,
-    sourceFile: string): PyObject =
+proc sourceSpanToPy(span: SourceSpan, pyBuiltins: PyObject): PyObject =
+  result = pyBuiltins.dict()
+  result["sourceFile"] = pyBuiltins.str(
+      if span.source != nil: span.source.path else: "")
+  result["line"] = pyBuiltins.int(int(span.line))
+  result["col"] = pyBuiltins.int(int(span.col))
+  result["endLine"] = pyBuiltins.int(int(span.endLine))
+  result["endCol"] = pyBuiltins.int(int(span.endCol))
+
+proc diagnosticToPy(code, message: string, primary: SourceSpan,
+    sources: openArray[SourceSpan]): PyObject =
   let pyBuiltins = nimpy.pyBuiltinsModule()
   result = pyBuiltins.dict()
   result["code"] = pyBuiltins.str(code)
   result["message"] = pyBuiltins.str(message)
-  result["line"] = pyBuiltins.int(line)
-  result["col"] = pyBuiltins.int(col)
-  result["endLine"] = pyBuiltins.int(endLine)
-  result["endCol"] = pyBuiltins.int(endCol)
-  result["sourceFile"] = pyBuiltins.str(sourceFile)
+  result["line"] = pyBuiltins.int(int(primary.line))
+  result["col"] = pyBuiltins.int(int(primary.col))
+  result["endLine"] = pyBuiltins.int(int(primary.endLine))
+  result["endCol"] = pyBuiltins.int(int(primary.endCol))
+  result["sourceFile"] = pyBuiltins.str(
+      if primary.source != nil: primary.source.path else: "")
+  let pySources = pyBuiltins.list()
+  for span in sources:
+    discard pySources.append(sourceSpanToPy(span, pyBuiltins))
+  result["sources"] = pySources
 
 proc successResult(value: PyObject): PyObject =
   let pyBuiltins = nimpy.pyBuiltinsModule()
   result = pyBuiltins.dict()
   result["value"] = value
 
-proc failureResult(code: string, message: string, line: int, col: int,
-    endLine: int, endCol: int, sourceFile: string): PyObject =
+proc failureResult(code, message: string, primary: SourceSpan,
+    sources: openArray[SourceSpan]): PyObject =
   let pyBuiltins = nimpy.pyBuiltinsModule()
   result = pyBuiltins.dict()
-  result["diagnostic"] = diagnosticToPy(code, message, line, col, endLine,
-      endCol, sourceFile)
+  result["diagnostic"] = diagnosticToPy(code, message, primary, sources)
 
 template withDiagnostics(body: untyped): PyObject =
   try:
     successResult(body)
   except YumlyError as error:
-    failureResult(error.code, error.msg, error.line, error.col, error.endLine,
-        error.endCol, error.sourceFile)
+    failureResult($error.code, error.msg,
+        if error.source.len > 0: error.source[0]
+        else: SourceSpan(),
+        error.source)
   except YumlyIOError as error:
-    failureResult(error.code, error.msg, error.line, error.col, error.endLine,
-        error.endCol, error.sourceFile)
+    failureResult($error.code, error.msg,
+        if error.source.len > 0: error.source[0]
+        else: SourceSpan(),
+        error.source)
   except CatchableError as error:
-    failureResult("undefined" & $error.name, error.msg, 0, 0, 0, 0,
-        "") # NOTE: or just crash here
+    failureResult("undefined" & $error.name, error.msg, SourceSpan(), [])
 
 proc validateContent*(content: string): bool {.exportpy.} =
   try:
@@ -84,7 +101,7 @@ proc evaluatedConfigToPy(config: YumlyConf, pyBuiltins: PyObject): PyObject =
   ## YumlyData keeps the evaluated mapping and its exact Yumyumy rendering.
   result = pyBuiltins.dict()
   result["data"] = config.toPython()
-  result["yumyumy"] = pyBuiltins.str(yumyumy_encoder.toYumyumy(config))
+  result["yumyumy"] = pyBuiltins.str(yumyumyencoder.toYumyumy(config))
 
 proc pipelineResultToPy(res: PipelineResult, pyBuiltins: PyObject): PyObject =
   case res.stage
@@ -97,7 +114,7 @@ proc pipelineResultToPy(res: PipelineResult, pyBuiltins: PyObject): PyObject =
 
 func parsePipelineStage(until: int): PipelineStage =
   if until < ord(low(PipelineStage)) or until > ord(high(PipelineStage)):
-    raise newYumlyError("Invalid pipeline stage index: " & $until, 0, 0, "python.invalid-pipeline-stage")
+    raise newException(ValueError, "Invalid pipeline stage index: " & $until)
   PipelineStage(until)
 
 proc loadYumlyPy*(path: string, until: int = 5): PyObject {.exportpy.} =
@@ -122,13 +139,13 @@ proc dumpPy*(data: PyObject): string {.exportpy.} =
 
 proc dictToYumyumyPy*(data: PyObject): string {.exportpy.} =
   let config = dictToYumlyConf(data)
-  yumyumy_encoder.toYumyumy(config)
+  yumyumyencoder.toYumyumy(config)
 
 proc loadYumyumyPy*(path: string): string {.exportpy.} =
   let config = pipeline.loadYumly(path)
-  yumyumy_encoder.toYumyumy(config)
+  yumyumyencoder.toYumyumy(config)
 
 proc loadYumyumyContentPy*(content: string,
     workingDir: string = "."): string {.exportpy.} =
   let config = pipeline.loadYumlyContent(content, workingDir)
-  yumyumy_encoder.toYumyumy(config)
+  yumyumyencoder.toYumyumy(config)

@@ -1,6 +1,0 @@
-;> Test file metadata for whitespace and comments <;
-
-name ;string = "Whitespace and Comments"
-valid ;bool = true, number ;int = 0008
-
-cases ;list[string] = ["case1.yumly", "case2.yumly", "case3.yumly", "case4.yumly", "case5.yumly"]

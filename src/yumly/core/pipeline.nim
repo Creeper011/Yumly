@@ -12,7 +12,7 @@ import ../phases/resolver/resolver
 import ../phases/evaluator/evaluator
 import ../phases/validator/validate
 import ../serializers/yumly/encoder
-import ../types/[ast, nodes, token]
+import ../types/[ast, nodes, source, token]
 
 type
   PipelineStage* = enum
@@ -39,6 +39,10 @@ proc collectTokens(puller: TokenPuller): seq[Token] =
     if token.kind == tkEOF:
       break
 
+proc consumeTokens(puller: TokenPuller) =
+  while puller().kind != tkEOF:
+    discard
+
 proc collectNodes(puller: NodePuller): seq[YumNode] =
   while true:
     let node = puller()
@@ -46,35 +50,82 @@ proc collectNodes(puller: NodePuller): seq[YumNode] =
     if node.kind == nkEOF:
       break
 
-proc runPipeline*(stream: Stream, until: PipelineStage = psValidator,
-    workingDir: string = ".", sourceFile: string = ""): PipelineResult =
+proc consumeNodes(puller: NodePuller) =
+  while puller().kind != nkEOF:
+    discard
+
+proc runPipeline(tokenPuller: TokenPuller, until: PipelineStage,
+    workingDir: string, sourceFile: SourceFile,
+    captureResult: bool): PipelineResult =
   result = PipelineResult(stage: until)
 
-  let tokenPuller = tokenize(stream)
   if until == psTokenizer:
-    result.tokens = collectTokens(tokenPuller)
+    if captureResult:
+      result.tokens = collectTokens(tokenPuller)
+    else:
+      consumeTokens(tokenPuller)
     return
 
-  let parsed = parseNodes(tokenPuller)
+  let parsed = parseNodes(tokenPuller, sourceFile.documentKindFor())
   if until == psParser:
-    result.nodes = collectNodes(parsed)
+    if captureResult:
+      result.nodes = collectNodes(parsed)
+    else:
+      consumeNodes(parsed)
     return
 
   let included = loadIncludes(parsed, workingDir, sourceFile)
   if until == psIncludes:
-    result.nodes = collectNodes(included)
+    if captureResult:
+      result.nodes = collectNodes(included)
+    else:
+      consumeNodes(included)
     return
 
   let resolved = resolveNodes(included)
   if until == psResolver:
-    result.nodes = collectNodes(resolved)
+    if captureResult:
+      result.nodes = collectNodes(resolved)
+    else:
+      consumeNodes(resolved)
     return
 
-  result.config = evaluateNodes(resolved)
+  let config = evaluateNodes(resolved)
   if until == psEvaluator:
+    if captureResult:
+      result.config = config
     return
 
-  validateConfig(result.config)
+  validateConfig(config)
+  if captureResult:
+    result.config = config
+
+proc runPipeline*(stream: Stream, until: PipelineStage = psValidator,
+    workingDir: string = ".", sourceFile: SourceFile = nil): PipelineResult =
+  ## Runs the pipeline while reading the input incrementally from `stream`.
+  runPipeline(tokenize(stream, sourceFile = sourceFile), until, workingDir,
+      sourceFile, captureResult = true)
+
+proc runPipeline*(content: sink string,
+    until: PipelineStage = psValidator, workingDir: string = ".",
+    sourceFile: SourceFile = nil): PipelineResult =
+  ## Runs the same pull pipeline over content already resident in memory.
+  runPipeline(tokenize(content, sourceFile), until, workingDir, sourceFile,
+      captureResult = true)
+
+proc consumePipeline*(stream: Stream,
+    until: PipelineStage = psValidator, workingDir: string = ".",
+    sourceFile: SourceFile = nil) =
+  ## Runs a pipeline stage without retaining its final token/node/config result.
+  discard runPipeline(tokenize(stream, sourceFile = sourceFile), until,
+      workingDir, sourceFile, captureResult = false)
+
+proc consumePipeline*(content: sink string,
+    until: PipelineStage = psValidator, workingDir: string = ".",
+    sourceFile: SourceFile = nil) =
+  ## Runs a resident-content pipeline without retaining its final result.
+  discard runPipeline(tokenize(content, sourceFile), until, workingDir,
+      sourceFile, captureResult = false)
 
 # Api/Public procs:
 
@@ -87,32 +138,38 @@ proc loadYumly*(stream: Stream, workingDir: string = "."): YumlyConf =
 
 proc loadYumlyContent*(content: string, until: PipelineStage,
     workingDir: string = "."): PipelineResult =
-  let stream = newStringStream(content)
-  try:
-    runPipeline(stream, until, workingDir)
-  finally:
-    stream.close()
+  runPipeline(content, until, workingDir)
 
 proc loadYumlyContent*(content: string, workingDir: string = "."): YumlyConf =
-  let stream = newStringStream(content)
-  try:
-    runPipeline(stream, psValidator, workingDir).config
-  finally:
-    stream.close()
+  runPipeline(content, psValidator, workingDir).config
 
 proc loadYumly*(path: string, until: PipelineStage): PipelineResult =
   let stream = newYumlyStream(path)
   try:
-    runPipeline(stream, until, parentDir(path), os.absolutePath(path))
+    runPipeline(stream, until, parentDir(path),
+        SourceFile(path: os.absolutePath(path)))
   finally:
     stream.close()
 
 proc loadYumly*(path: string = "config.yumly"): YumlyConf =
   let stream = newYumlyStream(path)
   try:
-    runPipeline(stream, psValidator, parentDir(path), os.absolutePath(path)).config
+    runPipeline(stream, psValidator, parentDir(path),
+        SourceFile(path: os.absolutePath(path))).config
   finally:
     stream.close()
+
+proc consumeYumly*(path: string, until: PipelineStage = psValidator) =
+  let stream = newYumlyStream(path)
+  try:
+    consumePipeline(stream, until, parentDir(path),
+        SourceFile(path: os.absolutePath(path)))
+  finally:
+    stream.close()
+
+proc consumeYumlyContent*(content: string,
+    until: PipelineStage = psValidator, workingDir: string = ".") =
+  consumePipeline(content, until, workingDir)
 
 func dumpYumly*(config: YumlyConf): string =
   encoder.dumpYumly(config)

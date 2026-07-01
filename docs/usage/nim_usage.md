@@ -48,6 +48,51 @@ const content = """
 let config = loadYumlyContent(content)
 ```
 
+### From a stream
+
+```nim
+import std/streams
+
+let stream = newFileStream("config.yumly", fmRead)
+if stream == nil:
+    raise newException(IOError, "could not open config.yumly")
+
+try:
+    let config = loadYumly(stream)
+finally:
+    stream.close()
+```
+
+`loadYumly(path)` and `loadYumly(stream)` consume their input incrementally
+through my refillable cursor. They do not preload the complete source.
+`loadYumlyContent(content)` is the all-at-once input path: because the string is
+already resident in memory, I scan it directly without wrapping it in a
+`StringStream`.
+
+Both paths run the same tokenizer, parser, include, resolver, evaluator, and
+validator semantics. The regular loading procedures return only after the
+selected pipeline stage finishes; incremental input consumption does not expose
+a partially validated `YumlyConf`.
+
+### Pulling tokens directly
+
+The low-level tokenizer also has a stateful API for callers that want one token
+at a time without collecting a token sequence:
+
+```nim
+import yumly/phases/tokenizer/tokenizer
+import yumly/types/token
+
+var tokenizer = initTokenizer(content)
+while true:
+    let token = tokenizer.nextToken()
+    if token.kind == tkEOF:
+        break
+```
+
+`initTokenizer` accepts either a `string` or a `Stream`. The stream remains
+owned by the caller and must stay open until tokenization ends.
+
 ---
 
 ## ✿ Accessing Values
@@ -162,7 +207,7 @@ To allow retrieving both **pairs** (values) and **blocks** using the same `[]` o
 
 You do **not** need to manually convert or unpack this type. The library handles conversions automatically:
 - **Direct Variable Assignment**: You can assign a `YumlyElement` directly to a `Value` or a `Block` variable.
-- **Method Chaining**: You can call any value accessor (like `.getStr()`, `.getInt()`) or index it further with a string (if it's a block) or an integer (if it's a list).
+- **Method Chaining**: You can call any value accessor (like `.getStr()`, `.getInt()`), index it with a string (if it's a block or object), or with an integer (if it's a list).
 
 #### Example:
 ```nim
@@ -176,6 +221,9 @@ echo port.getInt()
 # 3. Fetching a block directly:
 let db: Block = config["database"]
 echo db["host"].getStr()
+
+# 4. Fetching a block nested inside an object in a list:
+echo config["items"][0]["metadata"]["source"].getStr()
 ```
 
 
@@ -312,6 +360,8 @@ let hint = inferTypeHint(value)
 |-----------|-------------|
 | `loadYumly(path)` | Load and parse a file |
 | `loadYumlyContent(content)` | Parse content from a string |
+| `consumeYumly(path, until)` | Consume a file incrementally without retaining the selected stage result |
+| `consumeYumlyContent(content, until)` | Consume resident content without retaining the selected stage result |
 | `parseContentToAST(content)` | Tokenize and parse to AST |
 
 ### Serialization
@@ -337,6 +387,8 @@ let hint = inferTypeHint(value)
 | Operator / Proc | Description |
 |-----------------|-------------|
 | `config[key]` | Retrieve a pair (as `Value`) or block (as `Block`) wrapped in `YumlyElement` |
+| `value[index]` | Retrieve an item from a list value |
+| `value[key]` | Retrieve a pair or block from an object value |
 | `hasKey(config, key)` | Check if key exists |
 | `hasBlock(config, name)` | Check if block exists |
 | `findBlock(config, name)` | Find block by name |

@@ -28,7 +28,7 @@
       {
         packages.default = pkgs.stdenv.mkDerivation {
           pname = "yumly";
-          version = "0.9.0";
+          version = "0.10.0";
           src = ./.;
 
           nativeBuildInputs = [ pkgs.nim ];
@@ -36,17 +36,13 @@
 
           buildPhase = ''
             export HOME=$TMPDIR
-            # Add dependencies to Nim path
-            nim c -d:release --opt:size \
-              --path:${nimpy-src} \
-              --path:${dotenv-src}/src \
-              --path:${yaml-src} \
-              -o:yumly-cli -d:yumlySuggestions -d:yumlyJson -d:yumlyYaml src/cli/yumly_cli.nim
+            export YUMLY_NIM_FLAGS="--path:${nimpy-src} --path:${dotenv-src}/src --path:${yaml-src}"
+            nimble --nimbleDir:build/nimble buildCli
           '';
 
           installPhase = ''
             mkdir -p $out/bin
-            cp yumly-cli $out/bin/
+            cp build/bin/yumly-cli $out/bin/
           '';
         };
 

@@ -1,0 +1,56 @@
+;> A second example of a yumly configuration :3 <;
+
+include { ".env", "dependency.yu" }
+
+project-name = "Yumly Example 2"
+maintainer = "i don't know"
+age = 2 ;> yea, i have 2 years old .,. <;
+active ;bool = true ;> also, you can explicit type hint a pair <;
+home-dir = $["HOME"; string ?? "/tmp"]
+
+;>
+  Comments can be inline or multiline.
+  Yumly keeps them as trivia too, so formatters and tools
+  can read them and put them back where they belong :3
+<;
+
+(profile) {
+  ;> ;list[type] locks this list to values of that type only <;
+  hobbies ;list[string] = ["reading", "hiking", "cooking", "programming"]
+  lucky-numbers ;list[int] = [7, 11, 42]
+  requests-estimate = 1.2e6 ;> the value is resolved during parsing <;
+
+  escaped = "string with a \"quote\" and a \\ backslash"
+  empty = []
+  empty-int-list ;list[int] = []
+
+  dependencies ;list = [
+    ;> tagged objects, like <schema>, say which schema they want to follow <;
+    <dependency> {
+      name = "Yumene"
+      description = "yu core"
+      optional = false
+    }
+  ]
+
+  ;> ;list[dependency] locks every item to the dependency schema <;
+  optional-dependencies ;list[dependency] = [
+    {
+      name = "funny guy"
+      description = "none"
+      optional = true
+    }
+  ]
+
+  ;> a list can contain only values (objects, ints, strings, lists etc.)<;
+  mixed-values ;list = [
+    1,
+    "two",
+    3.3,
+    ["nested", "list"],
+    {
+      label = "inline object"
+      enabled = true
+    }
+  ]
+}
